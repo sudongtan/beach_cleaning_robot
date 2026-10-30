@@ -31,8 +31,13 @@ SHARE = get_package_share_directory('sim_bridge_gazebo')
 
 def spawner(*controllers, ros_args=()):
     extra = [a for r in ros_args for a in ('--controller-ros-args', r)]
+    # Beach scenes start paused until attach_server has detached the items, and controllers
+    # only switch while the simulation steps: the default 5 s switch timeout lost that race with
+    # the GUI open (joint_state_broadcaster stayed inactive -> no joint TFs). The service call
+    # must outlast the switch timeout.
     return Node(package='controller_manager', executable='spawner', output='screen',
-                arguments=[*controllers, '--controller-manager', '/controller_manager', *extra],
+                arguments=[*controllers, '--controller-manager', '/controller_manager',
+                           '--switch-timeout', '60', '--service-call-timeout', '70', *extra],
                 parameters=[{'use_sim_time': True}])
 
 
