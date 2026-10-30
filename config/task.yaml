@@ -1,0 +1,9 @@
+# Task (packages/task): search pattern now; the state machine adds its settings in A2a.
+task:
+  search:
+    # Lawnmower lanes parallel to the shore (x). Lane spacing = camera footprint width at
+    # view_distance_m ahead (2 * d * tan(hfov / 2), hfov from config/sensors.yaml) * (1 - overlap).
+    view_distance_m: 2.0
+    overlap: 0.2
+    edge_margin_m: 0.5         # lanes and waypoints stay this far inside the geofence
+    waypoint_spacing_m: 5.0    # waypoints along a lane (progress checks; lethal ones are dropped)
