@@ -1,0 +1,7 @@
+# World model (packages/world_model). Basket load cap: config/robot_limits.yaml basket_load_max_kg.
+world_model:
+  dedup_radius_m: 0.3            # a detection this close to a known item of the same class is that item
+  ignore_near_gripper_m: 0.2     # detections this close to the gripper TCP are the held item, not a new one
+  coverage_resolution_m: 0.5
+  max_items_per_compartment: 5   # 33 x 14.5 cm compartments; bottles (21-23 cm) lie two or three side by side
+  default_item_mass_kg: 0.2      # mass when the item isn't known (heaviest item: the 330 ml glass bottle)

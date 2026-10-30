@@ -8,6 +8,8 @@ bin for a material under config/sorting_rules.yaml.
 
 import math
 
+import numpy as np
+
 TRASH, DISTRACTOR = 'trash', 'distractor'
 
 
@@ -29,6 +31,12 @@ class Fov:
         if not self.near <= x <= self.far:
             return False
         return abs(math.atan2(y, x)) <= self.h and abs(math.atan2(z, x)) <= self.v
+
+    def sees_many(self, x, y, z):
+        """Vectorised sees() over numpy arrays."""
+        x, y, z = np.asarray(x), np.asarray(y), np.asarray(z)
+        return ((x >= self.near) & (x <= self.far) & (np.abs(np.arctan2(y, x)) <= self.h)
+                & (np.abs(np.arctan2(z, x)) <= self.v))
 
 
 def object_class(gt_class, trash_materials):
