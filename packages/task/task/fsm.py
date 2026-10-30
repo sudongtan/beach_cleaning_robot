@@ -140,7 +140,7 @@ class Task:
         if self.state == 'DONE':
             return
         if not snap.safety_ok and self.pending is None:
-            if self.state == 'APPROACH' and self.sub == 'final':
+            if self.state in ('APPROACH', 'GO_TO_BIN') and self.sub == 'final':
                 self.io.cmd_vel(0.0, 0.0, 0.0)
             return                                      # pause: start nothing new
         if self.item and self.state in ('APPROACH',) and snap.t - self.item_since > self.cfg['item_timeout_s']:
@@ -297,6 +297,8 @@ class Task:
         self.go('GO_TO_BIN' if self.sub == 'full' and self.basket_items(snap) else 'SEARCH', snap)
 
     def state_go_to_bin(self, snap):
+        if self.sub == 'final':
+            return self.bin_final_approach(snap)
         if self.pending is None:
             self.unload = self.basket_items(snap)
             if not self.unload:
@@ -310,7 +312,7 @@ class Task:
             self.pending, r = None, False
         if r is True:
             self.nav_fails = 0
-            self.go('PLACE', snap)
+            self.sub = 'final'
         elif r is False:
             self.nav_fails += 1
             self.io.log({'t': round(snap.t, 2), 'event': 'bin_nav_failed', 'bin': self.unload[0][0]})
@@ -320,6 +322,25 @@ class Task:
                 self.io.log({'t': round(snap.t, 2), 'event': 'left_in_basket', 'items': stuck})
                 self.nav_fails = 0
                 self.go('GO_TO_BIN', snap)
+
+    def bin_final_approach(self, snap):
+        """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
+        fa = self.cfg['final_approach']
+        bx, by, _, _ = self.bins[self.unload[0][0]]
+        x, y = to_robot(snap.robot, bx, by)
+        err = x - self.cfg['bin_place_distance_m']
+        if abs(err) <= 0.03 and abs(y) <= 0.05:
+            self.io.cmd_vel(0.0, 0.0, 0.0)
+            if self.settle_since is None:
+                self.settle_since = snap.t
+            if snap.t - self.settle_since >= fa['settle_s']:
+                self.settle_since = None
+                self.go('PLACE', snap)
+            return
+        self.settle_since = None
+        clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
+        self.io.cmd_vel(clip(fa['gain'] * err, fa['max_vx']), clip(fa['gain'] * y, fa['max_vy']),
+                        clip(fa['gain'] * math.atan2(y, x), fa['max_wz']))
 
     def state_place(self, snap):
         if self.pending is None:

@@ -19,6 +19,14 @@
   <exec_depend>sim_bridge_gazebo</exec_depend>
   <exec_depend>rviz2</exec_depend>
 
+  <exec_depend>localization</exec_depend>
+  <exec_depend>mapping</exec_depend>
+  <exec_depend>perception</exec_depend>
+  <exec_depend>world_model</exec_depend>
+  <exec_depend>safety</exec_depend>
+  <exec_depend>navigation</exec_depend>
+  <exec_depend>grasping</exec_depend>
+  <exec_depend>task</exec_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>

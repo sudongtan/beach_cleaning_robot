@@ -10,7 +10,8 @@ task:
   fsm:
     rate_hz: 10.0
     standoff_m: 0.7              # APPROACH step 1: navigation goal this far from the item, facing it
-    bin_standoff_m: 0.7          # base_link this far in front of a bin centre (head ~5 cm from the wall)
+    bin_standoff_m: 1.2          # navigation goal this far in front of a bin centre (clear of its lethal cells)
+    bin_place_distance_m: 0.7    # then straight in until base_link is this far (head ~5 cm from the wall)
     final_approach:              # APPROACH step 2: small /cmd_vel_nav steps until the item is in reach
       target_x_m: 0.49           # item centre ahead of base_link (middle of the grasp envelope)
       gain: 0.8

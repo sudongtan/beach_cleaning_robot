@@ -272,3 +272,15 @@ def test_compartment_full_of_stuck_items_skips_instead_of_looping():
     t = run(make(w, PATH, capacity=Capacity(1, 2.0, 0.05)), w)
     assert t.state == 'DONE' and 'a' in t.stuck
     assert (w.known['b'].status, w.known['b'].skip_reason) == (SKIPPED, 'compartment_full')
+
+
+def test_bin_approach_ends_at_the_place_distance():
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    t = make(w, [])
+    while t.state != 'PLACE' and w.tick_no < 10000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.state == 'PLACE'
+    bx, by, _, _ = BINS['recyclable']
+    assert math.hypot(w.robot[0] - bx, w.robot[1] - by) == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
+    assert w.cmd == (0.0, 0.0, 0.0)

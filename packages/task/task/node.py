@@ -170,6 +170,7 @@ class TaskNode(Node):
         self.create_subscription(Image, '/camera/rgb', self.on_image, 1, callback_group=io)
         self.create_timer(1.0 / cfg['fsm']['rate_hz'], self.tick, callback_group=MutuallyExclusiveCallbackGroup())
         self.last_state = None
+        self.started = False
 
     # --- inputs ---------------------------------------------------------------------------
     def now(self):
@@ -263,9 +264,19 @@ class TaskNode(Node):
         self.log_file.flush()
 
     # --- loop -----------------------------------------------------------------------------
+    def servers_ready(self):
+        return (self.nav.server_is_ready() and self.pick_client.server_is_ready()
+                and self.place_client.server_is_ready() and self.classify_client.service_is_ready()
+                and self.update_client.service_is_ready())
+
     def tick(self):
         if self.robot is None or self.task.state == 'DONE':
             return
+        if not self.started:                      # a missing server would otherwise fail every goal
+            if not self.servers_ready():
+                return
+            self.started = True
+            self.log({'event': 'servers_ready'})
         with self.lock:
             snap = Snapshot(self.now(), self.robot, dict(self.items),
                             {k: list(v) for k, v in self.compartments.items()}, self.load, self.safety == 'ok')

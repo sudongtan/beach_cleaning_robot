@@ -16,7 +16,9 @@ pytest.importorskip('beach_interfaces')
 os.environ.setdefault('ROS_DOMAIN_ID', '66')
 os.environ['ROS_AUTOMATIC_DISCOVERY_RANGE'] = 'LOCALHOST'
 
+from beach_interfaces.action import PickObject, PlaceObject  # noqa: E402
 from beach_interfaces.msg import WorldModel  # noqa: E402
+from beach_interfaces.srv import ClassifyItem, UpdateItem  # noqa: E402
 from nav2_msgs.action import NavigateToPose  # noqa: E402
 from nav_msgs.msg import Odometry  # noqa: E402
 from rclpy.action import ActionServer  # noqa: E402
@@ -48,6 +50,11 @@ def test_task_node_searches_and_logs():
             gh.succeed()
             return NavigateToPose.Result()
         ActionServer(fake, NavigateToPose, '/nav/goal', execute)
+        # the node starts only once all its servers exist
+        ActionServer(fake, PickObject, '/grasp/pick', lambda gh: PickObject.Result())
+        ActionServer(fake, PlaceObject, '/grasp/place', lambda gh: PlaceObject.Result())
+        fake.create_service(ClassifyItem, '/classify', lambda req, res: res)
+        fake.create_service(UpdateItem, '/world_model/update_item', lambda req, res: res)
         odom_pub = fake.create_publisher(Odometry, '/odom/global', 10)
         wm_pub = fake.create_publisher(WorldModel, '/world_model', 10)
         safety_pub = fake.create_publisher(String, '/safety/state', LATCHED)
