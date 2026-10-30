@@ -32,7 +32,7 @@ generate:
 	$(PYTHON) sim/common/generate_scene.py --seeds $(SEEDS)
 
 test:
-	source $(ROS_SETUP) && source $(WS_SETUP) && $(PYTHON) -m pytest sim/common -q
+	source $(ROS_SETUP) && source $(WS_SETUP) && $(PYTHON) -m pytest sim/common packages -q
 
 assets:
 	$(PYTHON) sim/common/make_assets.py

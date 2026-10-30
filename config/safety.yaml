@@ -1,0 +1,13 @@
+# Safety supervisor thresholds (notes/architecture.md, "Safety supervisor rules").
+# ROS parameter file: passed to the safety_supervisor node; the unit tests read the same values.
+# Distances are horizontal, from base_link to the person's centre.
+safety_supervisor:
+  ros__parameters:
+    slow_distance_m: 3.0       # person closer -> slow (and the arm holds: arm rule = state != ok)
+    stop_distance_m: 1.5       # person closer -> stop
+    slow_factor: 0.3           # velocity scale while slow (linear and angular)
+    release_margin_m: 0.3      # leave slow/stop only beyond the threshold + this margin ...
+    release_hold_s: 1.0        # ... for at least this long (no flicker)
+    people_timeout_s: 0.5      # no /people message for longer -> stop (fail-safe)
+    cmd_timeout_s: 0.5         # no /cmd_vel_nav for longer -> zero velocity
+    rate_hz: 20.0              # /cmd_vel and /safety/state publish rate
