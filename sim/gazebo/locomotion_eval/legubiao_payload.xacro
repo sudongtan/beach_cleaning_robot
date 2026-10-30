@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- legubiao go2_description (Gazebo ros2_control variant) + evaluation payload -->
+<robot name="go2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="payload" default="true"/>
+  <xacro:include filename="$(find go2_description)/xacro/ros2_control/robot.xacro"/>
+  <xacro:include filename="payload.xacro"/>
+  <xacro:if value="$(arg payload)">
+    <xacro:eval_payload parent="trunk"/>
+  </xacro:if>
+</robot>

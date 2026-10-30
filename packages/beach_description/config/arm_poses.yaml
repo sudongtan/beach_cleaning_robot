@@ -1,0 +1,26 @@
+# Named arm poses (joint space, rad), used by the arm test command and later by grasping.
+# Order: arm_waist, arm_shoulder, arm_elbow, arm_forearm_roll, arm_wrist_angle, arm_wrist_rotate.
+# fingers: arm_left_finger opening in m (0.015 closed .. 0.037 open); right finger = -left.
+# Derived with scripts/reach_check.py (IK) and checked with scripts/arm_pose_check.py (collisions).
+poses:
+  rest:
+    # tucked forward above the plate, behind the head camera (the Interbotix "sleep" pose
+    # [0, -1.88, 1.5, 0, 0.8, 0] folds back into the basket). From arm_pose_check.py --search-rest.
+    arm: [0.0, -1.38, 1.49, 0.0, 0.81, 0.0]
+    fingers: 0.015
+  ground_front:
+    # TCP 0.30 m in front of the front feet, 3 cm above ground at body height 0.285 m, pointing down
+    arm: [0.0, 1.535, -0.395, 0.0, 0.43, 0.0]
+    fingers: 0.037
+  over_recyclable:
+    # TCP 5 cm above the centre of the recyclable compartment (+y), pointing down
+    arm: [2.96, -0.31, 0.47, 0.0, 1.40, 0.0]
+    fingers: 0.015
+  over_residual:
+    # TCP 5 cm above the centre of the residual compartment (-y), pointing down
+    arm: [-2.96, -0.31, 0.48, 0.0, 1.41, 0.0]
+    fingers: 0.015
+
+# Arm test (A0 DoD 4). Moves are joint-space interpolations; each one is collision-checked by
+# arm_pose_check.py. Going via `rest` keeps the waist swing (about +-170 deg) tucked in.
+test_sequence: [rest, ground_front, rest, over_recyclable, rest, over_residual, rest]

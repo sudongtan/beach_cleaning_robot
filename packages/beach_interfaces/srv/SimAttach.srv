@@ -1,0 +1,6 @@
+# Simulated attach/detach of a scene object to the gripper (grasp_mode:=attach).
+# Served by the sim bridge on /sim/attach and /sim/detach (notes/architecture.md).
+string object_id    # id from bench/scenes.yaml, e.g. trash_03
+---
+bool success
+string message

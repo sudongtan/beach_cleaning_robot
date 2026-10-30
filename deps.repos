@@ -1,0 +1,13 @@
+# Third-party source dependencies, cloned next to this repo into ~/ros2_ws/src.
+# Import + patch with: patches/setup_deps.sh
+repositories:
+  quadruped_ros2_control:
+    type: git
+    url: https://github.com/legubiao/quadruped_ros2_control.git
+    # dev branch; basic_quadruped_controller (main's unitree_guide_controller doesn't trot in Gazebo, upstream issue #50)
+    version: 4dfc15ea73e7e453019a685d2199fd8406c93896
+  interbotix_ros_manipulators:
+    type: git
+    url: https://github.com/Interbotix/interbotix_ros_manipulators.git
+    # jazzy branch; only interbotix_xsarm_descriptions is built (meshes for the WidowX 250 6DOF)
+    version: 01c557d65f781697c3a05bffebafbd3404e03eab

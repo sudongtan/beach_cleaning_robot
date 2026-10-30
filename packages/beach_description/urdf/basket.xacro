@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!-- Two-compartment basket (recyclable | residual), split left/right so the arm reaches both
+     equally. Thin-walled box with real collision geometry. Simulator-agnostic. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="box_geom" params="sx sy sz x y z">
+    <origin xyz="${x} ${y} ${z}"/>
+    <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+  </xacro:macro>
+
+  <!-- one wall: same box as visual and collision -->
+  <xacro:macro name="basket_wall" params="sx sy sz x y z">
+    <visual><xacro:box_geom sx="${sx}" sy="${sy}" sz="${sz}" x="${x}" y="${y}" z="${z}"/>
+      <material name="basket_blue"/></visual>
+    <collision><xacro:box_geom sx="${sx}" sy="${sy}" sz="${sz}" x="${x}" y="${y}" z="${z}"/></collision>
+  </xacro:macro>
+
+  <!-- origin = centre of the basket floor (underside). Compartments: recyclable = +y, residual = -y. -->
+  <xacro:macro name="basket" params="parent length width height wall mass load_mass *origin">
+    <material name="basket_blue"><color rgba="0.2 0.35 0.7 1.0"/></material>
+
+    <joint name="basket_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent}"/>
+      <child link="basket_link"/>
+    </joint>
+
+    <link name="basket_link">
+      <!-- floor -->
+      <xacro:basket_wall sx="${length}" sy="${width}" sz="${wall}" x="0" y="0" z="${wall/2}"/>
+      <!-- front / back walls -->
+      <xacro:basket_wall sx="${wall}" sy="${width}" sz="${height}" x="${length/2 - wall/2}" y="0" z="${height/2}"/>
+      <xacro:basket_wall sx="${wall}" sy="${width}" sz="${height}" x="${-length/2 + wall/2}" y="0" z="${height/2}"/>
+      <!-- side walls -->
+      <xacro:basket_wall sx="${length}" sy="${wall}" sz="${height}" x="0" y="${width/2 - wall/2}" z="${height/2}"/>
+      <xacro:basket_wall sx="${length}" sy="${wall}" sz="${height}" x="0" y="${-width/2 + wall/2}" z="${height/2}"/>
+      <!-- divider -->
+      <xacro:basket_wall sx="${length}" sy="${wall}" sz="${height}" x="0" y="0" z="${height/2}"/>
+      <!-- thin-walled box: mass spread over the walls, approximated by a solid box of the same size -->
+      <inertial>
+        <origin xyz="0 0 ${height/2}"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${mass*(width*width + height*height)/12}" iyy="${mass*(length*length + height*height)/12}"
+                 izz="${mass*(length*length + width*width)/12}" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <!-- compartment frames: centre of each opening, at the rim (place target for the arm) -->
+    <joint name="basket_recyclable_joint" type="fixed">
+      <origin xyz="0 ${width/4} ${height}"/>
+      <parent link="basket_link"/>
+      <child link="basket_recyclable_link"/>
+    </joint>
+    <link name="basket_recyclable_link"/>
+
+    <joint name="basket_residual_joint" type="fixed">
+      <origin xyz="0 ${-width/4} ${height}"/>
+      <parent link="basket_link"/>
+      <child link="basket_residual_link"/>
+    </joint>
+    <link name="basket_residual_link"/>
+
+    <!-- simulated load (DoD walking test): a fixed mass on the floor, split over both compartments -->
+    <xacro:if value="${load_mass > 0}">
+      <joint name="basket_load_joint" type="fixed">
+        <origin xyz="0 0 ${wall + 0.025}"/>
+        <parent link="basket_link"/>
+        <child link="basket_load_link"/>
+      </joint>
+      <link name="basket_load_link">
+        <visual><xacro:box_geom sx="${length - 4*wall}" sy="${width - 4*wall}" sz="0.05" x="0" y="0" z="0"/>
+          <material name="basket_load_grey"><color rgba="0.5 0.5 0.45 1.0"/></material></visual>
+        <inertial>
+          <mass value="${load_mass}"/>
+          <inertia ixx="${load_mass*(width*width + 0.0025)/12}" iyy="${load_mass*(length*length + 0.0025)/12}"
+                   izz="${load_mass*(length*length + width*width)/12}" ixy="0" ixz="0" iyz="0"/>
+        </inertial>
+      </link>
+    </xacro:if>
+  </xacro:macro>
+</robot>

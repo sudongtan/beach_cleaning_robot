@@ -1,0 +1,10 @@
+# Traversability thresholds used to build the static /map grid (A2) and to
+# check where the scene generator may put things.
+traversability:
+  # Robot limit, measured with the custom robot and the full 2 kg load, walking up and down the
+  # steepest line of seed 9 with velocity smoothing (0.3 m/s^2, 0.5 rad/s^2): 5 and 6 deg
+  # passed 2/2, 7 deg 1 pass / 1 roll-over just past the crest (notes/logs/A1.md, A1c).
+  # A2 navigation must smooth velocity commands. The generator keeps the whole geofence <= this.
+  max_slope_deg: 6.0
+  placement_max_slope_deg: 5.0   # objects, bins and the start pose go only where slope is below this
+  grid_resolution_m: 0.25

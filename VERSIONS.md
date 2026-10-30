@@ -1,0 +1,54 @@
+# Versions
+
+Recorded 2026-10-12 on the dev machine (native, no container).
+
+## System
+
+| Component | Version |
+|---|---|
+| OS | Ubuntu 24.04.5 LTS |
+| ROS 2 | Jazzy (`ros-jazzy-ros-base` 0.11.0) |
+| Gazebo | Gazebo Sim 8.15.0 (Harmonic), via `ros-jazzy-gz-sim-vendor` 0.0.13 |
+| Python | 3.12.3 |
+| GPU | none (CPU only) |
+
+## apt packages (ros-jazzy-*)
+
+| Package | Version | Why |
+|---|---|---|
+| ros-gz | 1.0.24 | Gazebo ↔ ROS bridge, spawning |
+| xacro | 2.1.1 | robot description |
+| rviz2 | 14.1.24 | visualization |
+| ros2-control / controller-manager | 4.48.1 | control framework |
+| ros2-controllers | 4.42.1 | joint_trajectory_controller, broadcasters |
+| gz-ros2-control | 1.2.20 | Gazebo ros2_control plugin (arm) |
+| pinocchio | 4.1.0 | dependency of `basic_quadruped_controller`; reach/collision checks (Python, with coal) |
+| joint-state-publisher(-gui) | 2.4.3 | description tools |
+| realsense2-description | 4.58.4 | only for the CHAMP candidate (evaluation) |
+| robot-localization | 3.8.3 | CHAMP candidate (evaluation); our localization in A4 |
+| vision-msgs | 4.1.1 | `/sim/ground_truth/objects`, `/people` (A1b) |
+| gz-transport-vendor (Python bindings `gz.transport13`, `gz.msgs10`) | 0.0.9 | sim_bridge_gazebo nodes talk to Gazebo directly (A1b); comes with ros-gz |
+
+## Python (system, Ubuntu 24.04 packages)
+
+| Package | Version | Why |
+|---|---|---|
+| numpy | 1.26.4 | scene generator, terrain (A1) |
+| Pillow | 10.2.0 | heightmap / texture export (A1) |
+| PyYAML | 6.0.1 | scenes, configs |
+| pytest | 7.4.4 | `make test` |
+
+## Runtime downloads
+
+| Asset | Source | Notes |
+|---|---|---|
+| Walking person | Gazebo Fuel `Mingfei/actor` (`walk.dae`), CC BY 4.0 | downloaded by Gazebo on the first run of a scene with a person, cached in `~/.gz/fuel/` |
+
+## Third-party source repos (pinned in `deps.repos`)
+
+| Repo | Commit | Branch | Notes |
+|---|---|---|---|
+| [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) | `4dfc15ea73e7e453019a685d2199fd8406c93896` (2026-02-22) | dev | Apache-2.0. Patches in `patches/quadruped_ros2_control/`: `0001` link the Pinocchio 4 imported target, `0002` kp/kd `initial_value`s in `gz_quadruped_hardware`. Not built: rl/ocs2 controllers, unitree_sdk2 hardware, unitree_joystick_input (`patches/setup_deps.sh` adds COLCON_IGNORE). |
+| [Interbotix/interbotix_ros_manipulators](https://github.com/Interbotix/interbotix_ros_manipulators) | `01c557d65f781697c3a05bffebafbd3404e03eab` (2025-01-02) | jazzy | BSD-3-Clause. Only `interbotix_xsarm_descriptions` is built (WidowX 250 6DOF meshes); everything else gets COLCON_IGNORE. |
+
+Evaluated but not used: [khaledgabr77/unitree_go2_ros2](https://github.com/khaledgabr77/unitree_go2_ros2) `55ff151632a0220bf3ae0c0772392615d86da7a8` (2026-09-08), kept in `~/ros2_ws/src` with a COLCON_IGNORE.

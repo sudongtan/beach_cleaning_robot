@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<!--
+  Beach cleanup robot: Unitree Go2 (legubiao go2_description) + arm mount plate +
+  WidowX 250 6DOF arm at the front of the back + 2-compartment basket at the rear.
+  Simulator-agnostic: no <gazebo> or <ros2_control> blocks are added here (the Go2 leg
+  macro from go2_description carries a few <gazebo> friction tags, which other importers ignore).
+  Simulator bridges include this file and add their own control blocks.
+  Mass budget (notes/scope.md): arm + gripper + plate <= 3 kg, empty basket <= 1 kg, load <= 2 kg.
+-->
+<robot name="beach_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- load in the basket, kg (0 = empty; the DoD walking test uses 2.0) -->
+  <xacro:arg name="basket_load_kg" default="0.0"/>
+  <!-- robot variant (notes/decisions.md):
+       stock  = Interbotix WidowX gripper (5.2 cm max gap) + 180 x 160 x 120 mm basket (A0)
+       custom = wide custom jaws (2-15 cm gap) + 340 x 300 x 150 mm basket, for the A1 trash sizes
+       Default custom since A1c (the robot the project uses); stock stays selectable. -->
+  <xacro:arg name="variant" default="custom"/>
+  <xacro:property name="variant" value="$(arg variant)"/>
+  <xacro:property name="custom" value="${variant == 'custom'}"/>
+
+  <!-- Go2 trunk collision box is 0.3762 x 0.0935 x 0.114 m centred on `trunk`: top at z = +0.057 -->
+  <xacro:property name="trunk_top_z" value="0.057"/>
+
+  <!-- arm mount plate (aluminium, 140 x 90 x 6 mm) at the front of the back -->
+  <xacro:property name="plate_x" value="0.13"/>
+  <xacro:property name="plate_size_x" value="0.14"/>
+  <xacro:property name="plate_size_y" value="0.09"/>
+  <xacro:property name="plate_t" value="0.006"/>
+  <xacro:property name="plate_mass" value="0.20"/>
+
+  <!-- basket at the rear, 3 mm walls.
+       stock:  180 x 160 x 120 mm, 0.8 kg, on the trunk (x -0.175 .. +0.005)
+       custom: 340 x 300 x 150 mm, 1.0 kg, x +0.04 .. -0.30 (just behind the arm base),
+               overhangs the trunk's rear end (-0.188) by ~11 cm and the sides by ~10 cm. Each compartment
+               (~334 x 147 mm inside) takes a 1.5 L bottle (320 x 90 mm) lying at ~10 deg. -->
+  <xacro:property name="basket_x" value="${-0.13 if custom else -0.085}"/>
+  <xacro:property name="basket_length" value="${0.34 if custom else 0.18}"/>
+  <xacro:property name="basket_width" value="${0.30 if custom else 0.16}"/>
+  <xacro:property name="basket_height" value="${0.15 if custom else 0.12}"/>
+  <xacro:property name="basket_wall" value="0.003"/>
+  <xacro:property name="basket_mass" value="${1.0 if custom else 0.8}"/>
+  <!-- custom: the basket sits on a 45 mm rack (mass included in basket_mass) so its overhanging
+       floor clears the rear hip motors at hip roll up to +-0.4 rad (leg sweep in scripts/arm_pose_check.py) -->
+  <xacro:property name="basket_raise" value="${0.045 if custom else 0.0}"/>
+
+  <xacro:include filename="$(find go2_description)/xacro/robot.xacro"/>
+  <xacro:include filename="$(find beach_description)/urdf/wx250s_arm.xacro"/>
+  <xacro:include filename="$(find beach_description)/urdf/basket.xacro"/>
+
+  <!-- base_link is the root (frame names fixed in notes/architecture.md); go2's root is `base` -->
+  <link name="base_link"/>
+  <joint name="base_link_to_base" type="fixed">
+    <parent link="base_link"/>
+    <child link="base"/>
+  </joint>
+
+  <!-- front-facing camera placeholder (sensor added in A1): Go2 head, pitched 20 deg down -->
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0.32715 0 0.04297" rpy="0 ${radians(20)} 0"/>
+    <parent link="trunk"/>
+    <child link="camera_link"/>
+  </joint>
+  <link name="camera_link"/>
+  <!-- ROS optical convention (REP 103): z forward, x right, y down. Image messages use this frame. -->
+  <joint name="camera_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    <parent link="camera_link"/>
+    <child link="camera_optical_frame"/>
+  </joint>
+  <link name="camera_optical_frame"/>
+
+  <!-- GNSS antenna on the rear edge of the arm plate, 1 cm above it: clear of the arm base
+       (x >= ~0.08) and of both baskets (custom front edge x = +0.04, stock +0.005). Same place in
+       both variants. imu_link comes from go2_description (at the trunk origin). -->
+  <joint name="gnss_joint" type="fixed">
+    <origin xyz="${plate_x - plate_size_x/2 + 0.005} 0 ${trunk_top_z + plate_t + 0.01}"/>
+    <parent link="trunk"/>
+    <child link="gnss_link"/>
+  </joint>
+  <link name="gnss_link"/>
+
+  <!-- arm mount plate -->
+  <joint name="arm_plate_joint" type="fixed">
+    <origin xyz="${plate_x} 0 ${trunk_top_z + plate_t/2}"/>
+    <parent link="trunk"/>
+    <child link="arm_plate_link"/>
+  </joint>
+  <link name="arm_plate_link">
+    <visual>
+      <geometry><box size="${plate_size_x} ${plate_size_y} ${plate_t}"/></geometry>
+      <material name="plate_silver"><color rgba="0.7 0.7 0.72 1.0"/></material>
+    </visual>
+    <collision>
+      <geometry><box size="${plate_size_x} ${plate_size_y} ${plate_t}"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="${plate_mass}"/>
+      <inertia ixx="${plate_mass*(plate_size_y**2 + plate_t**2)/12}" iyy="${plate_mass*(plate_size_x**2 + plate_t**2)/12}"
+               izz="${plate_mass*(plate_size_x**2 + plate_size_y**2)/12}" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <xacro:wx250s_arm parent="arm_plate_link" gripper="${'wide' if custom else 'stock'}">
+    <origin xyz="0 0 ${plate_t/2}" rpy="0 0 0"/>
+  </xacro:wx250s_arm>
+
+  <xacro:basket parent="trunk" length="${basket_length}" width="${basket_width}" height="${basket_height}"
+                wall="${basket_wall}" mass="${basket_mass}" load_mass="$(arg basket_load_kg)">
+    <origin xyz="${basket_x} 0 ${trunk_top_z + basket_raise}"/>
+  </xacro:basket>
+
+</robot>

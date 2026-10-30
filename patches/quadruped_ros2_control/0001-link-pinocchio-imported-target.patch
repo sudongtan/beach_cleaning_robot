@@ -1,0 +1,18 @@
+diff --git a/controllers/basic_quadruped_controller/CMakeLists.txt b/controllers/basic_quadruped_controller/CMakeLists.txt
+index c299d4f..6d630e1 100644
+--- a/controllers/basic_quadruped_controller/CMakeLists.txt
++++ b/controllers/basic_quadruped_controller/CMakeLists.txt
+@@ -60,10 +60,13 @@ target_include_directories(${PROJECT_NAME}
+         "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+         PRIVATE
+         src)
++list(REMOVE_ITEM CONTROLLER_INCLUDE_DEPENDS pinocchio)
+ ament_target_dependencies(
+         ${PROJECT_NAME} PUBLIC
+         ${CONTROLLER_INCLUDE_DEPENDS}
+ )
++# Pinocchio >= 4: use the imported target (deprecated include dir + Boost MPL defines)
++target_link_libraries(${PROJECT_NAME} PUBLIC pinocchio::pinocchio)
+ 
+ pluginlib_export_plugin_description_file(controller_interface basic_quadruped_controller.xml)
+ 

@@ -1,0 +1,50 @@
+# Gazebo test tools (A1)
+
+Diagnostic and check scripts used while building the A1 beach world and the A1b
+robot integration. Background and results: `notes/logs/A1.md`. They run headless
+on their own Gazebo partition / ROS domain (`scene_env.sh`: `GZ_PARTITION=a1b`,
+`ROS_DOMAIN_ID=43`) and write to `sim/gazebo/worlds/generated/tools/` (git-ignored).
+
+## Scene with the robot (A1b)
+
+| Script | What it does |
+|---|---|
+| `scene_up.sh <seed>` / `scene_down.sh` | start `make scene` headless in the background, wait for the stand-up / stop everything (incl. stale servers) |
+| `source scene_env.sh` | environment for `ros2` / `gz` commands against that scene |
+| `startup_all.sh [seeds]` | start every seed: items detached, stand-up, RTF, camera rate |
+| `check_ground_truth.py <sdf>` | `/sim/ground_truth/pose` + `objects` vs Gazebo's pose stream; objects vs spawn poses |
+| `check_sensors.py` | GNSS error vs ground truth + covariance, IMU, saves camera rgb/depth PNGs |
+| `check_people.py <seed>` | `/people` vs the rendered actor (top-down segmentation camera; no robot needed) |
+| `dump_objects.py out.yaml` / `--compare a b` | world state at a sim time, to compare two launches |
+| `goto.py x,y ...` | walk through waypoints on ground truth (publishes `/cmd_vel`: A1 only), logs zone/slope/tilt |
+| `slope_test.sh <seed> <deg>` | climb a seed's steepest line with the dunes scaled to `deg` (0 = as generated), and back |
+| `slope_variant.py` | builds those variants (used by `slope_test.sh`) |
+| `arm_pose.py <pose>` / `--joints` | move the arm to a named pose from `arm_poses.yaml` or to joint angles |
+| `attach_test.py <item>` | gripper down, `/sim/attach`, lift, over the basket, `/sim/detach` |
+
+## A1c (custom robot)
+
+| Script | What it does |
+|---|---|
+| `physics_grasp_run.sh [args]` / `physics_grasp_test.py` | physics-grasp trials per item (flat world, own partition) → `results/physics_grasp/` |
+| `slope_test.sh <seed> <deg>` | env `LOAD=2.0`, `VARIANT=custom`, `SMOOTH="--accel 0.3 --ang-accel 0.5"` |
+| `turn_test.py` | abrupt walk → turn-on-the-spot cycles, max tilt |
+| `a1c_walk_campaign.sh`, `a1c_walk_campaign2.sh` | the A1c slope / turn campaigns |
+| `stop_all_tests.sh` | stop every campaign and test scene started from here (by PID; other projects untouched) |
+
+All of these use `scene_env.sh`: loopback only (`GZ_IP=127.0.0.1`, `ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST`).
+Run long campaigns under `systemd-inhibit --what=sleep:idle:handle-lid-switch ...` so the laptop doesn't suspend.
+Don't run them while someone else uses the machine for another simulation.
+
+## World only (A1a)
+
+| Script | Checks |
+|---|---|
+| `run_heightmap_probe.sh [detector] [seed]` | collision heightmap matches `terrain.height_at` (drops boxes on a grid) |
+| `settle_check.sh <seed>` | real-time factor, and that every item settles where it spawned |
+| `actor_collision_test.sh [seed]` | the walking person has no collision (a box on its path doesn't move) |
+| `compare_poses.py`, `heightmap_probe.py`, `gz_poses.py`, `common.sh` | helpers |
+
+For rendered images of the world, use `python3 sim/gazebo/load_scene.py --seed N --debug-camera`
+and subscribe to the `/debug/...` topics while it runs. Gazebo only renders a camera that has a
+subscriber.

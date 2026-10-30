@@ -1,0 +1,22 @@
+diff --git a/hardwares/gz_quadruped_hardware/src/gz_system.cpp b/hardwares/gz_quadruped_hardware/src/gz_system.cpp
+index 6ce47af..b5b469f 100644
+--- a/hardwares/gz_quadruped_hardware/src/gz_system.cpp
++++ b/hardwares/gz_quadruped_hardware/src/gz_system.cpp
+@@ -405,7 +405,7 @@ namespace gz_quadruped_hardware
+                         joint_name,
+                         "kp",
+                         &this->dataPtr->joints_[j].joint_kp_cmd);
+-                    this->dataPtr->joints_[j].joint_kp_cmd = 0.0;
++                    this->dataPtr->joints_[j].joint_kp_cmd = get_initial_value(joint_info.command_interfaces[i]);  // 0 unless initial_value is set in the URDF
+                 }
+                 else if (joint_info.command_interfaces[i].name == "kd")
+                 {
+@@ -414,7 +414,7 @@ namespace gz_quadruped_hardware
+                         joint_name,
+                         "kd",
+                         &this->dataPtr->joints_[j].joint_kd_cmd);
+-                    this->dataPtr->joints_[j].joint_kd_cmd = 0.0;
++                    this->dataPtr->joints_[j].joint_kd_cmd = get_initial_value(joint_info.command_interfaces[i]);  // 0 unless initial_value is set in the URDF
+                 }
+ 
+                 // independently of existence of command interface set initial value if defined

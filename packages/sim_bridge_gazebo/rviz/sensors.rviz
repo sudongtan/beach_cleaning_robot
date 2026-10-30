@@ -1,0 +1,76 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 40
+      Reference Frame: <Fixed Frame>
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+        Durability Policy: Transient Local
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: false
+      Frames:
+        All Enabled: false
+        base_link: {Value: true}
+        camera_optical_frame: {Value: true}
+        imu_link: {Value: true}
+        gnss_link: {Value: true}
+        basket_recyclable_link: {Value: true}
+        basket_residual_link: {Value: true}
+    - Class: rviz_default_plugins/Image
+      Name: camera rgb
+      Enabled: true
+      Topic:
+        Value: /camera/rgb
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/Image
+      Name: camera depth
+      Enabled: true
+      Normalize Range: false
+      Min Value: 0
+      Max Value: 10
+      Topic:
+        Value: /camera/depth
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/Camera
+      Name: camera overlay
+      Enabled: false
+      Topic:
+        Value: /camera/rgb
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/Odometry
+      Name: ground truth pose
+      Enabled: true
+      Topic:
+        Value: /sim/ground_truth/pose
+      Keep: 50
+      Shape:
+        Value: Arrow
+  Global Options:
+    Fixed Frame: odom
+    Background Color: 48; 48; 48
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 3
+      Focal Point: {X: 0, Y: 0, Z: 0.3}
+      Pitch: 0.5
+      Yaw: 3.5
+      Target Frame: base_link
+Window Geometry:
+  Width: 1400
+  Height: 900

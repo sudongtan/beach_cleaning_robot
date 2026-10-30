@@ -1,0 +1,272 @@
+<?xml version="1.0"?>
+<!--
+  Gazebo (Harmonic) variant of the beach robot: beach_description + ros2_control block for
+  legubiao's gz_quadruped_hardware (legs: hybrid PD/torque commands from basic_quadruped_controller;
+  arm: position servos via the same hardware, kp/kd fixed from beach_description/config/arm_gains.yaml),
+  IMU + foot force sensors, and the Gazebo systems.
+  Leg/IMU/foot blocks follow quadruped_ros2_control (dev, 4dfc15e) go2_description/xacro/ros2_control/gazebo.xacro
+  (Apache-2.0). Requires patches/quadruped_ros2_control/0002 (kp/kd initial values).
+-->
+<robot name="beach_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="basket_load_kg" default="0.0"/>
+  <!-- stock | custom (beach_description/urdf/beach_robot.urdf.xacro) -->
+  <xacro:arg name="variant" default="custom"/>
+  <!-- controller_manager parameter files (leg + broadcasters, arm) -->
+  <xacro:arg name="legs_params" default="$(find sim_bridge_gazebo)/config/gazebo_controllers.yaml"/>
+  <xacro:arg name="arm_params" default="$(find beach_description)/config/arm_controllers.yaml"/>
+
+  <xacro:include filename="$(find beach_description)/urdf/beach_robot.urdf.xacro"/>
+  <xacro:include filename="$(find gz_quadruped_hardware)/xacro/foot_force_sensor.xacro"/>
+
+  <!-- per-variant gains (overrides under `variants:`) and poses (arm_poses[_custom].yaml) -->
+  <xacro:property name="arm_gains_file" value="${xacro.load_yaml('$(find beach_description)/config/arm_gains.yaml')}"/>
+  <xacro:property name="arm_gains" value="${dict(arm_gains_file['gains'], **arm_gains_file.get('variants', dict()).get('$(arg variant)', dict()))}"/>
+  <xacro:property name="arm_poses" value="${xacro.load_yaml('$(find beach_description)/config/arm_poses' + ('_custom' if '$(arg variant)' == 'custom' else '') + '.yaml')['poses']}"/>
+  <xacro:property name="arm_joint_names" value="${['arm_waist', 'arm_shoulder', 'arm_elbow', 'arm_forearm_roll', 'arm_wrist_angle', 'arm_wrist_rotate']}"/>
+
+  <!-- leg joint: the five command interfaces basic_quadruped_controller claims -->
+  <xacro:macro name="leg_joint" params="name">
+    <joint name="${name}">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <command_interface name="effort"/>
+      <command_interface name="kp"/>
+      <command_interface name="kd"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- arm joint: a position servo. The trajectory controller claims position + velocity;
+       kp/kd stay at their initial values; the start position is the rest pose. -->
+  <xacro:macro name="servo_joint" params="name start">
+    <joint name="${name}">
+      <command_interface name="position"/>
+      <command_interface name="velocity"/>
+      <command_interface name="effort"/>
+      <command_interface name="kp"><param name="initial_value">${arm_gains[name]['kp']}</param></command_interface>
+      <command_interface name="kd"><param name="initial_value">${arm_gains[name]['kd']}</param></command_interface>
+      <state_interface name="position"><param name="initial_value">${start}</param></state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="arm_servos" params="names values">
+    <xacro:if value="${names}">
+      <xacro:servo_joint name="${names[0]}" start="${values[0]}"/>
+      <xacro:arm_servos names="${names[1:]}" values="${values[1:]}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware>
+      <plugin>gz_quadruped_hardware/GazeboSimSystem</plugin>
+    </hardware>
+
+    <xacro:leg_joint name="FR_hip_joint"/>
+    <xacro:leg_joint name="FR_thigh_joint"/>
+    <xacro:leg_joint name="FR_calf_joint"/>
+    <xacro:leg_joint name="FL_hip_joint"/>
+    <xacro:leg_joint name="FL_thigh_joint"/>
+    <xacro:leg_joint name="FL_calf_joint"/>
+    <xacro:leg_joint name="RR_hip_joint"/>
+    <xacro:leg_joint name="RR_thigh_joint"/>
+    <xacro:leg_joint name="RR_calf_joint"/>
+    <xacro:leg_joint name="RL_hip_joint"/>
+    <xacro:leg_joint name="RL_thigh_joint"/>
+    <xacro:leg_joint name="RL_calf_joint"/>
+
+    <xacro:arm_servos names="${arm_joint_names}" values="${arm_poses['rest']['arm']}"/>
+    <xacro:servo_joint name="arm_left_finger" start="${arm_poses['rest']['fingers']}"/>
+    <xacro:servo_joint name="arm_right_finger" start="${-arm_poses['rest']['fingers']}"/>
+
+    <sensor name="imu_sensor">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+
+    <sensor name="foot_force">
+      <state_interface name="FR_foot_force"/>
+      <state_interface name="FL_foot_force"/>
+      <state_interface name="RR_foot_force"/>
+      <state_interface name="RL_foot_force"/>
+    </sensor>
+  </ros2_control>
+
+  <gazebo>
+    <plugin filename="gz_quadruped_hardware-system" name="gz_quadruped_hardware::GazeboSimQuadrupedPlugin">
+      <parameters>$(arg legs_params)</parameters>
+      <parameters>$(arg arm_params)</parameters>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque"/>
+  </gazebo>
+
+  <gazebo reference="trunk">
+    <mu1>0.6</mu1>
+    <mu2>0.6</mu2>
+    <self_collide>1</self_collide>
+  </gazebo>
+
+  <!-- IMU: same noise model as legubiao's Go2 Gazebo description -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>1</always_on>
+      <update_rate>1000</update_rate>
+      <topic>imu</topic>
+      <imu>
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>2e-4</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>2e-4</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>2e-4</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <gazebo reference="imu_joint">
+    <disableFixedJointLumping>true</disableFixedJointLumping>
+  </gazebo>
+
+  <!-- ===== A1b: perception/localization sensors (values: config/sensors.yaml) ===== -->
+  <xacro:property name="sensors" value="${xacro.load_yaml('$(find sim_bridge_gazebo)/config/sensors.yaml')}"/>
+  <xacro:property name="cam" value="${sensors['camera']}"/>
+  <xacro:property name="nimu" value="${sensors['imu']}"/>
+  <xacro:property name="gnss" value="${sensors['gnss']}"/>
+  <!-- metres per degree of latitude (WGS84 mean); NavSat noise is applied in degrees -->
+  <xacro:property name="m_per_deg" value="111320.0"/>
+
+  <xacro:macro name="gauss" params="stddev bias:=0">
+    <noise type="gaussian"><mean>0.0</mean><stddev>${stddev}</stddev>
+      <bias_mean>0.0</bias_mean><bias_stddev>${bias}</bias_stddev></noise>
+  </xacro:macro>
+
+  <!-- RGB-D camera. Gazebo cameras look along +x of their frame (camera_link);
+       messages carry the ROS optical frame. Topics: camera/image, camera/depth_image,
+       camera/camera_info, camera/points (bridged in config/bridge.yaml). -->
+  <gazebo reference="camera_link">
+    <sensor name="rgbd_camera" type="rgbd_camera">
+      <always_on>1</always_on>
+      <update_rate>${cam['rate_hz']}</update_rate>
+      <topic>camera</topic>
+      <gz_frame_id>camera_optical_frame</gz_frame_id>
+      <camera>
+        <horizontal_fov>${cam['horizontal_fov_rad']}</horizontal_fov>
+        <image>
+          <width>${cam['width']}</width>
+          <height>${cam['height']}</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>${cam['clip_near_m']}</near>
+          <far>${cam['clip_far_m']}</far>
+        </clip>
+        <depth_camera>
+          <clip>
+            <near>${cam['depth_min_m']}</near>
+            <far>${cam['depth_max_m']}</far>
+          </clip>
+        </depth_camera>
+        <!-- camera noise: <type> is a child element here (IMU/NavSat noise use an attribute) -->
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>${cam['rgb_noise_stddev']}</stddev></noise>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <!-- IMU for localization (/imu). The leg controller keeps its own 1 kHz `imu_sensor` above:
+       gz_quadruped_hardware binds IMUs by name, so this one is ignored by it. -->
+  <gazebo reference="imu_link">
+    <sensor name="nav_imu" type="imu">
+      <always_on>1</always_on>
+      <update_rate>${nimu['rate_hz']}</update_rate>
+      <topic>nav_imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <imu>
+        <angular_velocity>
+          <x><xacro:gauss stddev="${nimu['gyro_noise_stddev']}" bias="${nimu['gyro_bias_stddev']}"/></x>
+          <y><xacro:gauss stddev="${nimu['gyro_noise_stddev']}" bias="${nimu['gyro_bias_stddev']}"/></y>
+          <z><xacro:gauss stddev="${nimu['gyro_noise_stddev']}" bias="${nimu['gyro_bias_stddev']}"/></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><xacro:gauss stddev="${nimu['accel_noise_stddev']}" bias="${nimu['accel_bias_stddev']}"/></x>
+          <y><xacro:gauss stddev="${nimu['accel_noise_stddev']}" bias="${nimu['accel_bias_stddev']}"/></y>
+          <z><xacro:gauss stddev="${nimu['accel_noise_stddev']}" bias="${nimu['accel_bias_stddev']}"/></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <!-- GNSS: plain GPS. Horizontal noise converted from metres to degrees (see sensors.yaml). -->
+  <gazebo reference="gnss_link">
+    <sensor name="navsat" type="navsat">
+      <always_on>1</always_on>
+      <update_rate>${gnss['rate_hz']}</update_rate>
+      <topic>navsat</topic>
+      <gz_frame_id>gnss_link</gz_frame_id>
+      <navsat>
+        <position_sensing>
+          <horizontal><xacro:gauss stddev="${gnss['horizontal_noise_stddev_m'] / m_per_deg}"/></horizontal>
+          <vertical><xacro:gauss stddev="${gnss['vertical_noise_stddev_m']}"/></vertical>
+        </position_sensing>
+      </navsat>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
+    <!-- Ground truth: true pose of the model frame (base_link) in the world frame, which is
+         the map frame in the beach worlds. Bridged to /sim/ground_truth/pose. -->
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>map</odom_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <dimensions>3</dimensions>
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_topic>/sim/gz/ground_truth/odom</odom_topic>
+      <tf_topic>/sim/gz/ground_truth/tf</tf_topic>
+    </plugin>
+  </gazebo>
+
+  <!-- ===== A1b: attach-on-contact plumbing (notes/architecture.md, "Simulated grasping") =====
+       One DetachableJoint per trash item, parent = gripper link (its fixed children are merged
+       into it). Harmonic attaches every instance on startup; sim_bridge_gazebo's attach_server
+       detaches them all right after spawn (world started paused), then serves /sim/attach|detach. -->
+  <xacro:arg name="attach_items" default=""/>
+  <xacro:macro name="detachable" params="items">
+    <xacro:if value="${items}">
+      <gazebo>
+        <plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint">
+          <parent_link>arm_gripper_link</parent_link>
+          <child_model>${items[0]}</child_model>
+          <child_link>link</child_link>
+          <attach_topic>/sim/gz/attach/${items[0]}</attach_topic>
+          <detach_topic>/sim/gz/detach/${items[0]}</detach_topic>
+          <output_topic>/sim/gz/attach_state/${items[0]}</output_topic>
+        </plugin>
+      </gazebo>
+      <xacro:detachable items="${items[1:]}"/>
+    </xacro:if>
+  </xacro:macro>
+  <xacro:detachable items="${[i for i in '$(arg attach_items)'.split(',') if i]}"/>
+
+  <xacro:foot_force_sensor name="FL" suffix="foot_fixed"/>
+  <xacro:foot_force_sensor name="RL" suffix="foot_fixed"/>
+  <xacro:foot_force_sensor name="FR" suffix="foot_fixed"/>
+  <xacro:foot_force_sensor name="RR" suffix="foot_fixed"/>
+
+</robot>

@@ -1,0 +1,17 @@
+# Limits that tie the robot to the scene (checked by sim/common/tests/test_cross_phase.py).
+# Geometry (jaw gap, basket size, masses, reach) is read from the robot model and
+# sim/common/objects.yaml; only policy values live here.
+robot_limits:
+  variant: custom              # the robot the scenes are built for
+  payload_kg: 0.2              # arm payload used in A0's torque check (notes/logs/A0.md section 17)
+  added_mass_budget_kg: 6.0    # notes/scope.md: arm + gripper + plate + basket + load
+  basket_load_max_kg: 2.0      # notes/scope.md cap on the load carried in the basket
+  jaw_margin_m: 0.02           # an item's narrow side must leave this much of the open jaw gap free
+  grasp_tip_height_m: 0.005    # jaw tips this far above the ground when closing (results/physics_grasp)
+  bar_clearance_m: 0.015       # an item's top must stay this far below the gripper bar at grasp height
+  bin_drop:                    # the jaw tips must get over the bin opening to drop an item
+    clearance_above_rim_m: 0.05
+    inside_wall_m: 0.08        # tips this far past the near wall, into the opening
+    body_to_bin_m: 0.05        # gap between the robot's head and the bin wall
+    body_heights_m: [0.285, 0.361]   # loaded walking height, full stand height (A0)
+    max_tilt_deg: 45

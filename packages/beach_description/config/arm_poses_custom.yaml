@@ -1,0 +1,35 @@
+# Named arm poses for the "custom" robot variant (wide jaws + large basket), same names and
+# meaning as arm_poses.yaml (stock). Order: arm_waist, arm_shoulder, arm_elbow, arm_forearm_roll,
+# arm_wrist_angle, arm_wrist_rotate. fingers: arm_left_finger in m; jaw gap = 2 * fingers
+# (0.010 -> 2 cm .. 0.075 -> 15 cm); right finger = -left.
+# Derived with scripts/reach_check.py --variant custom (IK, seeded from the stock poses) and
+# checked with scripts/arm_pose_check.py --variant custom --legs.
+poses:
+  rest:
+    # leaning forward, gripper curled back over the plate, behind the head camera (TCP x 0.24 m).
+    # The stock rest lays the upper arm back over the basket, which the taller, raised custom
+    # basket blocks. From arm_pose_check.py --variant custom --search-rest (wider ranges).
+    arm: [0.0, 0.82, 0.43, 0.0, 2.10, 0.0]
+    fingers: 0.015
+  up:
+    # waypoint between targets: upper arm vertical, forearm raised, gripper pointing down.
+    # Direct joint-space moves between rest / ground / compartments pass < 1 cm from the trunk
+    # and the basket rim with the long jaws; via `up` every move keeps >= 19 mm.
+    arm: [0.0, 0.0, -0.8, 0.0, 1.6, 0.0]
+    fingers: 0.015
+  ground_front:
+    # TCP (3 cm behind the jaw tips) 0.30 m in front of the front feet, 4.5 cm above ground at
+    # body height 0.285 m (jaw tips 1.5 cm above ground), pointing down, jaws fully open
+    arm: [0.0, 1.364, -0.212, 0.0, 0.419, 0.0]
+    fingers: 0.075
+  over_recyclable:
+    # TCP 9 cm above the centre of the recyclable compartment (+y) (jaw tips 6 cm above the rim,
+    # clear of the rim when leaving), pointing down
+    arm: [2.861, -0.024, -0.411, 0.0, 2.005, 0.0]
+    fingers: 0.015
+  over_residual:
+    # TCP 9 cm above the centre of the residual compartment (-y), pointing down
+    arm: [-2.861, -0.024, -0.411, 0.0, 2.005, 0.0]
+    fingers: 0.015
+
+test_sequence: [rest, up, ground_front, up, over_recyclable, up, over_residual, up, rest]

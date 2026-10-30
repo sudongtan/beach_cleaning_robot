@@ -1,0 +1,8 @@
+# Geofence rules. The polygon itself is per scene (the waterline moves between
+# seeds), so it lives in bench/scenes.yaml under `geofence`. The scene generator
+# builds that polygon from these margins; the /geofence publisher (A2) reads the
+# polygon of the running scene.
+geofence:
+  water_margin_m: 1.0    # keep-out band between the waterline and the cleaning area
+  edge_margin_m: 0.5     # inset from the east/west edges of the scene area
+  back_margin_m: 1.0     # inset from the fence line at the back of the beach

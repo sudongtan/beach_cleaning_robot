@@ -1,0 +1,8 @@
+food_container     trial 0: dropped  drift cm lift:11.3 hold_5s:11.3 wrist_pm90:11.3 walk_1m:101.8
+food_container     trial 1: held     drift cm lift:1.4 hold_5s:1.4 wrist_pm90:1.2 walk_1m:1.1
+food_container     trial 2: dropped  drift cm lift:11.5 hold_5s:11.5 wrist_pm90:11.7 walk_1m:98.7
+food_container     trial 3: held     drift cm lift:0.2 hold_5s:0.2 wrist_pm90:0.2 walk_1m:0.5
+food_container     trial 4: spawn_failed drift cm 
+arm_controller action server not available
+
+[exited with code 0]

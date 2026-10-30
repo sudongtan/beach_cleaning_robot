@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- A0 locomotion evaluation only - lumped stand-ins for the planned arm and basket.
+     Masses follow the budget in notes/scope.md (arm+gripper 3 kg, basket 1 kg + load 2 kg).
+     Go2 trunk box is 0.376 x 0.0935 x 0.114 m, so its top is at z = +0.057 in the trunk frame. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="box_inertial" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(y*y+z*z)/12}" iyy="${m*(x*x+z*z)/12}" izz="${m*(x*x+y*y)/12}"
+               ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="eval_payload" params="parent arm_mass:=3.0 basket_mass:=3.0">
+    <!-- folded arm, compact block at the front of the back, CoM ~10 cm above the trunk top -->
+    <link name="eval_arm_mass">
+      <xacro:box_inertial m="${arm_mass}" x="0.12" y="0.08" z="0.18"/>
+      <visual><geometry><box size="0.12 0.08 0.18"/></geometry></visual>
+    </link>
+    <joint name="eval_arm_mass_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="eval_arm_mass"/>
+      <origin xyz="0.12 0 0.147"/>
+    </joint>
+
+    <!-- basket (1 kg) + load (2 kg) at the rear -->
+    <link name="eval_basket_mass">
+      <xacro:box_inertial m="${basket_mass}" x="0.18" y="0.20" z="0.15"/>
+      <visual><geometry><box size="0.18 0.20 0.15"/></geometry></visual>
+    </link>
+    <joint name="eval_basket_mass_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="eval_basket_mass"/>
+      <origin xyz="-0.09 0 0.132"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

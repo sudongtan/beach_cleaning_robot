@@ -1,0 +1,207 @@
+# Shared object table, read by the scene generator and by every simulator's
+# world builder. Units are SI (m, kg). Do not hand-tune per simulator.
+#
+# Model frame of every object: origin at the centre of its footprint on the
+# ground (z = 0 is the lowest point of the resting object), x along the long
+# axis, z up. Meshes in sim/common/meshes/ use the same frame.
+#
+# collision: list of primitives (box size [x y z], cylinder radius/length along
+#            z), each with a pose [x y z roll pitch yaw] in the model frame.
+#            Primitives only, for stability and CPU speed.
+# footprint_radius: radius of the circle the generator keeps clear around the
+#            object (no overlaps).
+# color: RGBA used for the visual mesh (no textures in A1).
+
+classes:          # class / label id used by the Label system and by Isaac semantics
+  background: 0
+  pet: 1
+  metal: 2
+  glass: 3
+  residual: 4
+  shell: 10
+  rock: 11
+  seaweed: 12
+  driftwood: 13
+  bin_recyclable: 20
+  bin_residual: 21
+  lifeguard_tower: 30
+  fence_post: 31
+  person: 40
+
+trash:
+  # All movable items collide as boxes: bottles and cans lie on their side and
+  # a box doesn't roll down gentle slopes (sand holds them in place), and in
+  # Harmonic (DART + ODE collision) a 10 g cylinder sank into the heightmap
+  # while boxes rested within ~1 cm.
+  # Every item must fit under the gripper bar (<= 7.5 cm tall, test_cross_phase.py).
+  # No 1.5 L bottle: lying down it is 9 cm tall (notes/decisions.md, 2026-10-30).
+  pet_bottle_500:
+    material: pet
+    mass: 0.025
+    mesh: meshes/pet_bottle_500.obj
+    color: [0.75, 0.88, 0.95, 0.6]
+    collision:
+      - {type: box, size: [0.21, 0.065, 0.065], pose: [0, 0, 0.0325, 0, 0, 0]}
+    footprint_radius: 0.12
+    buriable: true
+  can_330:
+    material: metal
+    mass: 0.015
+    mesh: meshes/can_330.obj
+    color: [0.80, 0.10, 0.10, 1.0]
+    collision:
+      - {type: box, size: [0.115, 0.066, 0.066], pose: [0, 0, 0.033, 0, 0, 0]}
+    footprint_radius: 0.08
+    buriable: true
+  food_tin:
+    material: metal
+    mass: 0.05
+    mesh: meshes/food_tin.obj
+    color: [0.72, 0.72, 0.75, 1.0]
+    collision:
+      - {type: box, size: [0.11, 0.075, 0.075], pose: [0, 0, 0.0375, 0, 0, 0]}
+    footprint_radius: 0.08
+    buriable: true
+  glass_bottle_330:
+    material: glass
+    mass: 0.20
+    mesh: meshes/glass_bottle_330.obj
+    color: [0.25, 0.45, 0.15, 0.8]
+    collision:
+      - {type: box, size: [0.23, 0.06, 0.06], pose: [0, 0, 0.03, 0, 0, 0]}
+    footprint_radius: 0.13
+    buriable: true
+  glass_jar:                 # 4 oz wide-mouth jar (TricorBraun: 6.7 cm base, 7.0 cm tall, 114 g)
+    material: glass
+    mass: 0.114
+    mesh: meshes/glass_jar.obj
+    color: [0.85, 0.90, 0.92, 0.6]
+    collision:
+      - {type: box, size: [0.067, 0.067, 0.07], pose: [0, 0, 0.035, 0, 0, 0]}
+    footprint_radius: 0.06
+    buriable: true
+  poly_cup:
+    material: residual
+    mass: 0.01
+    mesh: meshes/poly_cup.obj
+    color: [0.97, 0.97, 0.95, 1.0]
+    collision:   # 4 oz cup: 6.2 cm top, 4.6 cm base, 6.0 cm tall
+      - {type: box, size: [0.062, 0.062, 0.06], pose: [0, 0, 0.03, 0, 0, 0]}
+    footprint_radius: 0.06
+    buriable: false
+  cigarette_pack:
+    material: residual
+    mass: 0.02
+    mesh: meshes/cigarette_pack.obj
+    color: [0.90, 0.85, 0.20, 1.0]
+    collision:
+      - {type: box, size: [0.088, 0.055, 0.022], pose: [0, 0, 0.011, 0, 0, 0]}
+    footprint_radius: 0.07
+    buriable: false
+  food_container:
+    material: residual
+    mass: 0.03
+    mesh: meshes/food_container.obj
+    color: [0.95, 0.60, 0.30, 1.0]
+    collision:
+      - {type: box, size: [0.18, 0.12, 0.05], pose: [0, 0, 0.025, 0, 0, 0]}
+    footprint_radius: 0.13
+    buriable: false
+
+distractors:
+  shell:
+    class: shell
+    mass: 0.02
+    mesh: meshes/shell.obj
+    color: [0.93, 0.85, 0.75, 1.0]
+    collision:
+      - {type: box, size: [0.06, 0.05, 0.02], pose: [0, 0, 0.01, 0, 0, 0]}
+    footprint_radius: 0.05
+  rock_small:
+    class: rock
+    mass: 0.6
+    mesh: meshes/rock_small.obj
+    color: [0.45, 0.43, 0.40, 1.0]
+    collision:
+      - {type: box, size: [0.12, 0.09, 0.06], pose: [0, 0, 0.03, 0, 0, 0]}
+    footprint_radius: 0.09
+  rock_medium:
+    class: rock
+    mass: 3.0
+    mesh: meshes/rock_medium.obj
+    color: [0.38, 0.36, 0.34, 1.0]
+    collision:
+      - {type: box, size: [0.24, 0.18, 0.12], pose: [0, 0, 0.06, 0, 0, 0]}
+    footprint_radius: 0.17
+  seaweed:
+    class: seaweed
+    mass: 0.1
+    mesh: meshes/seaweed.obj
+    color: [0.20, 0.30, 0.12, 1.0]
+    collision:
+      - {type: box, size: [0.40, 0.20, 0.02], pose: [0, 0, 0.01, 0, 0, 0]}
+    footprint_radius: 0.25
+  driftwood:
+    class: driftwood
+    mass: 1.5
+    mesh: meshes/driftwood.obj
+    color: [0.60, 0.52, 0.42, 1.0]
+    collision:
+      - {type: box, size: [0.90, 0.08, 0.08], pose: [0, 0, 0.04, 0, 0, 0]}
+    footprint_radius: 0.50
+
+# Static models: bins and landmarks never move.
+bins:
+  # revisit after A0: rim height must suit the arm's reach when dropping items.
+  bin_recyclable:
+    class: bin_recyclable
+    bin_id: recyclable
+    mesh: meshes/bin.obj
+    color: [0.10, 0.35, 0.80, 1.0]
+    collision:   # open top: floor + 4 walls, outer 0.60 x 0.45 x 0.50
+      - {type: box, size: [0.60, 0.45, 0.02], pose: [0, 0, 0.01, 0, 0, 0]}
+      - {type: box, size: [0.60, 0.02, 0.50], pose: [0, 0.215, 0.25, 0, 0, 0]}
+      - {type: box, size: [0.60, 0.02, 0.50], pose: [0, -0.215, 0.25, 0, 0, 0]}
+      - {type: box, size: [0.02, 0.41, 0.50], pose: [0.29, 0, 0.25, 0, 0, 0]}
+      - {type: box, size: [0.02, 0.41, 0.50], pose: [-0.29, 0, 0.25, 0, 0, 0]}
+    footprint_radius: 0.40
+  bin_residual:
+    class: bin_residual
+    bin_id: residual
+    mesh: meshes/bin.obj
+    color: [0.25, 0.25, 0.25, 1.0]
+    collision:
+      - {type: box, size: [0.60, 0.45, 0.02], pose: [0, 0, 0.01, 0, 0, 0]}
+      - {type: box, size: [0.60, 0.02, 0.50], pose: [0, 0.215, 0.25, 0, 0, 0]}
+      - {type: box, size: [0.60, 0.02, 0.50], pose: [0, -0.215, 0.25, 0, 0, 0]}
+      - {type: box, size: [0.02, 0.41, 0.50], pose: [0.29, 0, 0.25, 0, 0, 0]}
+      - {type: box, size: [0.02, 0.41, 0.50], pose: [-0.29, 0, 0.25, 0, 0, 0]}
+    footprint_radius: 0.40
+
+landmarks:
+  lifeguard_tower:
+    class: lifeguard_tower
+    mesh: meshes/lifeguard_tower.obj
+    color: [0.92, 0.92, 0.90, 1.0]
+    collision:   # 4 legs + cabin, footprint 2.0 x 2.0, cabin floor at 1.8 m
+      - {type: box, size: [0.12, 0.12, 1.8], pose: [0.9, 0.9, 0.9, 0, 0, 0]}
+      - {type: box, size: [0.12, 0.12, 1.8], pose: [0.9, -0.9, 0.9, 0, 0, 0]}
+      - {type: box, size: [0.12, 0.12, 1.8], pose: [-0.9, 0.9, 0.9, 0, 0, 0]}
+      - {type: box, size: [0.12, 0.12, 1.8], pose: [-0.9, -0.9, 0.9, 0, 0, 0]}
+      - {type: box, size: [2.0, 2.0, 1.2], pose: [0, 0, 2.4, 0, 0, 0]}
+      - {type: box, size: [0.55, 0.10, 2.0], pose: [0, 1.6, 1.0, 0, 0, 0]}    # ladder
+    footprint_radius: 1.8
+  fence_post:
+    class: fence_post
+    mesh: meshes/fence_post.obj
+    color: [0.50, 0.38, 0.25, 1.0]
+    collision:
+      - {type: cylinder, radius: 0.05, length: 1.0, pose: [0, 0, 0.5, 0, 0, 0]}
+    footprint_radius: 0.15
+
+person:
+  class: person
+  # Gazebo actor animation, downloaded from Gazebo Fuel on first run (see ASSETS.md).
+  gazebo_skin: https://fuel.gazebosim.org/1.0/Mingfei/models/actor/tip/files/meshes/walk.dae
+  hip_height: 1.0     # z offset of the walk.dae root above the ground, as in gz-sim's actor.sdf
+  footprint_radius: 0.4

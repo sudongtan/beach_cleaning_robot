@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.venv/
+# colcon output if built from here by mistake
+build/
+install/
+log/
+# large training artifacts
+training/runs/
+*.pt
+*.onnx
+results/plots/*.tmp
+
+notes/
+CLAUDE.md
+
+
+# generated worlds and terrain exports (rebuilt by make world / make terrain)
+sim/gazebo/worlds/generated/
+sim/common/generated/

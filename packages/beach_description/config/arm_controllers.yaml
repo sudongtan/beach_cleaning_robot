@@ -1,0 +1,37 @@
+# Arm + gripper controllers (simulator-agnostic; loaded by each sim bridge's controller manager
+# next to its own leg/broadcaster config).
+controller_manager:
+  ros__parameters:
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+arm_controller:
+  ros__parameters:
+    joints:
+      - arm_waist
+      - arm_shoulder
+      - arm_elbow
+      - arm_forearm_roll
+      - arm_wrist_angle
+      - arm_wrist_rotate
+    command_interfaces: [position, velocity]
+    state_interfaces: [position, velocity]
+    allow_nonzero_velocity_at_trajectory_end: false
+    constraints:
+      stopped_velocity_tolerance: 0.05
+      goal_time: 1.0
+
+gripper_controller:
+  ros__parameters:
+    # both fingers commanded (no mimic joint, see urdf/wx250s_arm.xacro)
+    joints:
+      - arm_left_finger
+      - arm_right_finger
+    command_interfaces: [position, velocity]
+    state_interfaces: [position, velocity]
+    allow_nonzero_velocity_at_trajectory_end: false
+    constraints:
+      stopped_velocity_tolerance: 0.02
+      goal_time: 1.0

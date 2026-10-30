@@ -1,0 +1,2116 @@
+{
+ "label": "baseline",
+ "variant": "custom",
+ "world": "empty",
+ "trials_per_item": 10,
+ "finger_effort_limit_N": 5.0,
+ "items": {
+  "food_container": {
+   "counts": {
+    "held": 6,
+    "slipped": 0,
+    "dropped": 4,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.1
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.1
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.9
+      },
+      "walk_1m": {
+       "drift_cm": 0.7,
+       "item_z_cm": 19.8
+      }
+     },
+     "offset_cm": [
+      0.9,
+      -0.71
+     ],
+     "tips_above_ground_cm": 0.08,
+     "finger_after_close_m": 0.0646,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.9
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.0
+      },
+      "walk_1m": {
+       "drift_cm": 1.0,
+       "item_z_cm": 20.3
+      }
+     },
+     "offset_cm": [
+      -0.38,
+      -0.15
+     ],
+     "tips_above_ground_cm": 0.2,
+     "finger_after_close_m": 0.0631,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.8
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.8
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.8
+      },
+      "walk_1m": {
+       "drift_cm": 1.3,
+       "item_z_cm": 20.1
+      }
+     },
+     "offset_cm": [
+      -0.18,
+      0.1
+     ],
+     "tips_above_ground_cm": 0.31,
+     "finger_after_close_m": 0.0631,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.3
+      },
+      "hold_5s": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.3
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.4
+      },
+      "walk_1m": {
+       "drift_cm": 1.0,
+       "item_z_cm": 19.2
+      }
+     },
+     "offset_cm": [
+      0.51,
+      0.08
+     ],
+     "tips_above_ground_cm": 0.66,
+     "finger_after_close_m": 0.0613,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.6
+      },
+      "hold_5s": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.6
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.6
+      },
+      "walk_1m": {
+       "drift_cm": 0.6,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      0.58,
+      -0.39
+     ],
+     "tips_above_ground_cm": 0.4,
+     "finger_after_close_m": 0.063,
+     "ik_tilt_deg": 0.8
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 11.4,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 11.5,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 11.3,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 102.4,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.73,
+      -0.19
+     ],
+     "tips_above_ground_cm": 5.06,
+     "finger_after_close_m": 0.075,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 11.7,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 11.7,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 11.6,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 103.8,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.48,
+      0.5
+     ],
+     "tips_above_ground_cm": 5.01,
+     "finger_after_close_m": 0.075,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 12.6,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 12.6,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 14.5,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 77.6,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.03,
+      0.96
+     ],
+     "tips_above_ground_cm": 5.49,
+     "finger_after_close_m": 0.01,
+     "ik_tilt_deg": 1.0
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 16.4,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 16.4,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 14.7,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 102.8,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.45,
+      0.08
+     ],
+     "tips_above_ground_cm": 4.98,
+     "finger_after_close_m": 0.0379,
+     "ik_tilt_deg": 0.6
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.9
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.9
+      },
+      "walk_1m": {
+       "drift_cm": 0.4,
+       "item_z_cm": 20.1
+      }
+     },
+     "offset_cm": [
+      -0.68,
+      0.94
+     ],
+     "tips_above_ground_cm": 0.2,
+     "finger_after_close_m": 0.0625,
+     "ik_tilt_deg": 0.7
+    }
+   ]
+  },
+  "food_tin": {
+   "counts": {
+    "held": 8,
+    "slipped": 2,
+    "dropped": 0,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.1,
+       "item_z_cm": 20.1
+      },
+      "hold_5s": {
+       "drift_cm": 0.1,
+       "item_z_cm": 20.1
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 20.1
+      },
+      "walk_1m": {
+       "drift_cm": 0.8,
+       "item_z_cm": 20.5
+      }
+     },
+     "offset_cm": [
+      -0.77,
+      0.25
+     ],
+     "tips_above_ground_cm": 0.19,
+     "finger_after_close_m": 0.0381,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.2
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.2
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.2
+      },
+      "walk_1m": {
+       "drift_cm": 0.7,
+       "item_z_cm": 20.7
+      }
+     },
+     "offset_cm": [
+      0.23,
+      0.83
+     ],
+     "tips_above_ground_cm": 0.19,
+     "finger_after_close_m": 0.0383,
+     "ik_tilt_deg": 1.0
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 3.9,
+       "item_z_cm": 20.1
+      },
+      "hold_5s": {
+       "drift_cm": 0.1,
+       "item_z_cm": 23.8
+      },
+      "wrist_pm90": {
+       "drift_cm": 3.3,
+       "item_z_cm": 23.6
+      },
+      "walk_1m": {
+       "drift_cm": 1.1,
+       "item_z_cm": 24.0
+      }
+     },
+     "offset_cm": [
+      0.06,
+      -0.08
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0394,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 7.1,
+       "item_z_cm": 13.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.2,
+       "item_z_cm": 19.9
+      },
+      "walk_1m": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.0
+      }
+     },
+     "offset_cm": [
+      0.28,
+      0.71
+     ],
+     "tips_above_ground_cm": 0.43,
+     "finger_after_close_m": 0.0398,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.3,
+       "item_z_cm": 0.8
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 20.1
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.8
+      },
+      "walk_1m": {
+       "drift_cm": 0.3,
+       "item_z_cm": 20.4
+      }
+     },
+     "offset_cm": [
+      -0.48,
+      0.68
+     ],
+     "tips_above_ground_cm": 0.16,
+     "finger_after_close_m": 0.0382,
+     "ik_tilt_deg": 0.9
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": 3.9
+      },
+      "hold_5s": {
+       "drift_cm": 3.3,
+       "item_z_cm": 23.8
+      },
+      "wrist_pm90": {
+       "drift_cm": 3.0,
+       "item_z_cm": 23.7
+      },
+      "walk_1m": {
+       "drift_cm": 3.0,
+       "item_z_cm": 24.0
+      }
+     },
+     "offset_cm": [
+      0.02,
+      0.51
+     ],
+     "tips_above_ground_cm": 0.32,
+     "finger_after_close_m": 0.0394,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.2,
+       "item_z_cm": 0.1
+      },
+      "hold_5s": {
+       "drift_cm": 2.2,
+       "item_z_cm": 20.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 3.5,
+       "item_z_cm": 19.8
+      },
+      "walk_1m": {
+       "drift_cm": 2.9,
+       "item_z_cm": 20.2
+      }
+     },
+     "offset_cm": [
+      0.64,
+      0.37
+     ],
+     "tips_above_ground_cm": 0.36,
+     "finger_after_close_m": 0.0397,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": 0.1
+      },
+      "hold_5s": {
+       "drift_cm": 0.3,
+       "item_z_cm": 20.2
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.9,
+       "item_z_cm": 20.2
+      },
+      "walk_1m": {
+       "drift_cm": 0.4,
+       "item_z_cm": 20.2
+      }
+     },
+     "offset_cm": [
+      -0.62,
+      0.6
+     ],
+     "tips_above_ground_cm": 0.17,
+     "finger_after_close_m": 0.0393,
+     "ik_tilt_deg": 0.6
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": 0.1
+      },
+      "hold_5s": {
+       "drift_cm": 0.6,
+       "item_z_cm": 20.2
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 20.1
+      },
+      "walk_1m": {
+       "drift_cm": 0.6,
+       "item_z_cm": 20.2
+      }
+     },
+     "offset_cm": [
+      -0.84,
+      0.71
+     ],
+     "tips_above_ground_cm": 0.16,
+     "finger_after_close_m": 0.0394,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 1.3,
+       "item_z_cm": 20.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.8,
+       "item_z_cm": 19.9
+      },
+      "walk_1m": {
+       "drift_cm": 0.9,
+       "item_z_cm": 20.0
+      }
+     },
+     "offset_cm": [
+      0.75,
+      -0.06
+     ],
+     "tips_above_ground_cm": 0.25,
+     "finger_after_close_m": 0.0398,
+     "ik_tilt_deg": 0.7
+    }
+   ]
+  },
+  "glass_bottle_330": {
+   "counts": {
+    "held": 6,
+    "slipped": 3,
+    "dropped": 1,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.9,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.8
+      },
+      "walk_1m": {
+       "drift_cm": 0.6,
+       "item_z_cm": 19.8
+      }
+     },
+     "offset_cm": [
+      -0.99,
+      0.29
+     ],
+     "tips_above_ground_cm": 0.17,
+     "finger_after_close_m": 0.0347,
+     "ik_tilt_deg": 0.8
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 1.0,
+       "item_z_cm": 20.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.1,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 1.1,
+       "item_z_cm": 20.0
+      }
+     },
+     "offset_cm": [
+      0.67,
+      -0.44
+     ],
+     "tips_above_ground_cm": 0.17,
+     "finger_after_close_m": 0.0271,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 16.5,
+       "item_z_cm": 3.0
+      },
+      "hold_5s": {
+       "drift_cm": 3.4,
+       "item_z_cm": 22.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 3.5,
+       "item_z_cm": 22.4
+      },
+      "walk_1m": {
+       "drift_cm": 3.5,
+       "item_z_cm": 22.4
+      }
+     },
+     "offset_cm": [
+      0.28,
+      0.61
+     ],
+     "tips_above_ground_cm": 0.72,
+     "finger_after_close_m": 0.0258,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.8
+      },
+      "walk_1m": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.9
+      }
+     },
+     "offset_cm": [
+      -0.7,
+      -0.04
+     ],
+     "tips_above_ground_cm": 0.2,
+     "finger_after_close_m": 0.0354,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 16.7,
+       "item_z_cm": 3.0
+      },
+      "hold_5s": {
+       "drift_cm": 3.6,
+       "item_z_cm": 22.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 3.8,
+       "item_z_cm": 22.5
+      },
+      "walk_1m": {
+       "drift_cm": 3.6,
+       "item_z_cm": 22.3
+      }
+     },
+     "offset_cm": [
+      -0.15,
+      0.18
+     ],
+     "tips_above_ground_cm": 0.43,
+     "finger_after_close_m": 0.027,
+     "ik_tilt_deg": 0.8
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.2,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.9
+      }
+     },
+     "offset_cm": [
+      0.35,
+      0.84
+     ],
+     "tips_above_ground_cm": 0.18,
+     "finger_after_close_m": 0.031,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.9,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.8,
+       "item_z_cm": 20.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.6,
+       "item_z_cm": 19.9
+      },
+      "walk_1m": {
+       "drift_cm": 1.0,
+       "item_z_cm": 20.0
+      }
+     },
+     "offset_cm": [
+      0.77,
+      0.32
+     ],
+     "tips_above_ground_cm": 0.16,
+     "finger_after_close_m": 0.028,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 20.0,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.9,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.6,
+       "item_z_cm": 19.9
+      },
+      "walk_1m": {
+       "drift_cm": 1.0,
+       "item_z_cm": 20.2
+      }
+     },
+     "offset_cm": [
+      0.54,
+      -0.58
+     ],
+     "tips_above_ground_cm": 0.18,
+     "finger_after_close_m": 0.0276,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.9,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.9
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.9,
+       "item_z_cm": 19.5
+      },
+      "walk_1m": {
+       "drift_cm": 5.0,
+       "item_z_cm": 11.0
+      }
+     },
+     "offset_cm": [
+      -0.87,
+      0.65
+     ],
+     "tips_above_ground_cm": 0.2,
+     "finger_after_close_m": 0.0369,
+     "ik_tilt_deg": 0.7
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 217.7,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 229.8,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 193.6,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 728.1,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.25,
+      -0.37
+     ],
+     "tips_above_ground_cm": 11.02,
+     "finger_after_close_m": 0.01,
+     "ik_tilt_deg": 0.0
+    }
+   ]
+  },
+  "glass_jar": {
+   "counts": {
+    "held": 0,
+    "slipped": 0,
+    "dropped": 10,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 301.8,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 304.7,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 61.4,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 476.9,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.64,
+      -0.21
+     ],
+     "tips_above_ground_cm": 14.47,
+     "finger_after_close_m": 0.01,
+     "ik_tilt_deg": 0.0
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 239.6,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 374.8,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 394.7,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 303.8,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.48,
+      -0.16
+     ],
+     "tips_above_ground_cm": 16.28,
+     "finger_after_close_m": 0.0169,
+     "ik_tilt_deg": 0.0
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 356.2,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 272.8,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 262.9,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 428.5,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.27,
+      -0.24
+     ],
+     "tips_above_ground_cm": 16.52,
+     "finger_after_close_m": 0.0153,
+     "ik_tilt_deg": 0.0
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 96.1,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 192.1,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 412.4,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 477.8,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.31,
+      -0.14
+     ],
+     "tips_above_ground_cm": 16.45,
+     "finger_after_close_m": 0.0105,
+     "ik_tilt_deg": 0.3
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 240.0,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 165.5,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 164.1,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 219.2,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.26,
+      0.62
+     ],
+     "tips_above_ground_cm": 36.34,
+     "finger_after_close_m": 0.0115,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 440.3,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 243.4,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 441.6,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 400.5,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.09,
+      -0.61
+     ],
+     "tips_above_ground_cm": 34.47,
+     "finger_after_close_m": 0.0111,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 340.8,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 76.0,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 259.5,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 121.4,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.51,
+      -0.49
+     ],
+     "tips_above_ground_cm": 6.48,
+     "finger_after_close_m": 0.0121,
+     "ik_tilt_deg": 0.0
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 219.4,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 403.9,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 166.0,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 665.5,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.48,
+      0.53
+     ],
+     "tips_above_ground_cm": 17.44,
+     "finger_after_close_m": 0.0133,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 30.1,
+       "item_z_cm": 4.0
+      },
+      "hold_5s": {
+       "drift_cm": 131.7,
+       "item_z_cm": 4.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 97.0,
+       "item_z_cm": 4.0
+      },
+      "walk_1m": {
+       "drift_cm": 107.3,
+       "item_z_cm": 4.0
+      }
+     },
+     "offset_cm": [
+      -0.74,
+      -0.25
+     ],
+     "tips_above_ground_cm": 13.1,
+     "finger_after_close_m": 0.01,
+     "ik_tilt_deg": 0.0
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 255.1,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 220.4,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 134.3,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 156.0,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.33,
+      -0.09
+     ],
+     "tips_above_ground_cm": 32.75,
+     "finger_after_close_m": 0.01,
+     "ik_tilt_deg": 0.2
+    }
+   ]
+  },
+  "pet_bottle_1500": {
+   "counts": {
+    "held": 1,
+    "slipped": 0,
+    "dropped": 9,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 268.7,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 302.8,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 342.0,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 356.4,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.68,
+      0.45
+     ],
+     "tips_above_ground_cm": 25.97,
+     "finger_after_close_m": 0.01,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 8.3,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 8.3,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 10.1,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 10.4,
+       "item_z_cm": 0.0
+      }
+     },
+     "offset_cm": [
+      -0.1,
+      -0.26
+     ],
+     "tips_above_ground_cm": 8.87,
+     "finger_after_close_m": 0.0636,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 8.7,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 8.5,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 10.2,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 10.4,
+       "item_z_cm": 0.0
+      }
+     },
+     "offset_cm": [
+      -0.59,
+      -0.43
+     ],
+     "tips_above_ground_cm": 8.82,
+     "finger_after_close_m": 0.0653,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 8.7,
+       "item_z_cm": 0.0
+      },
+      "hold_5s": {
+       "drift_cm": 8.7,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 9.5,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 9.9,
+       "item_z_cm": 0.0
+      }
+     },
+     "offset_cm": [
+      -0.37,
+      0.15
+     ],
+     "tips_above_ground_cm": 8.97,
+     "finger_after_close_m": 0.0605,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 7.3,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 7.3,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 10.3,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 10.4,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.55,
+      0.58
+     ],
+     "tips_above_ground_cm": 9.0,
+     "finger_after_close_m": 0.0596,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.6,
+       "item_z_cm": 4.5
+      },
+      "hold_5s": {
+       "drift_cm": 0.3,
+       "item_z_cm": 24.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 10.1,
+       "item_z_cm": 23.3
+      },
+      "walk_1m": {
+       "drift_cm": 0.4,
+       "item_z_cm": 24.0
+      }
+     },
+     "offset_cm": [
+      0.19,
+      0.84
+     ],
+     "tips_above_ground_cm": 0.58,
+     "finger_after_close_m": 0.0682,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 6.3,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 5.7,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 9.0,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 9.5,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.0,
+      -0.85
+     ],
+     "tips_above_ground_cm": 8.8,
+     "finger_after_close_m": 0.0696,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 6.6,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 6.0,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 8.9,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 9.6,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      -0.57,
+      -0.73
+     ],
+     "tips_above_ground_cm": 8.6,
+     "finger_after_close_m": 0.073,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 8.5,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 8.4,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 10.1,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 10.1,
+       "item_z_cm": 0.0
+      }
+     },
+     "offset_cm": [
+      0.57,
+      -0.41
+     ],
+     "tips_above_ground_cm": 8.78,
+     "finger_after_close_m": 0.0663,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "dropped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 5.7,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 5.5,
+       "item_z_cm": -0.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 8.2,
+       "item_z_cm": -0.0
+      },
+      "walk_1m": {
+       "drift_cm": 9.3,
+       "item_z_cm": -0.0
+      }
+     },
+     "offset_cm": [
+      0.05,
+      -0.7
+     ],
+     "tips_above_ground_cm": 8.62,
+     "finger_after_close_m": 0.0714,
+     "ik_tilt_deg": 0.1
+    }
+   ]
+  },
+  "pet_bottle_500": {
+   "counts": {
+    "held": 8,
+    "slipped": 2,
+    "dropped": 0,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.3
+      },
+      "hold_5s": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.8
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      -0.2,
+      -0.41
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0356,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 13.7,
+       "item_z_cm": 6.1
+      },
+      "hold_5s": {
+       "drift_cm": 0.7,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.6,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 0.6,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      -0.75,
+      0.47
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0341,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 1.6,
+       "item_z_cm": 18.2
+      },
+      "hold_5s": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      -0.22,
+      -0.54
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0321,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 11.2,
+       "item_z_cm": 8.5
+      },
+      "hold_5s": {
+       "drift_cm": 1.1,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.1,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 1.1,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      -0.22,
+      0.95
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.034,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 2.4,
+       "item_z_cm": 17.4
+      },
+      "hold_5s": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 0.0,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      0.39,
+      0.04
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.033,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 17.0,
+       "item_z_cm": 3.2
+      },
+      "hold_5s": {
+       "drift_cm": 5.3,
+       "item_z_cm": 23.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 5.3,
+       "item_z_cm": 22.9
+      },
+      "walk_1m": {
+       "drift_cm": 5.3,
+       "item_z_cm": 22.9
+      }
+     },
+     "offset_cm": [
+      -0.21,
+      0.88
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0358,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "slipped",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 12.4,
+       "item_z_cm": 11.0
+      },
+      "hold_5s": {
+       "drift_cm": 3.5,
+       "item_z_cm": 23.0
+      },
+      "wrist_pm90": {
+       "drift_cm": 3.3,
+       "item_z_cm": 22.8
+      },
+      "walk_1m": {
+       "drift_cm": 3.5,
+       "item_z_cm": 22.9
+      }
+     },
+     "offset_cm": [
+      0.98,
+      0.52
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0349,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.0,
+       "item_z_cm": 0.9
+      },
+      "hold_5s": {
+       "drift_cm": 1.6,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.9,
+       "item_z_cm": 19.6
+      },
+      "walk_1m": {
+       "drift_cm": 1.6,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      0.28,
+      -0.24
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0333,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.9,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 1.0,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.6,
+       "item_z_cm": 19.6
+      },
+      "walk_1m": {
+       "drift_cm": 1.0,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      0.01,
+      -0.97
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0336,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.7,
+       "item_z_cm": 0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.7
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.7
+      },
+      "walk_1m": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.7
+      }
+     },
+     "offset_cm": [
+      0.94,
+      -0.43
+     ],
+     "tips_above_ground_cm": 0.39,
+     "finger_after_close_m": 0.0329,
+     "ik_tilt_deg": 0.1
+    }
+   ]
+  },
+  "poly_cup": {
+   "counts": {
+    "held": 10,
+    "slipped": 0,
+    "dropped": 0,
+    "ik_failed": 0,
+    "spawn_failed": 0
+   },
+   "trials": [
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.6,
+       "item_z_cm": -0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.4
+      },
+      "walk_1m": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      -0.11,
+      -0.58
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0463,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.5,
+       "item_z_cm": 0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.0,
+       "item_z_cm": 19.2
+      },
+      "walk_1m": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      -0.97,
+      -0.39
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0432,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 10.4,
+       "item_z_cm": 9.2
+      },
+      "hold_5s": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.6
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.4
+      },
+      "walk_1m": {
+       "drift_cm": 0.5,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      -0.48,
+      0.7
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0313,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 19.6,
+       "item_z_cm": 0.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.6
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.5
+      },
+      "walk_1m": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      0.61,
+      0.26
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0379,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 6.6,
+       "item_z_cm": 13.0
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.1,
+       "item_z_cm": 19.2
+      },
+      "walk_1m": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      0.52,
+      -0.95
+     ],
+     "tips_above_ground_cm": 0.56,
+     "finger_after_close_m": 0.0513,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 3.1,
+       "item_z_cm": 16.6
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.6
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.4
+      },
+      "walk_1m": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      -0.26,
+      -0.05
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0414,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 3.8,
+       "item_z_cm": 15.8
+      },
+      "hold_5s": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 1.3,
+       "item_z_cm": 19.3
+      },
+      "walk_1m": {
+       "drift_cm": 0.4,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      -0.55,
+      0.12
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0435,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": "lift",
+     "stages": {
+      "lift": {
+       "drift_cm": 3.1,
+       "item_z_cm": 16.5
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      },
+      "walk_1m": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      0.58,
+      0.21
+     ],
+     "tips_above_ground_cm": 0.56,
+     "finger_after_close_m": 0.0395,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 1.0,
+       "item_z_cm": 18.6
+      },
+      "hold_5s": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.6
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.4
+      },
+      "walk_1m": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      0.46,
+      0.2
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0389,
+     "ik_tilt_deg": 0.1
+    },
+    {
+     "result": "held",
+     "first_loss_stage": null,
+     "stages": {
+      "lift": {
+       "drift_cm": 1.3,
+       "item_z_cm": 18.3
+      },
+      "hold_5s": {
+       "drift_cm": 0.1,
+       "item_z_cm": 19.5
+      },
+      "wrist_pm90": {
+       "drift_cm": 0.3,
+       "item_z_cm": 19.4
+      },
+      "walk_1m": {
+       "drift_cm": 0.2,
+       "item_z_cm": 19.5
+      }
+     },
+     "offset_cm": [
+      0.57,
+      -0.5
+     ],
+     "tips_above_ground_cm": 0.57,
+     "finger_after_close_m": 0.0473,
+     "ik_tilt_deg": 0.1
+    }
+   ]
+  }
+ }
+}

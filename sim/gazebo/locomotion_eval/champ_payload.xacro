@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- khaledgabr77 unitree_go2_description + evaluation payload -->
+<robot name="go2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="payload" default="true"/>
+  <xacro:include filename="$(find unitree_go2_description)/urdf/unitree_go2_robot.xacro"/>
+  <xacro:include filename="payload.xacro"/>
+  <xacro:if value="$(arg payload)">
+    <xacro:eval_payload parent="trunk"/>
+  </xacro:if>
+</robot>

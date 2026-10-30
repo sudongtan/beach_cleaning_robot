@@ -1,0 +1,25 @@
+# Arm joint PD gains for simulated position servos (kp: N*m/rad or N/m, kd: N*m*s/rad or N*s/m).
+# Sized from the joint-space inertia over the named poses (Pinocchio CRBA) for ~60 rad/s,
+# critically damped; wrist gains raised so the URDF's 0.1 N*m joint friction leaves < 0.02 rad error.
+# Gravity steady-state error at these gains: < 0.02 rad on every joint (see notes/logs/A0.md).
+# Start pose = poses.rest in arm_poses.yaml.
+gains:
+  arm_waist:        {kp: 300.0, kd: 10.0}
+  arm_shoulder:     {kp: 500.0, kd: 17.0}
+  arm_elbow:        {kp: 150.0, kd: 5.0}
+  arm_forearm_roll: {kp: 8.0,   kd: 0.25}
+  arm_wrist_angle:  {kp: 10.0,  kd: 0.3}
+  arm_wrist_rotate: {kp: 5.0,   kd: 0.045}
+  arm_left_finger:  {kp: 60.0,  kd: 2.0}
+  arm_right_finger: {kp: 60.0,  kd: 2.0}
+
+# Overrides for the "custom" variant (wide jaws, ~0.34 kg gripper): the wrist and finger joints
+# carry 3-10x the inertia. Same sizing (~60 rad/s, about critically damped); wrist_angle stiffer
+# for the heavier gripper (gravity error 0.048 -> ~0.016 rad).
+variants:
+  custom:
+    arm_forearm_roll: {kp: 25.0,  kd: 0.85}
+    arm_wrist_angle:  {kp: 30.0,  kd: 0.9}
+    arm_wrist_rotate: {kp: 15.0,  kd: 0.25}
+    arm_left_finger:  {kp: 250.0, kd: 8.0}
+    arm_right_finger: {kp: 250.0, kd: 8.0}

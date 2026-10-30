@@ -1,0 +1,35 @@
+# Sensor parameters shared by all simulators (Gazebo: sim_bridge_gazebo xacro; Isaac in B0).
+# Units are SI. Sensor frames and mount poses are in beach_description
+# (camera_link / camera_optical_frame, imu_link, gnss_link).
+
+camera:                       # RGB-D, frame camera_link / optical frame camera_optical_frame
+  width: 640
+  height: 480
+  rate_hz: 10                 # 10-15 Hz budget for CPU rendering
+  horizontal_fov_rad: 1.20    # ~69 deg, similar to a RealSense D435 colour camera
+  clip_near_m: 0.10
+  clip_far_m: 30.0
+  depth_min_m: 0.20
+  depth_max_m: 10.0
+  rgb_noise_stddev: 0.007     # gaussian, in [0,1] intensity units
+  depth_noise_stddev_m: 0.01
+
+imu:                          # /imu, frame imu_link. (The leg controller has its own 1 kHz IMU
+                              # inside ros2_control; this one feeds localization.)
+  rate_hz: 200
+  gyro_noise_stddev: 0.0002        # rad/s
+  gyro_bias_stddev: 0.00001        # rad/s
+  accel_noise_stddev: 0.017        # m/s^2
+  accel_bias_stddev: 0.001         # m/s^2
+
+gnss:                         # frame gnss_link, plain GPS (no RTK)
+  rate_hz: 10
+  horizontal_noise_stddev_m: 1.5   # north; east 1.13 m (see below): ~1.9 m horizontal RMS, ~3.7 m 95 %
+  vertical_noise_stddev_m: 3.0
+  # Gazebo's NavSat sensor applies horizontal noise to lat/lon in DEGREES
+  # (gz-sensors NavSatSensor::Update), one noise model for both. The xacro
+  # converts: stddev_deg = stddev_m / 111320, so north noise is stddev_m and
+  # east noise is stddev_m * cos(lat) (~1.13 m at 41.4 N).
+  # The bridge's gnss_relay fills NavSatFix.position_covariance from these
+  # values (the ros_gz conversion leaves it at zero).
+  covariance_type: 2               # sensor_msgs/NavSatFix COVARIANCE_TYPE_DIAGONAL_KNOWN
