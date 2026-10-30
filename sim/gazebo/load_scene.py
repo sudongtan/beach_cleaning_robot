@@ -418,10 +418,12 @@ def build_world(scene, objects, debug_camera=False):
         dz = -it['bury_fraction'] * height if it['half_buried'] else 0.0
         object_model(world, it['id'], spec, it['pose'], z, classes[spec['material']], static=False,
                      visual_dz=dz)
+    # Distractors are static (never picked up; dynamic ones resting on the heightmap cost
+    # contact solving every step, RTF ~0.5 with the robot): set on the terrain at their centre.
     for d in scene['distractors']:
         spec = objects['distractors'][d['model']]
-        z = ground_z(t, d['pose'][0], d['pose'][1], spec['footprint_radius'], 'max') + SPAWN_GAP
-        object_model(world, d['id'], spec, d['pose'], z, classes[spec['class']], static=False)
+        z = ground_z(t, d['pose'][0], d['pose'][1], 0.0, 'min')
+        object_model(world, d['id'], spec, d['pose'], z, classes[spec['class']], static=True)
 
     if scene['person']:
         actor(world, scene['person'], objects['person'], t, classes['person'])
