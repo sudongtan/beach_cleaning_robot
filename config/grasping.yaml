@@ -1,0 +1,15 @@
+# Grasping (packages/grasping). Robot variant, jaw margin and bin-drop geometry: config/robot_limits.yaml.
+grasping:
+  # Pick (attach mode): jaw tips hover above the item's top without contact (Gazebo's
+  # DetachableJoint can't attach while touching), then attach, close, lift.
+  hover_above_item_m: 0.015
+  pregrasp_above_m: 0.10        # approach from this far above the hover point
+  lift_above_m: 0.20            # lift the jaw tips this far above the hover point
+  approach_max_tilt_deg: 10     # gripper within this of straight down for picks
+  # Reach envelope for picks, item centre in base_link (the robot walks until the item is
+  # inside, then stands still). Physics-grasp tests used x = 0.48 m.
+  reach_x_m: [0.42, 0.56]
+  reach_y_max_m: 0.10
+  # IK (numerical, Pinocchio): random restarts and convergence
+  ik_restarts: 30
+  ik_tolerance_m: 0.005
