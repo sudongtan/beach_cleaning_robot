@@ -1,0 +1,10 @@
+# Static /map for the running scene (A2 mapping baseline, packages/mapping).
+# Terrain limits (max slope, grid resolution) come from config/terrain.yaml.
+mapping:
+  # Static things the robot must walk around: lethal footprints (collision boxes from
+  # sim/common/objects.yaml, rotated by the object's yaw) grown by obstacle_margin_m.
+  # Small distractors (shells, small rocks, seaweed) are walked over.
+  obstacle_models: [lifeguard_tower, fence_post, bin_recyclable, bin_residual, rock_medium, driftwood]
+  obstacle_margin_m: 0.10
+  # Everything outside the scene's geofence polygon is lethal, so the planner never leaves it.
+  lethal_outside_geofence: true
