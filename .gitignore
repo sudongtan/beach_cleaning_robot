@@ -18,3 +18,6 @@ CLAUDE.md
 # generated worlds and terrain exports (rebuilt by make world / make terrain)
 sim/gazebo/worlds/generated/
 sim/common/generated/
+
+# raw task event logs (A2 task node); per-run summaries for metrics are kept
+results/runs/*.jsonl

@@ -1,4 +1,4 @@
-# Task (packages/task): search pattern now; the state machine adds its settings in A2a.
+# Task (packages/task): search pattern and state machine.
 task:
   search:
     # Lawnmower lanes parallel to the shore (x). Lane spacing = camera footprint width at
@@ -7,3 +7,18 @@ task:
     overlap: 0.2
     edge_margin_m: 0.5         # lanes and waypoints stay this far inside the geofence
     waypoint_spacing_m: 5.0    # waypoints along a lane (progress checks; lethal ones are dropped)
+  fsm:
+    rate_hz: 10.0
+    standoff_m: 0.7              # APPROACH step 1: navigation goal this far from the item, facing it
+    bin_standoff_m: 0.7          # base_link this far in front of a bin centre (head ~5 cm from the wall)
+    final_approach:              # APPROACH step 2: small /cmd_vel_nav steps until the item is in reach
+      target_x_m: 0.49           # item centre ahead of base_link (middle of the grasp envelope)
+      gain: 0.8
+      max_vx: 0.15
+      max_vy: 0.10
+      max_wz: 0.3
+      settle_s: 1.0              # stand still this long before the arm moves
+    grasp_retries: 3             # failed picks per item before it is skipped
+    nav_retries: 2               # failed navigation goals per target before it is skipped
+    item_timeout_s: 180.0        # no progress on one item for this long -> skipped (no_progress)
+    nav_timeout_s: 120.0         # one navigation goal
