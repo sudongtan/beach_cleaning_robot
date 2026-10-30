@@ -1,0 +1,11 @@
+# Which bin each material goes to (A2 classifier baseline and every later classifier).
+sorting:
+  rules:
+    pet: recyclable
+    metal: recyclable
+    glass: recyclable
+    residual: residual
+  # Below this classifier confidence an item goes to residual: never risk contaminating
+  # the recycling bin (CLAUDE.md plan, CLASSIFY).
+  confidence_threshold: 0.6
+  fallback_bin: residual

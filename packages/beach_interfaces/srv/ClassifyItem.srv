@@ -1,7 +1,7 @@
 # /classify: material of the item held in front of the camera (task → classifier).
 sensor_msgs/Image image             # close-up of the held item (the ground-truth classifier ignores it)
 ---
-string material                     # pet | metal | glass | residual
+string material                     # pet | metal | glass | residual, or distractor (not trash: put it back)
 bool recyclable
-string bin_id                       # recyclable | residual (config/sorting_rules.yaml)
+string bin_id                       # recyclable | residual (config/sorting_rules.yaml); empty for a distractor
 float32 confidence

@@ -1,0 +1,11 @@
+# Perception baselines (packages/perception). Camera geometry comes from config/sensors.yaml.
+perception:
+  ground_truth_detector:
+    # Report objects whose centre is inside the camera's field of view and depth range.
+    # No occlusion: an object behind another one is still reported.
+    fov_margin_rad: 0.0
+  ground_truth_classifier:
+    # The held item is the ground-truth object nearest the gripper TCP (arm_ee_gripper_link),
+    # if within this radius. Attach hovers 1-2 cm above the item and the TCP is 3 cm behind
+    # the jaw tips, so the item centre is up to ~8 cm away (7.5 cm tall food tin).
+    match_radius_m: 0.15

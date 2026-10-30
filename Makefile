@@ -23,6 +23,8 @@ GZ_PARTITION ?=
 GZ_ENV = $(if $(GZ_PARTITION),GZ_PARTITION=$(GZ_PARTITION))
 ROS_SETUP ?= /opt/ros/jazzy/setup.bash
 WS_SETUP ?= $(HOME)/ros2_ws/install/setup.bash
+# repository root for the A2 nodes (they read bench/, sim/common/ and config/ from it)
+export BEACH_REPO := $(CURDIR)
 WORLD = sim/gazebo/worlds/generated/scene_$(SEED).sdf
 MANIFEST = $(CURDIR)/sim/gazebo/worlds/generated/scene_$(SEED).manifest.yaml
 
