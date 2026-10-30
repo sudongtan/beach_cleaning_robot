@@ -1,0 +1,17 @@
+# /grasp/place: put down an object. One call handles one item.
+#   COMPARTMENT: release the held item into the basket compartment bin_id (STORE)
+#   BIN:         re-pick item_id from its compartment and release it over the bin at pose (PLACE)
+#   GROUND:      put the held item back down in front of the robot (e.g. a distractor)
+uint8 COMPARTMENT = 0
+uint8 BIN = 1
+uint8 GROUND = 2
+
+uint8 target
+string item_id
+string bin_id                       # recyclable | residual
+geometry_msgs/PoseStamped pose      # BIN only: centre of the bin opening (rim height); else ignored
+---
+bool success
+string message
+---
+string phase

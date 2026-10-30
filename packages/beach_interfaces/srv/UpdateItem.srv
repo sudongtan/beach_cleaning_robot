@@ -1,0 +1,9 @@
+# Change an item's state in the world model (task → world model).
+string id
+uint8 status                        # TrashItem constants
+string material                     # empty = unchanged
+string bin_id                       # compartment (COLLECTED) or bin (PLACED); empty = unchanged
+string skip_reason
+---
+bool success
+string message

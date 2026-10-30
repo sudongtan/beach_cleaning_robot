@@ -1,0 +1,7 @@
+# /classify: material of the item held in front of the camera (task → classifier).
+sensor_msgs/Image image             # close-up of the held item (the ground-truth classifier ignores it)
+---
+string material                     # pet | metal | glass | residual
+bool recyclable
+string bin_id                       # recyclable | residual (config/sorting_rules.yaml)
+float32 confidence

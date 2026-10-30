@@ -1,0 +1,8 @@
+# /grasp/pick: pick an object from the ground in front of the robot (robot standing still).
+string id                           # world-model id
+geometry_msgs/PoseStamped pose      # object pose, any frame with a TF to base_link
+---
+bool success
+string message                      # failure reason, e.g. unreachable, safety_hold_timeout, attach_failed
+---
+string phase                        # open, above, descend, attach, close, lift, holding
