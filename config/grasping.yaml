@@ -13,3 +13,13 @@ grasping:
   # IK (numerical, Pinocchio): random restarts and convergence
   ik_restarts: 30
   ik_tolerance_m: 0.005
+  # The pick goal carries the item's centre, not its size: hover above the tallest item
+  # (7.5 cm, cross-phase limit). Attach mode doesn't need contact, so a flat item is attached
+  # from a few cm higher.
+  assumed_item_height_m: 0.075
+  # After a pick the item is held in front of the head camera for /classify (A1c: item hangs
+  # in full view below the jaws, seen edge-on). Order as arm_controller joints.
+  show_pose: [0.0, 1.685, -1.78, -3.099, -1.687, -0.089]
+  move_time_s: 2.5              # duration of each arm move
+  finger_time_s: 1.0
+  safety_hold_timeout_s: 120.0  # give up a pick/place if /safety/state stays not-ok this long

@@ -1,0 +1,298 @@
+"""Grasping node: /grasp/pick and /grasp/place (notes/architecture.md), grasp_mode:=attach.
+
+The robot stands still while the arm moves (the task guarantees that). Every arm step
+waits while /safety/state != ok and a running move is cancelled (the controller holds
+position) as soon as the state leaves ok (arm rule, decisions 2026-10-30). Plans come
+from grasping.arm (IK), step order from grasping.sequence.
+
+Attach mode needs the simulator's object id: the world model's scene_id for the item,
+else the /sim/ground_truth/objects entry nearest the jaw tips (attach mode is itself a
+simulation shortcut). Physics mode is not implemented yet (A2 runs in attach mode).
+Parameters: repo, grasp_mode. Settings: config/grasping.yaml, config/robot_limits.yaml.
+"""
+
+import math
+import threading
+import time
+from pathlib import Path
+
+import numpy as np
+import rclpy
+import yaml
+from beach_interfaces.action import PickObject, PlaceObject
+from beach_interfaces.msg import WorldModel
+from beach_interfaces.srv import SimAttach
+from builtin_interfaces.msg import Duration
+from control_msgs.action import FollowJointTrajectory
+from geometry_msgs.msg import TransformStamped
+from rclpy.action import ActionClient, ActionServer, CancelResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile
+from rclpy.time import Time
+from std_msgs.msg import String
+from tf2_geometry_msgs import do_transform_pose
+from tf2_ros import Buffer, TransformException, TransformListener
+from trajectory_msgs.msg import JointTrajectoryPoint
+from vision_msgs.msg import Detection3DArray
+
+from grasping.arm import ARM, TIPS, Arm, bin_release_target, plan_pick
+from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, store_steps
+
+LATCHED = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+FINGERS = ['arm_left_finger', 'arm_right_finger']
+
+
+def duration(secs):
+    return Duration(sec=int(secs), nanosec=int((secs % 1) * 1e9))
+
+
+class RosIo:
+    """The io interface of grasping.sequence.Runner on top of ROS (called from action threads)."""
+
+    def __init__(self, node):
+        self.n = node
+
+    def now(self):
+        return time.monotonic()
+
+    def sleep(self, s):
+        time.sleep(s)
+
+    def safety_ok(self):
+        return self.n.safety_state == 'ok'
+
+    def _wait(self, fut, timeout):
+        end = time.monotonic() + timeout
+        while not fut.done() and time.monotonic() < end:
+            time.sleep(0.01)
+        return fut.done()
+
+    def _trajectory(self, client, joints, positions, secs, watch_safety):
+        goal = FollowJointTrajectory.Goal()
+        goal.trajectory.joint_names = joints
+        goal.trajectory.points = [JointTrajectoryPoint(positions=[float(p) for p in positions],
+                                                       time_from_start=duration(secs))]
+        if not client.wait_for_server(timeout_sec=5.0):
+            return 'failed'
+        sent = client.send_goal_async(goal)
+        if not self._wait(sent, 5.0) or not sent.result().accepted:
+            return 'failed'
+        handle = sent.result()
+        result = handle.get_result_async()
+        end = time.monotonic() + secs + 10.0
+        while not result.done():
+            if watch_safety and not self.safety_ok():
+                self._wait(handle.cancel_goal_async(), 2.0)
+                return 'interrupted'
+            if time.monotonic() > end:
+                return 'failed'
+            time.sleep(0.02)
+        return 'ok' if result.result().result.error_code == 0 else 'failed'
+
+    def move_arm(self, q, secs):
+        return self._trajectory(self.n.arm_client, ARM, q, secs, watch_safety=True)
+
+    def fingers(self, value, secs):
+        return self._trajectory(self.n.gripper_client, FINGERS, [value, -value], secs, watch_safety=False) == 'ok'
+
+    def _sim(self, client, object_id):
+        if not object_id or not client.wait_for_service(timeout_sec=5.0):
+            return False
+        fut = client.call_async(SimAttach.Request(object_id=object_id))
+        if not self._wait(fut, 10.0):
+            return False
+        self.n.get_logger().info(f'{client.srv_name} {object_id}: {fut.result().message}')
+        return fut.result().success
+
+    def attach(self, object_id):
+        return self._sim(self.n.attach_client, object_id)
+
+    def detach(self, object_id):
+        return self._sim(self.n.detach_client, object_id)
+
+
+class GraspingNode(Node):
+
+    def __init__(self, **kwargs):
+        super().__init__('grasping', **kwargs)
+        repo = self.declare_parameter('repo', '').value
+        if not repo:
+            raise RuntimeError('parameter repo (repository root) is required')
+        repo = Path(repo)
+        self.mode = self.declare_parameter('grasp_mode', 'attach').value
+        self.base_frame = self.declare_parameter('base_frame', 'base_link').value
+        self.cfg = yaml.safe_load(open(repo / 'config' / 'grasping.yaml'))['grasping']
+        self.limits = yaml.safe_load(open(repo / 'config' / 'robot_limits.yaml'))['robot_limits']
+        objects = yaml.safe_load(open(repo / 'sim' / 'common' / 'objects.yaml'))
+        bin_boxes = objects['bins']['bin_recyclable']['collision']
+        self.bin_half = (max(abs(b['pose'][0]) + b['size'][0] / 2 for b in bin_boxes),
+                         max(abs(b['pose'][1]) + b['size'][1] / 2 for b in bin_boxes))
+        self.arm = Arm(self.limits['variant'], self.cfg['ik_restarts'], self.cfg['ik_tolerance_m'])
+        self.runner = Runner(RosIo(self), self.cfg['move_time_s'], self.cfg['finger_time_s'],
+                             self.cfg['safety_hold_timeout_s'])
+        self.safety_state = 'stop'                 # not ok until the supervisor says so
+        self.scene_ids = {}
+        self.gt = None
+        self.picks = {}                            # item id -> pick plan (for putting it back)
+        self.busy = threading.Lock()
+
+        cb = ReentrantCallbackGroup()
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.arm_client = ActionClient(self, FollowJointTrajectory, '/arm_controller/follow_joint_trajectory',
+                                       callback_group=cb)
+        self.gripper_client = ActionClient(self, FollowJointTrajectory,
+                                           '/gripper_controller/follow_joint_trajectory', callback_group=cb)
+        self.attach_client = self.create_client(SimAttach, '/sim/attach', callback_group=cb)
+        self.detach_client = self.create_client(SimAttach, '/sim/detach', callback_group=cb)
+        self.create_subscription(String, '/safety/state', self.on_safety, LATCHED, callback_group=cb)
+        self.create_subscription(WorldModel, '/world_model', self.on_world_model, 10, callback_group=cb)
+        self.create_subscription(Detection3DArray, '/sim/ground_truth/objects', self.on_gt, 10, callback_group=cb)
+        ActionServer(self, PickObject, '/grasp/pick', self.execute_pick, callback_group=cb,
+                     cancel_callback=lambda _: CancelResponse.ACCEPT)
+        ActionServer(self, PlaceObject, '/grasp/place', self.execute_place, callback_group=cb,
+                     cancel_callback=lambda _: CancelResponse.ACCEPT)
+
+    def on_safety(self, msg):
+        self.safety_state = msg.data
+
+    def on_world_model(self, msg):
+        self.scene_ids = {it.id: it.scene_id for it in msg.items}
+
+    def on_gt(self, msg):
+        self.gt = msg
+
+    def to_base(self, pose_stamped):
+        try:
+            tf = self.tf_buffer.lookup_transform(self.base_frame, pose_stamped.header.frame_id, Time())
+        except TransformException as e:
+            self.get_logger().warn(f'no transform to {self.base_frame}: {e}')
+            return None
+        p = do_transform_pose(pose_stamped.pose, tf)
+        return p
+
+    def sim_object(self, item_id, near_base=None):
+        """Simulator object id for attach mode."""
+        if self.scene_ids.get(item_id):
+            return self.scene_ids[item_id]
+        if self.gt is None or near_base is None:
+            return ''
+        try:
+            tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
+        except TransformException:
+            return ''
+        best, best_d = '', 0.15
+        for d in self.gt.detections:
+            p = do_transform_pose(d.bbox.center, tf).position
+            dist = math.dist((p.x, p.y, p.z), near_base)
+            if dist < best_d:
+                best, best_d = d.id, dist
+        return best
+
+    def run(self, goal_handle, steps, result):
+        def feedback(phase):
+            msg = (PickObject.Feedback() if isinstance(goal_handle.request, PickObject.Goal)
+                   else PlaceObject.Feedback())
+            msg.phase = phase
+            goal_handle.publish_feedback(msg)
+        ok, message = self.runner.run(steps, feedback, lambda: goal_handle.is_cancel_requested)
+        result.success, result.message = ok, message
+        if goal_handle.is_cancel_requested:
+            goal_handle.canceled()
+        elif ok:
+            goal_handle.succeed()
+        else:
+            goal_handle.abort()
+        self.get_logger().info(f'{type(goal_handle.request).__name__}: {message}')
+        return result
+
+    def refuse(self, goal_handle, result, message):
+        self.get_logger().warn(message)
+        result.success, result.message = False, message
+        goal_handle.abort()
+        return result
+
+    def execute_pick(self, goal_handle):
+        g, result = goal_handle.request, PickObject.Result()
+        if self.mode != 'attach':
+            return self.refuse(goal_handle, result, f'grasp_mode {self.mode} not implemented (A2 uses attach)')
+        if not self.busy.acquire(blocking=False):
+            return self.refuse(goal_handle, result, 'busy')
+        try:
+            pose = self.to_base(g.pose)
+            if pose is None:
+                return self.refuse(goal_handle, result, 'no_transform')
+            c = (pose.position.x, pose.position.y, pose.position.z)
+            ok, why, plan = plan_pick(self.arm, c, self.cfg['assumed_item_height_m'], self.cfg)
+            if not ok:
+                return self.refuse(goal_handle, result, why)
+            hover_tips = self.arm.fk(plan['hover'], TIPS)[0]
+            obj = self.sim_object(g.id, tuple(hover_tips))
+            if not obj:
+                return self.refuse(goal_handle, result, 'no_sim_object')
+            self.picks[g.id] = plan
+            steps = pick_steps(plan, self.arm.poses, self.cfg['show_pose'], self.arm.finger_open,
+                               self.arm.finger_closed, obj)
+            return self.run(goal_handle, steps, result)
+        finally:
+            self.busy.release()
+
+    def execute_place(self, goal_handle):
+        g, result = goal_handle.request, PlaceObject.Result()
+        if self.mode != 'attach':
+            return self.refuse(goal_handle, result, f'grasp_mode {self.mode} not implemented (A2 uses attach)')
+        if not self.busy.acquire(blocking=False):
+            return self.refuse(goal_handle, result, 'busy')
+        try:
+            obj = self.sim_object(g.item_id)
+            if not obj:
+                return self.refuse(goal_handle, result, 'no_sim_object')
+            if g.target == PlaceObject.Goal.COMPARTMENT:
+                steps = store_steps(self.arm.poses, g.bin_id, self.arm.finger_open, obj)
+            elif g.target == PlaceObject.Goal.GROUND:
+                if g.item_id not in self.picks:
+                    return self.refuse(goal_handle, result, 'no_pick_plan')
+                steps = ground_steps(self.picks.pop(g.item_id), self.arm.poses, self.arm.finger_open, obj)
+            elif g.target == PlaceObject.Goal.BIN:
+                q = self.bin_release(g.pose)
+                if q is None:
+                    return self.refuse(goal_handle, result, 'bin_unreachable')
+                steps = bin_steps(self.arm.poses, g.bin_id, q, self.arm.finger_open, self.arm.finger_closed, obj)
+            else:
+                return self.refuse(goal_handle, result, f'unknown target {g.target}')
+            return self.run(goal_handle, steps, result)
+        finally:
+            self.busy.release()
+
+    def bin_release(self, pose_stamped):
+        """Joint target with the jaw tips over the bin opening (pose: opening centre at the rim)."""
+        pose = self.to_base(pose_stamped)
+        if pose is None:
+            return None
+        q = pose.orientation
+        rel_yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+        depth = abs(math.cos(rel_yaw)) * self.bin_half[0] + abs(math.sin(rel_yaw)) * self.bin_half[1]
+        c = (pose.position.x, pose.position.y, pose.position.z)
+        target = bin_release_target(c, c[0] - depth, self.limits['bin_drop'])
+        ok, arm_q, err, tilt = self.arm.ik(target, self.limits['bin_drop']['max_tilt_deg'])
+        return np.asarray(arm_q) if ok else None
+
+
+def main():
+    rclpy.init()
+    node = GraspingNode()
+    ex = MultiThreadedExecutor()
+    ex.add_node(node)
+    try:
+        ex.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()
+
+
+if __name__ == '__main__':
+    main()
