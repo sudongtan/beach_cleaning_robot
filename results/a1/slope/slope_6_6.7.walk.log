@@ -1,0 +1,27 @@
+t=  16.0 x=  3.99 y= 15.22 yaw=+0.03 roll= +0.2 pitch= +0.4 zone=dry ground=+0.17 m slope= 2.6 deg
+t=  17.0 x=  4.17 y= 15.21 yaw=-0.00 roll= +0.3 pitch= +0.5 zone=dry ground=+0.17 m slope= 2.7 deg
+t=  18.0 x=  4.54 y= 15.23 yaw=-0.03 roll= -0.9 pitch= +0.8 zone=dry ground=+0.18 m slope= 2.8 deg
+t=  19.0 x=  4.90 y= 15.22 yaw=-0.04 roll= -0.5 pitch= +0.6 zone=dry ground=+0.19 m slope= 3.0 deg
+t=  20.0 x=  5.25 y= 15.21 yaw=-0.04 roll= -1.1 pitch= +0.9 zone=dry ground=+0.20 m slope= 3.1 deg
+t=  21.0 x=  5.61 y= 15.20 yaw=-0.03 roll= -1.1 pitch= +0.8 zone=dry ground=+0.21 m slope= 3.3 deg
+t=  22.0 x=  5.96 y= 15.19 yaw=-0.03 roll= -0.7 pitch= +0.5 zone=dry ground=+0.22 m slope= 3.5 deg
+t=  23.0 x=  6.32 y= 15.18 yaw=-0.04 roll= -0.4 pitch= +0.8 zone=dry ground=+0.23 m slope= 3.7 deg
+t=  24.0 x=  6.68 y= 15.17 yaw=-0.04 roll= -0.8 pitch= +0.7 zone=dry ground=+0.24 m slope= 3.9 deg
+t=  25.0 x=  7.04 y= 15.16 yaw=-0.03 roll= -1.1 pitch= +0.8 zone=dry ground=+0.24 m slope= 4.1 deg
+t=  26.0 x=  7.39 y= 15.14 yaw=-0.03 roll= -0.9 pitch= +0.4 zone=dry ground=+0.25 m slope= 4.3 deg
+t=  27.0 x=  7.75 y= 15.13 yaw=-0.04 roll= -0.4 pitch= +0.6 zone=dry ground=+0.25 m slope= 4.5 deg
+t=  28.0 x=  8.10 y= 15.11 yaw=-0.04 roll= -0.1 pitch= +0.5 zone=dry ground=+0.25 m slope= 4.7 deg
+t=  29.0 x=  8.46 y= 15.10 yaw=-0.04 roll= -0.8 pitch= +0.7 zone=dry ground=+0.25 m slope= 4.9 deg
+t=  30.0 x=  8.81 y= 15.09 yaw=-0.03 roll= -0.8 pitch= +0.5 zone=dry ground=+0.24 m slope= 5.0 deg
+t=  31.0 x=  9.16 y= 15.08 yaw=-0.03 roll= -0.8 pitch= +0.3 zone=dry ground=+0.23 m slope= 5.0 deg
+t=  32.0 x=  9.52 y= 15.07 yaw=-0.04 roll= -0.4 pitch= +0.7 zone=dry ground=+0.23 m slope= 5.0 deg
+t=  33.0 x=  9.88 y= 15.06 yaw=-0.04 roll= -1.0 pitch= +0.7 zone=dry ground=+0.22 m slope= 4.8 deg
+t=  34.0 x= 10.23 y= 15.05 yaw=-0.04 roll= -0.9 pitch= +0.7 zone=dry ground=+0.21 m slope= 4.6 deg
+t=  35.0 x= 10.58 y= 15.04 yaw=-0.04 roll= -1.0 pitch= +0.2 zone=dry ground=+0.20 m slope= 4.3 deg
+t=  36.0 x= 10.94 y= 15.03 yaw=-0.04 roll= -0.8 pitch= +0.5 zone=dry ground=+0.20 m slope= 4.0 deg
+t=  37.0 x= 11.29 y= 15.01 yaw=-0.05 roll= -0.6 pitch= +0.6 zone=dry ground=+0.19 m slope= 3.7 deg
+t=  38.0 x= 11.65 y= 15.00 yaw=-0.05 roll= -1.0 pitch= +0.8 zone=dry ground=+0.19 m slope= 3.4 deg
+t=  39.0 x= 12.00 y= 14.99 yaw=-0.05 roll= -0.8 pitch= +0.5 zone=dry ground=+0.19 m slope= 3.1 deg
+t=  40.0 x= 12.36 y= 14.97 yaw=-0.05 roll= -0.8 pitch= +0.3 zone=dry ground=+0.19 m slope= 2.9 deg
+t=  41.0 x= 12.56 y= 14.95 yaw=-0.02 roll= +0.7 pitch= +0.9 zone=dry ground=+0.19 m slope= 2.8 deg
+RESULT FELL: reached 1/5 waypoints, final (12.57, 14.84), max tilt 36.0 deg, zones ['dry']

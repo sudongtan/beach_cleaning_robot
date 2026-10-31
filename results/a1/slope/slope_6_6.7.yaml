@@ -1,0 +1,376 @@
+schema_version: 1
+scenes:
+- seed: 6
+  area:
+    size:
+    - 40.0
+    - 30.0
+  geo:
+    latitude_deg: 41.3784
+    longitude_deg: 2.1925
+    elevation_m: 0.0
+  terrain:
+    z_min: -1.0
+    z_max: 6.0
+    heightmap:
+      pixels: 257
+      size: 64.0
+      center:
+      - 20.0
+      - 15.0
+    waterline_y: 4.587
+    wet_zone_width: 5.644
+    wet_zone_height: 0.03
+    beach_slope: 0.018
+    roughness:
+    - amplitude: 0.0069
+      wavelength: 5.308
+      direction_deg: 0.081
+      phase: 4.1646
+    - amplitude: 0.0068
+      wavelength: 7.799
+      direction_deg: 67.169
+      phase: 4.8389
+    - amplitude: 0.0056
+      wavelength: 8.01
+      direction_deg: 131.368
+      phase: 2.6013
+    - amplitude: 0.0072
+      wavelength: 7.41
+      direction_deg: 34.737
+      phase: 3.4785
+    - amplitude: 0.0088
+      wavelength: 5.328
+      direction_deg: 144.606
+      phase: 4.3083
+    dunes:
+    - x: 8.608
+      y: 23.791
+      height: 0.3660408211083669
+      sigma_x: 3.503
+      sigma_y: 3.503
+    - x: 8.626
+      y: 20.583
+      height: 0.3255148730570834
+      sigma_x: 3.668
+      sigma_y: 3.668
+    - x: -2.537
+      y: 35.183
+      height: 1.893
+      sigma_x: 5.828
+      sigma_y: 2.956
+    - x: 19.255
+      y: 38.331
+      height: 1.255
+      sigma_x: 5.576
+      sigma_y: 2.985
+    - x: 41.975
+      y: 37.015
+      height: 1.904
+      sigma_x: 5.633
+      sigma_y: 2.622
+    - x: 16.063
+      y: 36.43
+      height: 1.188
+      sigma_x: 5.5
+      sigma_y: 2.839
+    friction:
+      dry_sand: 0.6
+      wet_sand: 0.8
+  geofence:
+    polygon:
+    - - 0.5
+      - 5.587
+    - - 39.5
+      - 5.587
+    - - 39.5
+      - 28.5
+    - - 0.5
+      - 28.5
+  robot_start:
+    pose:
+    - 4.0
+    - 15.264
+    - 0.0
+  bins:
+  - id: bin_recyclable
+    model: bin_recyclable
+    bin_id: recyclable
+    pose:
+    - 1.5
+    - 14.664
+    - 0.0
+  - id: bin_residual
+    model: bin_residual
+    bin_id: residual
+    pose:
+    - 1.5
+    - 15.864
+    - 0.0
+  landmarks:
+  - id: lifeguard_tower
+    model: lifeguard_tower
+    pose:
+    - 16.193
+    - 26.307
+    - -1.6429
+  - id: fence_post_00
+    model: fence_post
+    pose:
+    - 0.0
+    - 29.5
+    - 0.0
+  - id: fence_post_01
+    model: fence_post
+    pose:
+    - 3.0
+    - 29.5
+    - 0.0
+  - id: fence_post_02
+    model: fence_post
+    pose:
+    - 6.0
+    - 29.5
+    - 0.0
+  - id: fence_post_03
+    model: fence_post
+    pose:
+    - 9.0
+    - 29.5
+    - 0.0
+  - id: fence_post_04
+    model: fence_post
+    pose:
+    - 12.0
+    - 29.5
+    - 0.0
+  - id: fence_post_05
+    model: fence_post
+    pose:
+    - 15.0
+    - 29.5
+    - 0.0
+  - id: fence_post_06
+    model: fence_post
+    pose:
+    - 18.0
+    - 29.5
+    - 0.0
+  - id: fence_post_07
+    model: fence_post
+    pose:
+    - 21.0
+    - 29.5
+    - 0.0
+  - id: fence_post_08
+    model: fence_post
+    pose:
+    - 24.0
+    - 29.5
+    - 0.0
+  - id: fence_post_09
+    model: fence_post
+    pose:
+    - 27.0
+    - 29.5
+    - 0.0
+  - id: fence_post_10
+    model: fence_post
+    pose:
+    - 30.0
+    - 29.5
+    - 0.0
+  - id: fence_post_11
+    model: fence_post
+    pose:
+    - 33.0
+    - 29.5
+    - 0.0
+  - id: fence_post_12
+    model: fence_post
+    pose:
+    - 36.0
+    - 29.5
+    - 0.0
+  - id: fence_post_13
+    model: fence_post
+    pose:
+    - 39.0
+    - 29.5
+    - 0.0
+  trash:
+  - id: trash_00
+    model: pet_bottle_1500
+    material: pet
+    pose:
+    - 31.811
+    - 7.776
+    - 2.3278
+    half_buried: false
+  - id: trash_01
+    model: poly_cup
+    material: residual
+    pose:
+    - 15.338
+    - 7.398
+    - -0.4623
+    half_buried: false
+  - id: trash_02
+    model: glass_jar
+    material: glass
+    pose:
+    - 12.363
+    - 24.252
+    - -1.9343
+    half_buried: false
+  - id: trash_03
+    model: can_330
+    material: metal
+    pose:
+    - 26.998
+    - 15.937
+    - 2.9221
+    half_buried: false
+  - id: trash_04
+    model: pet_bottle_1500
+    material: pet
+    pose:
+    - 10.384
+    - 23.85
+    - 0.0172
+    half_buried: true
+    bury_fraction: 0.366
+  - id: trash_05
+    model: cigarette_pack
+    material: residual
+    pose:
+    - 20.656
+    - 28.01
+    - 2.6825
+    half_buried: false
+  - id: trash_06
+    model: can_330
+    material: metal
+    pose:
+    - 16.96
+    - 16.711
+    - 0.982
+    half_buried: false
+  - id: trash_07
+    model: glass_bottle_330
+    material: glass
+    pose:
+    - 19.691
+    - 22.056
+    - 0.8449
+    half_buried: false
+  - id: trash_08
+    model: food_container
+    material: residual
+    pose:
+    - 18.732
+    - 14.019
+    - -2.1172
+    half_buried: false
+  - id: trash_09
+    model: glass_jar
+    material: glass
+    pose:
+    - 36.053
+    - 19.764
+    - -1.4715
+    half_buried: false
+  - id: trash_10
+    model: glass_bottle_330
+    material: glass
+    pose:
+    - 25.66
+    - 27.804
+    - -2.1477
+    half_buried: false
+  distractors:
+  - id: distractor_00
+    model: rock_small
+    type: rock
+    pose:
+    - 22.324
+    - 19.857
+    - 2.9195
+  - id: distractor_01
+    model: rock_medium
+    type: rock
+    pose:
+    - 1.834
+    - 23.219
+    - -2.437
+  - id: distractor_02
+    model: rock_small
+    type: rock
+    pose:
+    - 33.723
+    - 7.093
+    - -1.9313
+  - id: distractor_03
+    model: rock_small
+    type: rock
+    pose:
+    - 24.403
+    - 15.273
+    - 1.7737
+  - id: distractor_04
+    model: shell
+    type: shell
+    pose:
+    - 19.677
+    - 16.334
+    - -2.5123
+  - id: distractor_05
+    model: rock_small
+    type: rock
+    pose:
+    - 37.933
+    - 21.156
+    - -1.6125
+  - id: distractor_06
+    model: rock_small
+    type: rock
+    pose:
+    - 6.191
+    - 19.953
+    - -2.5301
+  - id: distractor_07
+    model: driftwood
+    type: driftwood
+    pose:
+    - 28.516
+    - 7.599
+    - -2.9478
+  - id: distractor_08
+    model: shell
+    type: shell
+    pose:
+    - 5.491
+    - 24.633
+    - -2.6167
+  - id: distractor_09
+    model: shell
+    type: shell
+    pose:
+    - 25.103
+    - 11.687
+    - 2.1263
+  - id: distractor_10
+    model: seaweed
+    type: seaweed
+    pose:
+    - 1.531
+    - 8.479
+    - 1.9996
+  - id: distractor_11
+    model: rock_medium
+    type: rock
+    pose:
+    - 35.803
+    - 15.709
+    - 1.7499
+  person: null

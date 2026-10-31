@@ -1,0 +1,589 @@
+python3 sim/gazebo/load_scene.py --seed 9
+/home/xd/ros2_ws/src/beach_cleaning_robot/sim/gazebo/worlds/generated/scene_9.sdf
+source /opt/ros/jazzy/setup.bash && source /home/xd/ros2_ws/install/setup.bash && GZ_PARTITION=a1b ros2 launch bringup sim.launch.py sim:=gazebo \
+  scene:=/home/xd/ros2_ws/src/beach_cleaning_robot/sim/gazebo/worlds/generated/scene_9.manifest.yaml headless:=true rviz:=false
+[INFO] [launch]: All log files can be found below /home/xd/.ros/log/2026-10-12-17-28-46-221746-xd-thinkpad-109046
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [109067]
+[INFO] [parameter_bridge-2]: process started with pid [109068]
+[INFO] [gnss_relay.py-3]: process started with pid [109070]
+[INFO] [robot_state_publisher-4]: process started with pid [109071]
+[INFO] [attach_server.py-5]: process started with pid [109072]
+[INFO] [ground_truth.py-6]: process started with pid [109073]
+[INFO] [create-7]: process started with pid [109074]
+[INFO] [legubiao_adapter-8]: process started with pid [109075]
+[robot_state_publisher-4] [INFO] [1791818927.028327665] [robot_state_publisher]: Robot initialized
+[create-7] [INFO] [1791818927.038468212] [ros_gz_sim]: Requesting list of world names.
+[legubiao_adapter-8] [INFO] [1791818927.826476573] [locomotion.legubiao_adapter]: waiting for the controller (controller_odom) ...
+[gazebo-1] [1;32m[Msg] [0m[1;32mGazebo Sim Server v[0m[1;32m8.15.0[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading SDF world file[[0m[1;32m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/gazebo/worlds/generated/scene_9.sdf[0m[1;32m].[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing entity system service on [[0m[1;32m/[0m[1;32mentity/system/add[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/beach/create_multiple[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/beach/create_multiple/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/beach/remove[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/beach/remove/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/beach/set_pose[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/beach/set_pose/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/beach/set_pose_vector[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/beach/set_pose_vector/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/beach/light_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/beach/light_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/beach/set_physics[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/beach/set_physics/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/beach/set_spherical_coordinates[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/beach/set_spherical_coordinates/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/beach/enable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/beach/enable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/beach/disable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/beach/disable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/beach/visual_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/beach/visual_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/beach/wheel_slip[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/beach/wheel_slip/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoaded level [[0m[1;32mdefault[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world controls on [[0m[1;32m/world/beach[0m[1;32m/control], [[0m[1;32m/world/beach[0m[1;32m/control/state] and [[0m[1;32m/world/beach[0m[1;32m/playback/control][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing GUI information on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mgui/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mWorld [[0m[1;32mbeach[0m[1;32m] initialized with [[0m[1;32m1ms[0m[1;32m] physics profile.[0m[1;32m[0m
+[create-7] [INFO] [1791818927.992437592] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-7] [INFO] [1791818928.006372943] [ros_gz_sim]: Entity creation successful.
+[parameter_bridge-2] [INFO] [1791818928.067096511] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791818928.071876956] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/image (gz.msgs.Image) -> /camera/rgb (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791818928.080392364] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/depth_image (gz.msgs.Image) -> /camera/depth (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791818928.082153429] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/camera_info (gz.msgs.CameraInfo) -> /camera/info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791818928.084574988] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/nav_imu (gz.msgs.IMU) -> /imu (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791818928.087004420] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/navsat (gz.msgs.NavSat) -> /gnss/fix_raw (sensor_msgs/msg/NavSatFix)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791818928.089543675] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/sim/gz/ground_truth/odom (gz.msgs.Odometry) -> /sim/ground_truth/pose (nav_msgs/msg/Odometry)] (Lazy 0)
+[INFO] [create-7]: process has finished cleanly [pid 109074]
+[INFO] [spawner-9]: process started with pid [109207]
+[spawner-9] [INFO] [1791818928.651497414] [spawner_joint_state_broadcaster]: waiting for service /controller_manager/list_controllers to become available...
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world SDF generation service on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mgenerate_world_sdf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world names on [[0m[1;32m/gazebo/worlds[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path add service on [[0m[1;32m/gazebo/resource_paths/add[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path get service on [[0m[1;32m/gazebo/resource_paths/get[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path resolve service on [[0m[1;32m/gazebo/resource_paths/resolve[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource paths published on [[0m[1;32m/gazebo/resource_paths[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServer control service on [[0m[1;32m/server_control[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /stats, adding root stats topic[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /clock, adding root clock topic[0m[1;32m[0m
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/link[@name="base_link"]/sensor[@name="rgbd_camera"]/gz_frame_id:<urdf-string>:L0]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/link[@name="base_link"]/sensor[@name="navsat"]/gz_frame_id:<urdf-string>:L0]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="FL_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="FR_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="RL_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="RR_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/link[@name="imu_link"]/sensor[@name="nav_imu"]/gz_frame_id:<urdf-string>:L0]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [INFO] [1791818929.534786480] [gz_quadruped_control]: Loading controller_manager
+[gazebo-1] [INFO] [1791818929.552521111] [controller_manager]: Using ROS clock for triggering controller manager cycles.
+[gazebo-1] [WARN] [1791818929.552583416] [controller_manager]: The resource manager is not yet initialized, will wait for the robot description to initialize it..
+[gazebo-1] [INFO] [1791818929.561528858] [controller_manager]: Subscribing to '/robot_description' topic for robot description.
+[gazebo-1] [WARN] [1791818929.561663557] [gz_quadruped_control]: Waiting RM to load and initialize hardware...
+[gazebo-1] [INFO] [1791818930.059966024] [controller_manager]: Received robot description from topic.
+[gazebo-1] [INFO] [1791818930.060249717] [controller_manager]: Enforcing command limits is disabled. Command limits from URDF will be ignored.
+[gazebo-1] [INFO] [1791818930.086503406] [gz_quadruped_control]: Loading joint: FR_hip_joint
+[gazebo-1] [INFO] [1791818930.086573681] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.086588369] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.086615014] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.086641090] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.086681910] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.086694228] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.086726328] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.086744743] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.086769267] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.086789214] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.086839629] [gz_quadruped_control]: Loading joint: FR_thigh_joint
+[gazebo-1] [INFO] [1791818930.086856879] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.086866016] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.086874947] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.086885977] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.086895610] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.086904183] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.086922335] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.086935980] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.086948600] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.086971651] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.087005098] [gz_quadruped_control]: Loading joint: FR_calf_joint
+[gazebo-1] [INFO] [1791818930.087016679] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.087025533] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087041870] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087052524] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087065550] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.087075102] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087094265] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087108674] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087121008] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.087133716] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.087158256] [gz_quadruped_control]: Loading joint: FL_hip_joint
+[gazebo-1] [INFO] [1791818930.087169018] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.087177857] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087187021] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087197335] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087213224] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.087229288] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087251650] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087269997] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087288069] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.087308317] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.087335763] [gz_quadruped_control]: Loading joint: FL_thigh_joint
+[gazebo-1] [INFO] [1791818930.087378705] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.087390357] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087400022] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087409388] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087419372] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.087428267] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087496043] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087518906] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087531445] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.087543898] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.087567483] [gz_quadruped_control]: Loading joint: FL_calf_joint
+[gazebo-1] [INFO] [1791818930.087578273] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.087587523] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087596666] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087611044] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087621772] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.087630386] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087647236] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087660270] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087679841] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.087692648] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.087718550] [gz_quadruped_control]: Loading joint: RR_hip_joint
+[gazebo-1] [INFO] [1791818930.087730223] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.087745083] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087761452] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087774852] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087784796] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.087798259] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087824860] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087839834] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087865404] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.087885860] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.087911099] [gz_quadruped_control]: Loading joint: RR_thigh_joint
+[gazebo-1] [INFO] [1791818930.087922203] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.087930881] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.087943756] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.087959854] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.087976048] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.087988714] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088017718] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088040688] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088054787] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.088066780] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.088090298] [gz_quadruped_control]: Loading joint: RR_calf_joint
+[gazebo-1] [INFO] [1791818930.088101352] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.088110713] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088119457] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088128809] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088138320] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.088146699] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088162956] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088175493] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088187427] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.088199386] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.088224152] [gz_quadruped_control]: Loading joint: RL_hip_joint
+[gazebo-1] [INFO] [1791818930.088241520] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.088251281] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088260374] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088269269] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088288391] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.088304361] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088327940] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088352683] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088369036] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.088380966] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.088403842] [gz_quadruped_control]: Loading joint: RL_thigh_joint
+[gazebo-1] [INFO] [1791818930.088414517] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.088423632] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088454305] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088473590] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088499324] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.088509725] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088535413] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088553605] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088565725] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.088577170] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.088604089] [gz_quadruped_control]: Loading joint: RL_calf_joint
+[gazebo-1] [INFO] [1791818930.088614904] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.088623858] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088639633] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088650279] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088659948] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.088669159] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088693548] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088711066] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088723008] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.088734575] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.088766088] [gz_quadruped_control]: Loading joint: arm_waist
+[gazebo-1] [INFO] [1791818930.088782517] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.088797154] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088845502] [gz_quadruped_control]: 			 found initial value: 0.000000
+[gazebo-1] [INFO] [1791818930.088872699] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088884609] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088894260] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.088906282] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.088932639] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.088946253] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.088963178] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.088980106] [gz_quadruped_control]: 			 found initial value: 300.000000
+[gazebo-1] [INFO] [1791818930.089012672] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.089045277] [gz_quadruped_control]: 			 found initial value: 10.000000
+[gazebo-1] [INFO] [1791818930.089089220] [gz_quadruped_control]: Loading joint: arm_shoulder
+[gazebo-1] [INFO] [1791818930.089104082] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.089112932] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089121668] [gz_quadruped_control]: 			 found initial value: -1.380000
+[gazebo-1] [INFO] [1791818930.089137881] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089154215] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089164384] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.089172802] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089196278] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089218494] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089237728] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.089253882] [gz_quadruped_control]: 			 found initial value: 500.000000
+[gazebo-1] [INFO] [1791818930.089280955] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.089302328] [gz_quadruped_control]: 			 found initial value: 17.000000
+[gazebo-1] [INFO] [1791818930.089360307] [gz_quadruped_control]: Loading joint: arm_elbow
+[gazebo-1] [INFO] [1791818930.089386861] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.089404901] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089422317] [gz_quadruped_control]: 			 found initial value: 1.490000
+[gazebo-1] [INFO] [1791818930.089452723] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089472962] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089490555] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.089504742] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089533450] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089561398] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089574420] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.089584239] [gz_quadruped_control]: 			 found initial value: 150.000000
+[gazebo-1] [INFO] [1791818930.089599078] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.089628769] [gz_quadruped_control]: 			 found initial value: 5.000000
+[gazebo-1] [INFO] [1791818930.089660248] [gz_quadruped_control]: Loading joint: arm_forearm_roll
+[gazebo-1] [INFO] [1791818930.089672361] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.089681686] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089705436] [gz_quadruped_control]: 			 found initial value: 0.000000
+[gazebo-1] [INFO] [1791818930.089713683] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089720915] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089728107] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.089735441] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089748526] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089763978] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089774505] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.089786099] [gz_quadruped_control]: 			 found initial value: 8.000000
+[gazebo-1] [INFO] [1791818930.089805249] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.089816082] [gz_quadruped_control]: 			 found initial value: 0.250000
+[gazebo-1] [INFO] [1791818930.089836679] [gz_quadruped_control]: Loading joint: arm_wrist_angle
+[gazebo-1] [INFO] [1791818930.089845177] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.089852074] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089858590] [gz_quadruped_control]: 			 found initial value: 0.810000
+[gazebo-1] [INFO] [1791818930.089866689] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089873743] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089880628] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.089887311] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089905849] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.089915928] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.089924884] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.089932884] [gz_quadruped_control]: 			 found initial value: 10.000000
+[gazebo-1] [INFO] [1791818930.089943704] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.089950685] [gz_quadruped_control]: 			 found initial value: 0.300000
+[gazebo-1] [INFO] [1791818930.089969464] [gz_quadruped_control]: Loading joint: arm_wrist_rotate
+[gazebo-1] [INFO] [1791818930.089977896] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.089985381] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.089992166] [gz_quadruped_control]: 			 found initial value: 0.000000
+[gazebo-1] [INFO] [1791818930.090000138] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.090007290] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.090014472] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.090021171] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.090033996] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.090043219] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.090052140] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.090059212] [gz_quadruped_control]: 			 found initial value: 5.000000
+[gazebo-1] [INFO] [1791818930.090068716] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.090075855] [gz_quadruped_control]: 			 found initial value: 0.045000
+[gazebo-1] [INFO] [1791818930.090094634] [gz_quadruped_control]: Loading joint: arm_left_finger
+[gazebo-1] [INFO] [1791818930.090105456] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.090112613] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.090119410] [gz_quadruped_control]: 			 found initial value: 0.015000
+[gazebo-1] [INFO] [1791818930.090127832] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.090135114] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.090142084] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.090148969] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.090161551] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.090171094] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.090184702] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.090192063] [gz_quadruped_control]: 			 found initial value: 60.000000
+[gazebo-1] [INFO] [1791818930.090202990] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.090209970] [gz_quadruped_control]: 			 found initial value: 2.000000
+[gazebo-1] [INFO] [1791818930.090228550] [gz_quadruped_control]: Loading joint: arm_right_finger
+[gazebo-1] [INFO] [1791818930.090250141] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.090260489] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.090267711] [gz_quadruped_control]: 			 found initial value: -0.015000
+[gazebo-1] [INFO] [1791818930.090277518] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.090290170] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.090304091] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791818930.090312686] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791818930.090326886] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791818930.090336782] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791818930.090363317] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791818930.090374818] [gz_quadruped_control]: 			 found initial value: 60.000000
+[gazebo-1] [INFO] [1791818930.090386166] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791818930.090393417] [gz_quadruped_control]: 			 found initial value: 2.000000
+[gazebo-1] [INFO] [1791818930.090660837] [gz_quadruped_control]: Loading sensor: imu_sensor
+[gazebo-1] [INFO] [1791818930.090678497] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.090722146] [gz_quadruped_control]: 		 orientation.x
+[gazebo-1] [INFO] [1791818930.090733047] [gz_quadruped_control]: 		 orientation.y
+[gazebo-1] [INFO] [1791818930.090741252] [gz_quadruped_control]: 		 orientation.z
+[gazebo-1] [INFO] [1791818930.090749476] [gz_quadruped_control]: 		 orientation.w
+[gazebo-1] [INFO] [1791818930.090758887] [gz_quadruped_control]: 		 angular_velocity.x
+[gazebo-1] [INFO] [1791818930.090788803] [gz_quadruped_control]: 		 angular_velocity.y
+[gazebo-1] [INFO] [1791818930.090806948] [gz_quadruped_control]: 		 angular_velocity.z
+[gazebo-1] [INFO] [1791818930.090816152] [gz_quadruped_control]: 		 linear_acceleration.x
+[gazebo-1] [INFO] [1791818930.090823647] [gz_quadruped_control]: 		 linear_acceleration.y
+[gazebo-1] [INFO] [1791818930.090831095] [gz_quadruped_control]: 		 linear_acceleration.z
+[gazebo-1] [INFO] [1791818930.090850306] [gz_quadruped_control]: Loading sensor: nav_imu
+[gazebo-1] [INFO] [1791818930.090859663] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791818930.091028935] [gz_quadruped_control]: Loading Foot Force sensor: FL_foot_force
+[gazebo-1] [INFO] [1791818930.091061815] [gz_quadruped_control]: Loading Foot Force sensor: FR_foot_force
+[gazebo-1] [INFO] [1791818930.091072320] [gz_quadruped_control]: Loading Foot Force sensor: RL_foot_force
+[gazebo-1] [INFO] [1791818930.091080741] [gz_quadruped_control]: Loading Foot Force sensor: RR_foot_force
+[gazebo-1] [INFO] [1791818930.091319392] [controller_manager]: Initialize hardware 'GazeboSystem' 
+[gazebo-1] [WARN] [1791818930.091397649] [controller_manager.hardware_component.system.GazeboSystem]: Executor is not available during hardware component initialization for 'GazeboSystem'. Skipping node creation!
+[gazebo-1] [INFO] [1791818930.091698205] [controller_manager]: Successful initialization of hardware 'GazeboSystem'
+[gazebo-1] [INFO] [1791818930.093278845] [controller_manager]: Activating component 'GazeboSystem'.
+[gazebo-1] [INFO] [1791818930.093321681] [resource_manager]: 'configure' hardware 'GazeboSystem' 
+[gazebo-1] [INFO] [1791818930.093334050] [gz_quadruped_control]: System Successfully configured!
+[gazebo-1] [INFO] [1791818930.093358235] [resource_manager]: Successful 'configure' of hardware 'GazeboSystem'
+[gazebo-1] [INFO] [1791818930.093415814] [resource_manager]: 'activate' hardware 'GazeboSystem' 
+[gazebo-1] [INFO] [1791818930.093442210] [resource_manager]: Successful 'activate' of hardware 'GazeboSystem'
+[gazebo-1] [WARN] [1791818930.093624357] [controller_manager]: Component 'GazeboSystem' does not have read or write statistics initialized, skipping registration.
+[gazebo-1] [INFO] [1791818930.093651054] [controller_manager]: Resource Manager has been successfully initialized. Starting Controller Manager services...
+[spawner-9] [INFO] [1791818930.162283231] [spawner_joint_state_broadcaster]: Setting controller param "params_file" to "['/tmp/launch_params_tq1lnf0e']" for joint_state_broadcaster
+[gazebo-1] [INFO] [1791818930.245930267] [controller_manager]: Loading controller : 'joint_state_broadcaster' of type 'joint_state_broadcaster/JointStateBroadcaster'
+[gazebo-1] [INFO] [1791818930.246062752] [controller_manager]: Loading controller 'joint_state_broadcaster'
+[gazebo-1] [INFO] [1791818930.263626441] [controller_manager]: Controller 'joint_state_broadcaster' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_tq1lnf0e --param use_sim_time:=true 
+[spawner-9] [INFO] [1791818930.287945352] [spawner_joint_state_broadcaster]: Loaded joint_state_broadcaster
+[gazebo-1] [INFO] [1791818930.289322128] [controller_manager]: Configuring controller: 'joint_state_broadcaster'
+[gazebo-1] [INFO] [1791818930.289724771] [joint_state_broadcaster]: 'joints' or 'interfaces' parameter is empty. All available state interfaces will be published
+[gazebo-1] [INFO] [1791818930.385478096] [controller_manager]: Activating controllers: [ joint_state_broadcaster ]
+[gazebo-1] [WARN] [1791818931.662865543] [gz_quadruped_control]:  Desired controller update period (0.001 s) is slower than the gazebo simulation period (0 s).
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry on [[0m[1;32m/sim/gz/ground_truth/odom[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry with covariance on [[0m[1;32m/model/beach_robot/odometry_with_covariance[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing Pose_V (TF) on [[0m[1;32m/sim/gz/ground_truth/tf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mUsing [[0m[1;32mode[0m[1;32m] collision detector[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mUsing [[0m[1;32mDantzigBoxedLcpSolver[0m[1;32m] solver.[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading plugin [[0m[1;32mgz-rendering-ogre2[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing scene information on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mscene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing graph information on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mscene/graph[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mstate[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state (async) on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mstate_async[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing scene information on [[0m[1;32m/world/beach/scene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing entity deletions on [[0m[1;32m/world/beach/scene/deletion[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing state changes on [[0m[1;32m/world/beach/state[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing pose messages on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mpose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing dynamic pose messages on [[0m[1;32m/world/beach[0m[1;32m/[0m[1;32mdynamic_pose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(1)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(1)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(2)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(2)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(3)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(3)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(4)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(4)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(5)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(5)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(6)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(6)]
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::Joint | beach_robot) The name [fixed] is a duplicate, so it has been renamed to [fixed(7)]
+[gazebo-1] [1;33m[Wrn] [Ogre2Heightmap.cc:125] [0m[1;33mHeightmap final sampling should be 2^n[0m[1;33m[0m
+[gazebo-1] [1;33m which differs from ogre1's 2^n+1[0m[1;33m[0m
+[gazebo-1] [1;33mThe last row and column will be cropped[0m[1;33m[0m
+[gazebo-1] [1;33msize = (width * sampling) - sampling + 1[0m[1;33m[0m
+[gazebo-1] [1;33m[[0m[1;33m257[0m[1;33m] = ([[0m[1;33m257[0m[1;33m] * [[0m[1;33m1[0m[1;33m]) - [[0m[1;33m1[0m[1;33m] + 1[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/bin.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/lifeguard_tower.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/fence_post.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/cigarette_pack.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/food_container.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/food_tin.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/pet_bottle_1500.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/glass_bottle_330.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/rock_small.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/shell.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/rock_medium.obj[0m[1;33m][0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [OBJLoader.cc:202] [0m[1;33mMissing material for shape[[0m[1;33m] [0m[1;33min OBJ file[[0m[1;33m/home/xd/ros2_ws/src/beach_cleaning_robot/sim/common/meshes/driftwood.obj[0m[1;33m][0m[1;33m[0m
+[attach_server.py-5] [INFO] [1791818932.176320961] [attach_server]: detached all 8 items after startup (4.4 s)
+[attach_server.py-5] [INFO] [1791818932.277841698] [attach_server]: world beach unpaused
+[gazebo-1] [1;32mMsg[0m [NameManager::issueNewName] (Skeleton::N4dart8dynamics9ShapeNodeE | beach_robot) The name [link:collision_0] is a duplicate, so it has been renamed to [link:collision_0(7)]
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading heightmap: [0m[1;32mscene::Heightmap(65413)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mHeightmap loaded. Process took [0m[1;32m0[0m[1;32m ms.[0m[1;32m[0m
+[gazebo-1] [1;36mDbg[0m ODE Heightfield AABB: min = {-31.8755, -31.8755, -0.05} max = {31.8755, 31.8755, 4.5581}
+[gazebo-1] [INFO] [1791818933.681287931] [gz_quadruped_control]: IMU imu_sensor has a topic name: imu
+[gazebo-1] [INFO] [1791818933.681518650] [gz_quadruped_control]: IMU nav_imu has a topic name: nav_imu
+[gazebo-1] [INFO] [1791818933.681600246] [gz_quadruped_control]: ForceTorque FL_foot_force has a topic name: FL_foot_force
+[gazebo-1] [INFO] [1791818933.681668171] [gz_quadruped_control]: ForceTorque FR_foot_force has a topic name: FR_foot_force
+[gazebo-1] [INFO] [1791818933.681727176] [gz_quadruped_control]: ForceTorque RL_foot_force has a topic name: RL_foot_force
+[gazebo-1] [INFO] [1791818933.681783806] [gz_quadruped_control]: ForceTorque RR_foot_force has a topic name: RR_foot_force
+[gazebo-1] [INFO] [1791818933.682125985] [controller_manager]: Successfully switched controllers!
+[spawner-9] [INFO] [1791818933.685407909] [spawner_joint_state_broadcaster]: Configured and activated joint_state_broadcaster
+[spawner-9] [INFO] [1791818933.691868728] [spawner_joint_state_broadcaster]: Setting controller param "params_file" to "['/tmp/launch_params_tq1lnf0e']" for imu_sensor_broadcaster
+[gazebo-1] [INFO] [1791818933.692829594] [controller_manager]: Loading controller : 'imu_sensor_broadcaster' of type 'imu_sensor_broadcaster/IMUSensorBroadcaster'
+[gazebo-1] [INFO] [1791818933.692863218] [controller_manager]: Loading controller 'imu_sensor_broadcaster'
+[gazebo-1] [INFO] [1791818933.696041528] [controller_manager]: Controller 'imu_sensor_broadcaster' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_tq1lnf0e --param use_sim_time:=true 
+[spawner-9] [INFO] [1791818933.711009685] [spawner_joint_state_broadcaster]: Loaded imu_sensor_broadcaster
+[gazebo-1] [INFO] [1791818933.711313447] [controller_manager]: Configuring controller: 'imu_sensor_broadcaster'
+[gazebo-1] [INFO] [1791818933.714255486] [controller_manager]: Activating controllers: [ imu_sensor_broadcaster ]
+[gazebo-1] [INFO] [1791818933.715004519] [controller_manager]: Successfully switched controllers!
+[spawner-9] [INFO] [1791818933.717821125] [spawner_joint_state_broadcaster]: Configured and activated imu_sensor_broadcaster
+[INFO] [spawner-9]: process has finished cleanly [pid 109207]
+[INFO] [spawner-10]: process started with pid [109331]
+[INFO] [spawner-11]: process started with pid [109332]
+[spawner-11] [INFO] [1791818934.523897742] [spawner_arm_controller]: waiting for service /controller_manager/list_controllers to become available...
+[spawner-11] [INFO] [1791818936.530957833] [spawner_arm_controller]: Setting controller param "params_file" to "['/tmp/launch_params_yvs7_ctq']" for arm_controller
+[gazebo-1] [INFO] [1791818936.532995687] [controller_manager]: Loading controller : 'arm_controller' of type 'joint_trajectory_controller/JointTrajectoryController'
+[gazebo-1] [INFO] [1791818936.533069468] [controller_manager]: Loading controller 'arm_controller'
+[gazebo-1] [INFO] [1791818936.539699277] [controller_manager]: Controller 'arm_controller' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_yvs7_ctq --param use_sim_time:=true 
+[spawner-11] [INFO] [1791818936.564046758] [spawner_arm_controller]: Loaded arm_controller
+[gazebo-1] [INFO] [1791818936.565275914] [controller_manager]: Configuring controller: 'arm_controller'
+[gazebo-1] [INFO] [1791818936.565635393] [arm_controller]: No specific joint names are used for command interfaces. Using 'joints' parameter.
+[gazebo-1] [INFO] [1791818936.565678004] [arm_controller]: Command interfaces are [position velocity] and state interfaces are [position velocity].
+[gazebo-1] [INFO] [1791818936.565723183] [arm_controller]: Using 'splines' interpolation method.
+[gazebo-1] [INFO] [1791818936.569589319] [arm_controller]: Action status changes will be monitored at 20.00 Hz.
+[gazebo-1] [INFO] [1791818936.577985507] [arm_controller]: No scaling interface set. This controller will not read speed scaling from the hardware.
+[gazebo-1] [INFO] [1791818936.580896825] [controller_manager]: Activating controllers: [ arm_controller ]
+[gazebo-1] [INFO] [1791818936.581978157] [controller_manager]: Successfully switched controllers!
+[spawner-11] [INFO] [1791818936.585514111] [spawner_arm_controller]: Configured and activated arm_controller
+[spawner-11] [INFO] [1791818936.592592876] [spawner_arm_controller]: Setting controller param "params_file" to "['/tmp/launch_params_yvs7_ctq']" for gripper_controller
+[gazebo-1] [INFO] [1791818936.593762280] [controller_manager]: Loading controller : 'gripper_controller' of type 'joint_trajectory_controller/JointTrajectoryController'
+[gazebo-1] [INFO] [1791818936.593806283] [controller_manager]: Loading controller 'gripper_controller'
+[gazebo-1] [INFO] [1791818936.594066439] [controller_manager]: Controller 'gripper_controller' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_yvs7_ctq --param use_sim_time:=true 
+[spawner-11] [INFO] [1791818936.619922426] [spawner_arm_controller]: Loaded gripper_controller
+[gazebo-1] [INFO] [1791818936.620293177] [controller_manager]: Configuring controller: 'gripper_controller'
+[gazebo-1] [INFO] [1791818936.620477461] [gripper_controller]: No specific joint names are used for command interfaces. Using 'joints' parameter.
+[gazebo-1] [INFO] [1791818936.620502502] [gripper_controller]: Command interfaces are [position velocity] and state interfaces are [position velocity].
+[gazebo-1] [INFO] [1791818936.620512811] [gripper_controller]: Using 'splines' interpolation method.
+[gazebo-1] [INFO] [1791818936.622213462] [gripper_controller]: Action status changes will be monitored at 20.00 Hz.
+[gazebo-1] [INFO] [1791818936.629427417] [gripper_controller]: No scaling interface set. This controller will not read speed scaling from the hardware.
+[gazebo-1] [INFO] [1791818936.631155222] [controller_manager]: Activating controllers: [ gripper_controller ]
+[gazebo-1] [INFO] [1791818936.633739877] [controller_manager]: Successfully switched controllers!
+[spawner-11] [INFO] [1791818936.637403850] [spawner_arm_controller]: Configured and activated gripper_controller
+[spawner-10] [INFO] [1791818936.811697189] [spawner_basic_quadruped_controller]: waiting for service /controller_manager/list_controllers to become available...
+[INFO] [spawner-11]: process has finished cleanly [pid 109332]
+[spawner-10] [INFO] [1791818939.570287974] [spawner_basic_quadruped_controller]: Setting controller param "node_options_args" to "['-r', 'odom:=/locomotion/controller_odom', '-r', '/control_input:=/locomotion/control_input', '-r', '/tf:=/locomotion/controller_tf']" for basic_quadruped_controller
+[spawner-10] [INFO] [1791818939.575972164] [spawner_basic_quadruped_controller]: Setting controller param "params_file" to "['/tmp/launch_params_bkn4d6ko']" for basic_quadruped_controller
+[gazebo-1] [INFO] [1791818939.659044026] [controller_manager]: Loading controller : 'basic_quadruped_controller' of type 'basic_quadruped_controller/BasicQuadrupedController'
+[gazebo-1] [INFO] [1791818939.659077495] [controller_manager]: Loading controller 'basic_quadruped_controller'
+[gazebo-1] [INFO] [1791818939.700959579] [controller_manager]: Controller 'basic_quadruped_controller' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_bkn4d6ko --param use_sim_time:=true --ros-args -r odom:=/locomotion/controller_odom -r /control_input:=/locomotion/control_input -r /tf:=/locomotion/controller_tf 
+[gazebo-1] [INFO] [1791818939.717504055] [basic_quadruped_controller]: Controller Manager Update Rate: 500 Hz
+[gazebo-1] 找到第一条腿末端Frame: FR_foot_fixed, 小腿长度: 0.213
+[gazebo-1] Leg FR (controller_idx=0): Hip offset=[ 0.1934 -0.0465       0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] Leg FL (controller_idx=1): Hip offset=[0.1934 0.0465      0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] Leg RR (controller_idx=2): Hip offset=[-0.1934 -0.0465       0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] Leg RL (controller_idx=3): Hip offset=[-0.1934  0.0465       0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] === 站立足端位置 ===
+[gazebo-1] FR:  0.186618    -0.142 -0.339064
+[gazebo-1] FL:  0.186618     0.142 -0.339064
+[gazebo-1] RR: -0.200182    -0.142 -0.339064
+[gazebo-1] RL: -0.200182     0.142 -0.339064
+[gazebo-1] === 简化运动学系统初始化完成 ===
+[gazebo-1] 质量: 15.098 kg
+[gazebo-1] 重心偏移: [ -0.00169499 -7.34589e-05   -0.0556818] m
+[gazebo-1] 惯性张量对角线: [0.208691 0.420864 0.396608]
+[gazebo-1] dt: 0.002
+[gazebo-1] [INFO] [1791818939.720617530] [basic_quadruped_controller]: Robot model initialized successfully for robot: go2
+[gazebo-1] [INFO] [1791818939.720649056] [basic_quadruped_controller]: URDF file: /home/xd/ros2_ws/install/go2_description/share/go2_description/urdf/go2.urdf
+[spawner-10] [INFO] [1791818939.731750072] [spawner_basic_quadruped_controller]: Loaded basic_quadruped_controller
+[gazebo-1] [INFO] [1791818939.733387428] [controller_manager]: Configuring controller: 'basic_quadruped_controller'
+[gazebo-1] [INFO] [1791818939.740196935] [controller_manager]: Activating controllers: [ basic_quadruped_controller ]
+[gazebo-1] [INFO] [1791818939.743073592] [controller_manager]: Successfully switched controllers!
+[spawner-10] [INFO] [1791818939.747437797] [spawner_basic_quadruped_controller]: Configured and activated basic_quadruped_controller
+[INFO] [spawner-10]: process has finished cleanly [pid 109331]
+[legubiao_adapter-8] [INFO] [1791818943.562746421] [locomotion.legubiao_adapter]: stand-up: command 2
+[gazebo-1] [INFO] [1791818943.565405617] [basic_quadruped_controller]: Switched from passive to fixed down
+[legubiao_adapter-8] [INFO] [1791818948.778152102] [locomotion.legubiao_adapter]: stand-up: command 2
+[gazebo-1] [INFO] [1791818948.778684409] [basic_quadruped_controller]: Switched from fixed down to fixed stand
+[legubiao_adapter-8] [INFO] [1791818955.629023283] [locomotion.legubiao_adapter]: stand-up: command 4
+[gazebo-1] [INFO] [1791818955.631112927] [basic_quadruped_controller]: Switched from fixed stand to trotting
+[legubiao_adapter-8] [INFO] [1791818959.278291326] [locomotion.legubiao_adapter]: stand-up done, following /cmd_vel
+[robot_state_publisher-4] [INFO] [1791818985.762922187] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-2] [INFO] [1791818985.762957870] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[legubiao_adapter-8] Traceback (most recent call last):
+[legubiao_adapter-8]   File "/home/xd/ros2_ws/install/locomotion/lib/locomotion/legubiao_adapter", line 33, in <module>
+[legubiao_adapter-8]     sys.exit(load_entry_point('locomotion', 'console_scripts', 'legubiao_adapter')())
+[legubiao_adapter-8]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[legubiao_adapter-8]   File "/home/xd/ros2_ws/build/locomotion/locomotion/legubiao_adapter.py", line 135, in main
+[legubiao_adapter-8]     rclpy.spin(node)
+[legubiao_adapter-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[legubiao_adapter-8]     executor.spin_once()
+[legubiao_adapter-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[legubiao_adapter-8]     self._spin_once_impl(timeout_sec)
+[legubiao_adapter-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[legubiao_adapter-8]     handler, entity, node = self.wait_for_ready_callbacks(
+[legubiao_adapter-8]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[legubiao_adapter-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[legubiao_adapter-8]     return next(self._cb_iter)
+[legubiao_adapter-8]            ^^^^^^^^^^^^^^^^^^^
+[legubiao_adapter-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[legubiao_adapter-8]     raise ExternalShutdownException()
+[legubiao_adapter-8] rclpy.executors.ExternalShutdownException
+[gnss_relay.py-3] Traceback (most recent call last):
+[gnss_relay.py-3]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/gnss_relay.py", line 53, in <module>
+[gnss_relay.py-3]     main()
+[gnss_relay.py-3]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/gnss_relay.py", line 44, in main
+[gnss_relay.py-3]     rclpy.spin(node)
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[gnss_relay.py-3]     executor.spin_once()
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[gnss_relay.py-3]     self._spin_once_impl(timeout_sec)
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[gnss_relay.py-3]     handler, entity, node = self.wait_for_ready_callbacks(
+[gnss_relay.py-3]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[gnss_relay.py-3]     return next(self._cb_iter)
+[gnss_relay.py-3]            ^^^^^^^^^^^^^^^^^^^
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[gnss_relay.py-3]     raise ExternalShutdownException()
+[gnss_relay.py-3] rclpy.executors.ExternalShutdownException
+[attach_server.py-5] Traceback (most recent call last):
+[attach_server.py-5]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/attach_server.py", line 129, in <module>
+[attach_server.py-5]     main()
+[attach_server.py-5]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/attach_server.py", line 120, in main
+[attach_server.py-5]     rclpy.spin(node)
+[attach_server.py-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[attach_server.py-5]     executor.spin_once()
+[attach_server.py-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[attach_server.py-5]     self._spin_once_impl(timeout_sec)
+[attach_server.py-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[attach_server.py-5]     handler, entity, node = self.wait_for_ready_callbacks(
+[attach_server.py-5]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[attach_server.py-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[attach_server.py-5]     return next(self._cb_iter)
+[attach_server.py-5]            ^^^^^^^^^^^^^^^^^^^
+[attach_server.py-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[attach_server.py-5]     raise ExternalShutdownException()
+[attach_server.py-5] rclpy.executors.ExternalShutdownException
+[INFO] [parameter_bridge-2]: process has finished cleanly [pid 109068]
+[INFO] [robot_state_publisher-4]: process has finished cleanly [pid 109071]
+[gazebo-1] [INFO] [1791818985.979326064] [controller_manager.pal_statistics]: Async messages lost 0
+[gazebo-1] [INFO] [1791818985.979404240] [controller_manager.pal_statistics]: publish_async_failures_ 0
+[gazebo-1] [INFO] [1791818985.982140764] [controller_manager.pal_statistics]: Async messages lost 0
+[gazebo-1] [INFO] [1791818985.982168260] [controller_manager.pal_statistics]: publish_async_failures_ 1
+[ERROR] [gnss_relay.py-3]: process has died [pid 109070, exit code 1, cmd '/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/gnss_relay.py --ros-args --params-file /tmp/launch_params_5czdlhf7'].
+[ERROR] [legubiao_adapter-8]: process has died [pid 109075, exit code 1, cmd '/home/xd/ros2_ws/install/locomotion/lib/locomotion/legubiao_adapter --ros-args -r __ns:=/locomotion --params-file /home/xd/ros2_ws/install/locomotion/share/locomotion/config/legubiao_adapter.yaml --params-file /tmp/launch_params_zwjqrova'].
+[ERROR] [attach_server.py-5]: process has died [pid 109072, exit code 1, cmd '/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/attach_server.py --ros-args --params-file /tmp/launch_params_x3hipbam'].
+[INFO] [gazebo-1]: process has finished cleanly [pid 109067]
+[INFO] [launch]: process[gazebo-1] was required: shutting down launched system
+[INFO] [ground_truth.py-6]: sending signal 'SIGINT' to process[ground_truth.py-6]
+[ground_truth.py-6] Traceback (most recent call last):
+[ground_truth.py-6]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/ground_truth.py", line 156, in <module>
+[ground_truth.py-6]     main()
+[ground_truth.py-6]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/ground_truth.py", line 147, in main
+[ground_truth.py-6]     rclpy.spin(node)
+[ground_truth.py-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[ground_truth.py-6]     executor.spin_once()
+[ground_truth.py-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[ground_truth.py-6]     self._spin_once_impl(timeout_sec)
+[ground_truth.py-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[ground_truth.py-6]     handler, entity, node = self.wait_for_ready_callbacks(
+[ground_truth.py-6]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ground_truth.py-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[ground_truth.py-6]     return next(self._cb_iter)
+[ground_truth.py-6]            ^^^^^^^^^^^^^^^^^^^
+[ground_truth.py-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[ground_truth.py-6]     raise ExternalShutdownException()
+[ground_truth.py-6] rclpy.executors.ExternalShutdownException
+[ERROR] [ground_truth.py-6]: process has died [pid 109073, exit code 1, cmd '/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/ground_truth.py --ros-args --params-file /tmp/launch_params_m62t2nz8'].

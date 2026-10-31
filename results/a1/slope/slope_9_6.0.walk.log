@@ -1,0 +1,27 @@
+t=  15.2 x=  4.00 y= 14.66 yaw=+0.09 roll= +0.1 pitch= +0.9 zone=dry ground=+0.13 m slope= 1.3 deg
+t=  16.2 x=  4.19 y= 14.65 yaw=+0.07 roll= +1.4 pitch= +1.0 zone=dry ground=+0.13 m slope= 1.4 deg
+t=  17.2 x=  4.57 y= 14.70 yaw=+0.05 roll= -0.8 pitch= +1.0 zone=dry ground=+0.13 m slope= 1.5 deg
+t=  18.2 x=  4.93 y= 14.72 yaw=+0.05 roll= -0.8 pitch= +1.0 zone=dry ground=+0.14 m slope= 1.6 deg
+t=  19.2 x=  5.28 y= 14.74 yaw=+0.06 roll= -0.9 pitch= +1.0 zone=dry ground=+0.14 m slope= 1.5 deg
+t=  20.2 x=  5.64 y= 14.76 yaw=+0.06 roll= -0.5 pitch= +0.7 zone=dry ground=+0.14 m slope= 1.4 deg
+t=  21.2 x=  5.99 y= 14.77 yaw=+0.05 roll= +0.0 pitch= +1.0 zone=dry ground=+0.15 m slope= 1.3 deg
+t=  22.2 x=  6.35 y= 14.80 yaw=+0.05 roll= -1.0 pitch= +1.0 zone=dry ground=+0.15 m slope= 1.0 deg
+t=  23.2 x=  6.70 y= 14.82 yaw=+0.06 roll= -1.0 pitch= +1.1 zone=dry ground=+0.15 m slope= 0.8 deg
+Traceback (most recent call last):
+  File "/home/xd/ros2_ws/src/beach_cleaning_robot/sim/gazebo/tools/goto.py", line 171, in <module>
+    main()
+  File "/home/xd/ros2_ws/src/beach_cleaning_robot/sim/gazebo/tools/goto.py", line 111, in main
+    rclpy.spin_once(n, timeout_sec=0.02)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 226, in spin_once
+    executor.spin_once(timeout_sec=timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException

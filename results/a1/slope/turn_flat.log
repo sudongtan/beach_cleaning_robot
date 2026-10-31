@@ -1,0 +1,880 @@
+[INFO] [launch]: All log files can be found below /home/xd/.ros/log/2026-10-13-20-43-20-566977-xd-thinkpad-139985
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [140019]
+[INFO] [parameter_bridge-2]: process started with pid [140022]
+[INFO] [gnss_relay.py-3]: process started with pid [140024]
+[INFO] [robot_state_publisher-4]: process started with pid [140025]
+[INFO] [create-5]: process started with pid [140026]
+[INFO] [legubiao_adapter-6]: process started with pid [140031]
+[create-5] [INFO] [1791917001.306443171] [ros_gz_sim]: Requesting list of world names.
+[robot_state_publisher-4] [INFO] [1791917001.308899496] [robot_state_publisher]: Robot initialized
+[gazebo-1] [1;32m[Msg] [0m[1;32mGazebo Sim Server v[0m[1;32m8.15.0[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading SDF world file[[0m[1;32m/home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/worlds/empty.sdf[0m[1;32m].[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing entity system service on [[0m[1;32m/[0m[1;32mentity/system/add[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/empty/create_multiple[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mCreate[0m[1;32m service on [[0m[1;32m/world/empty/create_multiple/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/empty/remove[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mRemove[0m[1;32m service on [[0m[1;32m/world/empty/remove/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/empty/set_pose[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/empty/set_pose/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/empty/set_pose_vector[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPose[0m[1;32m service on [[0m[1;32m/world/empty/set_pose_vector/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/empty/light_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLight configuration[0m[1;32m service on [[0m[1;32m/world/empty/light_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/empty/set_physics[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPhysics[0m[1;32m service on [[0m[1;32m/world/empty/set_physics/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/empty/set_spherical_coordinates[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mSphericalCoordinates[0m[1;32m service on [[0m[1;32m/world/empty/set_spherical_coordinates/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/empty/enable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mEnable collision[0m[1;32m service on [[0m[1;32m/world/empty/enable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/empty/disable_collision[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mDisable collision[0m[1;32m service on [[0m[1;32m/world/empty/disable_collision/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/empty/visual_config[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/empty/visual_config/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/empty/wheel_slip[0m[1;32m] (async)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mMaterial[0m[1;32m service on [[0m[1;32m/world/empty/wheel_slip/blocking[0m[1;32m] (blocking)[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoaded level [[0m[1;32mdefault[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world controls on [[0m[1;32m/world/empty[0m[1;32m/control], [[0m[1;32m/world/empty[0m[1;32m/control/state] and [[0m[1;32m/world/empty[0m[1;32m/playback/control][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing GUI information on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mgui/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mWorld [[0m[1;32mempty[0m[1;32m] initialized with [[0m[1;32m1ms[0m[1;32m] physics profile.[0m[1;32m[0m
+[legubiao_adapter-6] [INFO] [1791917001.967617092] [locomotion.legubiao_adapter]: waiting for the controller (controller_odom) ...
+[create-5] [INFO] [1791917001.981000434] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-5] [INFO] [1791917001.993128217] [ros_gz_sim]: Entity creation successful.
+[INFO] [create-5]: process has finished cleanly [pid 140026]
+[INFO] [spawner-7]: process started with pid [140192]
+[parameter_bridge-2] [INFO] [1791917002.355159317] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791917002.357282601] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/image (gz.msgs.Image) -> /camera/rgb (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791917002.360968661] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/depth_image (gz.msgs.Image) -> /camera/depth (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791917002.361544078] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/camera_info (gz.msgs.CameraInfo) -> /camera/info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791917002.362445847] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/nav_imu (gz.msgs.IMU) -> /imu (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791917002.363337285] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/navsat (gz.msgs.NavSat) -> /gnss/fix_raw (sensor_msgs/msg/NavSatFix)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1791917002.364149752] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/sim/gz/ground_truth/odom (gz.msgs.Odometry) -> /sim/ground_truth/pose (nav_msgs/msg/Odometry)] (Lazy 0)
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world SDF generation service on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mgenerate_world_sdf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing world names on [[0m[1;32m/gazebo/worlds[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path add service on [[0m[1;32m/gazebo/resource_paths/add[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path get service on [[0m[1;32m/gazebo/resource_paths/get[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource path resolve service on [[0m[1;32m/gazebo/resource_paths/resolve[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mResource paths published on [[0m[1;32m/gazebo/resource_paths[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServer control service on [[0m[1;32m/server_control[0m[1;32m].[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /stats, adding root stats topic[0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mFound no publishers on /clock, adding root clock topic[0m[1;32m[0m
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/link[@name="base_link"]/sensor[@name="rgbd_camera"]/gz_frame_id:<urdf-string>:L0]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/link[@name="base_link"]/sensor[@name="navsat"]/gz_frame_id:<urdf-string>:L0]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="FL_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="FR_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="RL_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/joint[@name="RR_foot_fixed"]/provide_feedback:<urdf-string>:L0]: XML Element[provide_feedback], child of element[joint], not defined in SDF. Copying[provide_feedback] as children of [joint].
+[gazebo-1] [1;33mWarning [Utils.cc:132][0m [/sdf/model[@name="beach_robot"]/link[@name="imu_link"]/sensor[@name="nav_imu"]/gz_frame_id:<urdf-string>:L0]: XML Element[gz_frame_id], child of element[sensor], not defined in SDF. Copying[gz_frame_id] as children of [sensor].
+[gazebo-1] [INFO] [1791917003.680063376] [gz_quadruped_control]: Loading controller_manager
+[gazebo-1] [INFO] [1791917003.693976559] [controller_manager]: Using ROS clock for triggering controller manager cycles.
+[gazebo-1] [WARN] [1791917003.694000674] [controller_manager]: The resource manager is not yet initialized, will wait for the robot description to initialize it..
+[gazebo-1] [INFO] [1791917003.700262569] [controller_manager]: Subscribing to '/robot_description' topic for robot description.
+[gazebo-1] [WARN] [1791917003.700366152] [gz_quadruped_control]: Waiting RM to load and initialize hardware...
+[gazebo-1] [INFO] [1791917003.861818492] [controller_manager]: Received robot description from topic.
+[gazebo-1] [INFO] [1791917003.862156401] [controller_manager]: Enforcing command limits is disabled. Command limits from URDF will be ignored.
+[gazebo-1] [INFO] [1791917003.889855547] [gz_quadruped_control]: Loading joint: FR_hip_joint
+[gazebo-1] [INFO] [1791917003.889943486] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.889963894] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890004950] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890044378] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890072525] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.890089069] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890141964] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890159922] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890178877] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.890190190] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.890221870] [gz_quadruped_control]: Loading joint: FR_thigh_joint
+[gazebo-1] [INFO] [1791917003.890234282] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.890246707] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890259835] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890274526] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890284128] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.890298877] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890328929] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890348594] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890360848] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.890389015] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.890428663] [gz_quadruped_control]: Loading joint: FR_calf_joint
+[gazebo-1] [INFO] [1791917003.890443749] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.890455172] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890468227] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890482176] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890499755] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.890512788] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890536580] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890549214] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890559378] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.890569518] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.890590698] [gz_quadruped_control]: Loading joint: FL_hip_joint
+[gazebo-1] [INFO] [1791917003.890599547] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.890606800] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890613959] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890621334] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890628575] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.890635326] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890649206] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890671643] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890683570] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.890693780] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.890715019] [gz_quadruped_control]: Loading joint: FL_thigh_joint
+[gazebo-1] [INFO] [1791917003.890725049] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.890735303] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890747697] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890760866] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890772286] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.890779541] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890852573] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890880625] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890897193] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.890914737] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.890937107] [gz_quadruped_control]: Loading joint: FL_calf_joint
+[gazebo-1] [INFO] [1791917003.890946511] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.890953832] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.890961339] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.890973584] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.890981790] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.890996271] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891011204] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891022654] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891039005] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.891055358] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.891086321] [gz_quadruped_control]: Loading joint: RR_hip_joint
+[gazebo-1] [INFO] [1791917003.891101121] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.891113119] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891124779] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891136691] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891148005] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.891159410] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891180539] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891196447] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891223267] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.891241351] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.891272394] [gz_quadruped_control]: Loading joint: RR_thigh_joint
+[gazebo-1] [INFO] [1791917003.891286301] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.891298746] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891310472] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891331826] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891346086] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.891358138] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891382333] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891400068] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891416723] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.891432580] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.891462856] [gz_quadruped_control]: Loading joint: RR_calf_joint
+[gazebo-1] [INFO] [1791917003.891476862] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.891489102] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891500936] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891512904] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891525008] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.891536302] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891558589] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891575867] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891591458] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.891606750] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.891638709] [gz_quadruped_control]: Loading joint: RL_hip_joint
+[gazebo-1] [INFO] [1791917003.891659360] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.891680028] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891692321] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891707571] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891724582] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.891736782] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891760970] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891779005] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891795775] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.891811979] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.891857813] [gz_quadruped_control]: Loading joint: RL_thigh_joint
+[gazebo-1] [INFO] [1791917003.891879155] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.891892497] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.891933715] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.891956098] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.891977597] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.891985874] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892002568] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892013449] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892023156] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.892052640] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.892088913] [gz_quadruped_control]: Loading joint: RL_calf_joint
+[gazebo-1] [INFO] [1791917003.892125313] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.892138572] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892146263] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892152442] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892158470] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.892164662] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892184189] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892202896] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892215167] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.892223946] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.892242816] [gz_quadruped_control]: Loading joint: arm_waist
+[gazebo-1] [INFO] [1791917003.892250317] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.892256188] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892304473] [gz_quadruped_control]: 			 found initial value: 0.000000
+[gazebo-1] [INFO] [1791917003.892328733] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892337122] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892343633] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.892349618] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892368794] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892389718] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892404349] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.892416198] [gz_quadruped_control]: 			 found initial value: 300.000000
+[gazebo-1] [INFO] [1791917003.892442801] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.892471752] [gz_quadruped_control]: 			 found initial value: 10.000000
+[gazebo-1] [INFO] [1791917003.892505303] [gz_quadruped_control]: Loading joint: arm_shoulder
+[gazebo-1] [INFO] [1791917003.892519142] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.892530331] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892541218] [gz_quadruped_control]: 			 found initial value: 0.820000
+[gazebo-1] [INFO] [1791917003.892550531] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892560590] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892571193] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.892580327] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892601384] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892618105] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892632940] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.892644021] [gz_quadruped_control]: 			 found initial value: 500.000000
+[gazebo-1] [INFO] [1791917003.892659040] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.892668204] [gz_quadruped_control]: 			 found initial value: 17.000000
+[gazebo-1] [INFO] [1791917003.892702779] [gz_quadruped_control]: Loading joint: arm_elbow
+[gazebo-1] [INFO] [1791917003.892717829] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.892729043] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892738862] [gz_quadruped_control]: 			 found initial value: 0.430000
+[gazebo-1] [INFO] [1791917003.892750492] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892760079] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892770943] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.892780344] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892799008] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892821814] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892848326] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.892861787] [gz_quadruped_control]: 			 found initial value: 150.000000
+[gazebo-1] [INFO] [1791917003.892873500] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.892893398] [gz_quadruped_control]: 			 found initial value: 5.000000
+[gazebo-1] [INFO] [1791917003.892914765] [gz_quadruped_control]: Loading joint: arm_forearm_roll
+[gazebo-1] [INFO] [1791917003.892926529] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.892937132] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.892943969] [gz_quadruped_control]: 			 found initial value: 0.000000
+[gazebo-1] [INFO] [1791917003.892950917] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.892957284] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.892971266] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.892982343] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893000538] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893015220] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893028523] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.893039514] [gz_quadruped_control]: 			 found initial value: 25.000000
+[gazebo-1] [INFO] [1791917003.893054238] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.893064156] [gz_quadruped_control]: 			 found initial value: 0.850000
+[gazebo-1] [INFO] [1791917003.893089934] [gz_quadruped_control]: Loading joint: arm_wrist_angle
+[gazebo-1] [INFO] [1791917003.893102847] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.893113173] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893123790] [gz_quadruped_control]: 			 found initial value: 2.100000
+[gazebo-1] [INFO] [1791917003.893136842] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893147182] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893156656] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.893165387] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893189709] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893203705] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893216634] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.893227959] [gz_quadruped_control]: 			 found initial value: 30.000000
+[gazebo-1] [INFO] [1791917003.893244106] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.893252417] [gz_quadruped_control]: 			 found initial value: 0.900000
+[gazebo-1] [INFO] [1791917003.893276894] [gz_quadruped_control]: Loading joint: arm_wrist_rotate
+[gazebo-1] [INFO] [1791917003.893286304] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.893292873] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893299230] [gz_quadruped_control]: 			 found initial value: 0.000000
+[gazebo-1] [INFO] [1791917003.893306280] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893314875] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893325386] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.893332004] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893343703] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893352238] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893360390] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.893372787] [gz_quadruped_control]: 			 found initial value: 15.000000
+[gazebo-1] [INFO] [1791917003.893386499] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.893393288] [gz_quadruped_control]: 			 found initial value: 0.250000
+[gazebo-1] [INFO] [1791917003.893412441] [gz_quadruped_control]: Loading joint: arm_left_finger
+[gazebo-1] [INFO] [1791917003.893424183] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.893431487] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893438237] [gz_quadruped_control]: 			 found initial value: 0.015000
+[gazebo-1] [INFO] [1791917003.893445831] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893451984] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893460247] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.893470492] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893482959] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893491536] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893504629] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.893516110] [gz_quadruped_control]: 			 found initial value: 250.000000
+[gazebo-1] [INFO] [1791917003.893528254] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.893534853] [gz_quadruped_control]: 			 found initial value: 8.000000
+[gazebo-1] [INFO] [1791917003.893552750] [gz_quadruped_control]: Loading joint: arm_right_finger
+[gazebo-1] [INFO] [1791917003.893577650] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.893588217] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893595054] [gz_quadruped_control]: 			 found initial value: -0.015000
+[gazebo-1] [INFO] [1791917003.893606263] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893616152] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893625920] [gz_quadruped_control]: 	Command:
+[gazebo-1] [INFO] [1791917003.893635051] [gz_quadruped_control]: 		 position
+[gazebo-1] [INFO] [1791917003.893654580] [gz_quadruped_control]: 		 velocity
+[gazebo-1] [INFO] [1791917003.893668315] [gz_quadruped_control]: 		 effort
+[gazebo-1] [INFO] [1791917003.893681140] [gz_quadruped_control]: 		 kp
+[gazebo-1] [INFO] [1791917003.893691419] [gz_quadruped_control]: 			 found initial value: 250.000000
+[gazebo-1] [INFO] [1791917003.893706829] [gz_quadruped_control]: 		 kd
+[gazebo-1] [INFO] [1791917003.893717260] [gz_quadruped_control]: 			 found initial value: 8.000000
+[gazebo-1] [INFO] [1791917003.893960566] [gz_quadruped_control]: Loading sensor: imu_sensor
+[gazebo-1] [INFO] [1791917003.893979054] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.894024040] [gz_quadruped_control]: 		 orientation.x
+[gazebo-1] [INFO] [1791917003.894036187] [gz_quadruped_control]: 		 orientation.y
+[gazebo-1] [INFO] [1791917003.894043216] [gz_quadruped_control]: 		 orientation.z
+[gazebo-1] [INFO] [1791917003.894049888] [gz_quadruped_control]: 		 orientation.w
+[gazebo-1] [INFO] [1791917003.894060885] [gz_quadruped_control]: 		 angular_velocity.x
+[gazebo-1] [INFO] [1791917003.894089752] [gz_quadruped_control]: 		 angular_velocity.y
+[gazebo-1] [INFO] [1791917003.894099176] [gz_quadruped_control]: 		 angular_velocity.z
+[gazebo-1] [INFO] [1791917003.894106131] [gz_quadruped_control]: 		 linear_acceleration.x
+[gazebo-1] [INFO] [1791917003.894112683] [gz_quadruped_control]: 		 linear_acceleration.y
+[gazebo-1] [INFO] [1791917003.894119545] [gz_quadruped_control]: 		 linear_acceleration.z
+[gazebo-1] [INFO] [1791917003.894143523] [gz_quadruped_control]: Loading sensor: nav_imu
+[gazebo-1] [INFO] [1791917003.894153061] [gz_quadruped_control]: 	State:
+[gazebo-1] [INFO] [1791917003.894243304] [gz_quadruped_control]: Loading Foot Force sensor: FL_foot_force
+[gazebo-1] [INFO] [1791917003.894268662] [gz_quadruped_control]: Loading Foot Force sensor: FR_foot_force
+[gazebo-1] [INFO] [1791917003.894277242] [gz_quadruped_control]: Loading Foot Force sensor: RL_foot_force
+[gazebo-1] [INFO] [1791917003.894284209] [gz_quadruped_control]: Loading Foot Force sensor: RR_foot_force
+[gazebo-1] [INFO] [1791917003.894490053] [controller_manager]: Initialize hardware 'GazeboSystem' 
+[gazebo-1] [WARN] [1791917003.894542293] [controller_manager.hardware_component.system.GazeboSystem]: Executor is not available during hardware component initialization for 'GazeboSystem'. Skipping node creation!
+[gazebo-1] [INFO] [1791917003.894825499] [controller_manager]: Successful initialization of hardware 'GazeboSystem'
+[gazebo-1] [INFO] [1791917003.896241480] [controller_manager]: Activating component 'GazeboSystem'.
+[gazebo-1] [INFO] [1791917003.896273121] [resource_manager]: 'configure' hardware 'GazeboSystem' 
+[gazebo-1] [INFO] [1791917003.896283582] [gz_quadruped_control]: System Successfully configured!
+[gazebo-1] [INFO] [1791917003.896293535] [resource_manager]: Successful 'configure' of hardware 'GazeboSystem'
+[gazebo-1] [INFO] [1791917003.896341970] [resource_manager]: 'activate' hardware 'GazeboSystem' 
+[gazebo-1] [INFO] [1791917003.896364763] [resource_manager]: Successful 'activate' of hardware 'GazeboSystem'
+[gazebo-1] [WARN] [1791917003.896502094] [controller_manager]: Component 'GazeboSystem' does not have read or write statistics initialized, skipping registration.
+[gazebo-1] [INFO] [1791917003.896523524] [controller_manager]: Resource Manager has been successfully initialized. Starting Controller Manager services...
+[gazebo-1] [INFO] [1791917005.921599874] [gz_quadruped_control]: IMU imu_sensor has a topic name: imu
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [INFO] [1791917005.922230308] [gz_quadruped_control]: IMU nav_imu has a topic name: nav_imu
+[gazebo-1] [INFO] [1791917005.922379271] [gz_quadruped_control]: ForceTorque FL_foot_force has a topic name: FL_foot_force
+[gazebo-1] [INFO] [1791917005.922631219] [gz_quadruped_control]: ForceTorque FR_foot_force has a topic name: FR_foot_force
+[gazebo-1] [INFO] [1791917005.922703442] [gz_quadruped_control]: ForceTorque RL_foot_force has a topic name: RL_foot_force
+[gazebo-1] [INFO] [1791917005.922781751] [gz_quadruped_control]: ForceTorque RR_foot_force has a topic name: RR_foot_force
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-7] [INFO] [1791917006.882090260] [spawner_joint_state_broadcaster]: Setting controller param "params_file" to "['/tmp/launch_params_tmhyb56o']" for joint_state_broadcaster
+[gazebo-1] [INFO] [1791917006.885486181] [controller_manager]: Loading controller : 'joint_state_broadcaster' of type 'joint_state_broadcaster/JointStateBroadcaster'
+[gazebo-1] [INFO] [1791917006.886489862] [controller_manager]: Loading controller 'joint_state_broadcaster'
+[gazebo-1] [INFO] [1791917006.897357513] [controller_manager]: Controller 'joint_state_broadcaster' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_tmhyb56o --param use_sim_time:=true 
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-7] [INFO] [1791917007.244810653] [spawner_joint_state_broadcaster]: Loaded joint_state_broadcaster
+[gazebo-1] [INFO] [1791917007.248630636] [controller_manager]: Configuring controller: 'joint_state_broadcaster'
+[gazebo-1] [INFO] [1791917007.248915466] [joint_state_broadcaster]: 'joints' or 'interfaces' parameter is empty. All available state interfaces will be published
+[gazebo-1] [INFO] [1791917007.274008163] [controller_manager]: Activating controllers: [ joint_state_broadcaster ]
+[gazebo-1] [INFO] [1791917007.276164370] [controller_manager]: Successfully switched controllers!
+[spawner-7] [INFO] [1791917007.281325646] [spawner_joint_state_broadcaster]: Configured and activated joint_state_broadcaster
+[spawner-7] [INFO] [1791917007.294269844] [spawner_joint_state_broadcaster]: Setting controller param "params_file" to "['/tmp/launch_params_tmhyb56o']" for imu_sensor_broadcaster
+[gazebo-1] [INFO] [1791917007.296125248] [controller_manager]: Loading controller : 'imu_sensor_broadcaster' of type 'imu_sensor_broadcaster/IMUSensorBroadcaster'
+[gazebo-1] [INFO] [1791917007.296174557] [controller_manager]: Loading controller 'imu_sensor_broadcaster'
+[gazebo-1] [INFO] [1791917007.302955498] [controller_manager]: Controller 'imu_sensor_broadcaster' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_tmhyb56o --param use_sim_time:=true 
+[spawner-7] [INFO] [1791917007.335508653] [spawner_joint_state_broadcaster]: Loaded imu_sensor_broadcaster
+[gazebo-1] [INFO] [1791917007.336178474] [controller_manager]: Configuring controller: 'imu_sensor_broadcaster'
+[gazebo-1] [INFO] [1791917007.341876413] [controller_manager]: Activating controllers: [ imu_sensor_broadcaster ]
+[gazebo-1] [INFO] [1791917007.344051935] [controller_manager]: Successfully switched controllers!
+[spawner-7] [INFO] [1791917007.349291282] [spawner_joint_state_broadcaster]: Configured and activated imu_sensor_broadcaster
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[INFO] [spawner-7]: process has finished cleanly [pid 140192]
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[INFO] [spawner-8]: process started with pid [140444]
+[INFO] [spawner-9]: process started with pid [140445]
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry on [[0m[1;32m/sim/gz/ground_truth/odom[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing odometry with covariance on [[0m[1;32m/model/beach_robot/odometry_with_covariance[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mOdometryPublisher publishing Pose_V (TF) on [[0m[1;32m/sim/gz/ground_truth/tf[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mLoading plugin [[0m[1;32mgz-rendering-ogre2[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing scene information on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mscene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing graph information on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mscene/graph[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mstate[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mServing full state (async) on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mstate_async[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing scene information on [[0m[1;32m/world/empty/scene/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing entity deletions on [[0m[1;32m/world/empty/scene/deletion[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing state changes on [[0m[1;32m/world/empty/state[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing pose messages on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mpose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;32m[Msg] [0m[1;32mPublishing dynamic pose messages on [[0m[1;32m/world/empty[0m[1;32m/[0m[1;32mdynamic_pose/info[0m[1;32m][0m[1;32m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-8] [INFO] [1791917009.719017108] [spawner_basic_quadruped_controller]: waiting for service /controller_manager/list_controllers to become available...
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-8] [INFO] [1791917010.478297746] [spawner_basic_quadruped_controller]: Setting controller param "node_options_args" to "['-r', 'odom:=/locomotion/controller_odom', '-r', '/control_input:=/locomotion/control_input', '-r', '/tf:=/locomotion/controller_tf']" for basic_quadruped_controller
+[spawner-8] [INFO] [1791917010.486817522] [spawner_basic_quadruped_controller]: Setting controller param "params_file" to "['/tmp/launch_params_ml6ujdai']" for basic_quadruped_controller
+[gazebo-1] [INFO] [1791917010.491672697] [controller_manager]: Loading controller : 'basic_quadruped_controller' of type 'basic_quadruped_controller/BasicQuadrupedController'
+[gazebo-1] [INFO] [1791917010.491721199] [controller_manager]: Loading controller 'basic_quadruped_controller'
+[gazebo-1] [INFO] [1791917010.542525123] [controller_manager]: Controller 'basic_quadruped_controller' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_ml6ujdai --param use_sim_time:=true --ros-args -r odom:=/locomotion/controller_odom -r /control_input:=/locomotion/control_input -r /tf:=/locomotion/controller_tf 
+[gazebo-1] [INFO] [1791917010.560958595] [basic_quadruped_controller]: Controller Manager Update Rate: 500 Hz
+[gazebo-1] 找到第一条腿末端Frame: FR_foot_fixed, 小腿长度: 0.213
+[gazebo-1] Leg FR (controller_idx=0): Hip offset=[ 0.1934 -0.0465       0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] Leg FL (controller_idx=1): Hip offset=[0.1934 0.0465      0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] Leg RR (controller_idx=2): Hip offset=[-0.1934 -0.0465       0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] Leg RL (controller_idx=3): Hip offset=[-0.1934  0.0465       0], Links=[0.0955, 0.213, 0.213]
+[gazebo-1] === 站立足端位置 ===
+[gazebo-1] FR:  0.186618    -0.142 -0.339064
+[gazebo-1] FL:  0.186618     0.142 -0.339064
+[gazebo-1] RR: -0.200182    -0.142 -0.339064
+[gazebo-1] RL: -0.200182     0.142 -0.339064
+[gazebo-1] === 简化运动学系统初始化完成 ===
+[gazebo-1] 质量: 15.098 kg
+[gazebo-1] 重心偏移: [ -0.00169499 -7.34589e-05   -0.0556818] m
+[gazebo-1] 惯性张量对角线: [0.208691 0.420864 0.396608]
+[gazebo-1] dt: 0.002
+[gazebo-1] [INFO] [1791917010.564677381] [basic_quadruped_controller]: Robot model initialized successfully for robot: go2
+[gazebo-1] [INFO] [1791917010.564718015] [basic_quadruped_controller]: URDF file: /home/xd/ros2_ws/install/go2_description/share/go2_description/urdf/go2.urdf
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-8] [INFO] [1791917010.579971809] [spawner_basic_quadruped_controller]: Loaded basic_quadruped_controller
+[gazebo-1] [INFO] [1791917010.582898911] [controller_manager]: Configuring controller: 'basic_quadruped_controller'
+[gazebo-1] [INFO] [1791917010.594134430] [controller_manager]: Activating controllers: [ basic_quadruped_controller ]
+[gazebo-1] [INFO] [1791917010.597003599] [controller_manager]: Successfully switched controllers!
+[spawner-8] [INFO] [1791917010.601508924] [spawner_basic_quadruped_controller]: Configured and activated basic_quadruped_controller
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[INFO] [spawner-8]: process has finished cleanly [pid 140444]
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-9] [INFO] [1791917011.099973341] [spawner_arm_controller]: waiting for service /controller_manager/list_controllers to become available...
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[spawner-9] [INFO] [1791917011.859604121] [spawner_arm_controller]: Setting controller param "params_file" to "['/tmp/launch_params_23xaed6m']" for arm_controller
+[gazebo-1] [INFO] [1791917011.862567079] [controller_manager]: Loading controller : 'arm_controller' of type 'joint_trajectory_controller/JointTrajectoryController'
+[gazebo-1] [INFO] [1791917011.862716423] [controller_manager]: Loading controller 'arm_controller'
+[gazebo-1] [INFO] [1791917011.871258281] [controller_manager]: Controller 'arm_controller' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_23xaed6m --param use_sim_time:=true 
+[spawner-9] [INFO] [1791917011.915112571] [spawner_arm_controller]: Loaded arm_controller
+[gazebo-1] [INFO] [1791917011.919005166] [controller_manager]: Configuring controller: 'arm_controller'
+[gazebo-1] [INFO] [1791917011.919820091] [arm_controller]: No specific joint names are used for command interfaces. Using 'joints' parameter.
+[gazebo-1] [INFO] [1791917011.920223520] [arm_controller]: Command interfaces are [position velocity] and state interfaces are [position velocity].
+[gazebo-1] [INFO] [1791917011.920277363] [arm_controller]: Using 'splines' interpolation method.
+[gazebo-1] [INFO] [1791917011.928301468] [arm_controller]: Action status changes will be monitored at 20.00 Hz.
+[gazebo-1] [INFO] [1791917011.945997930] [arm_controller]: No scaling interface set. This controller will not read speed scaling from the hardware.
+[gazebo-1] [INFO] [1791917011.951126636] [controller_manager]: Activating controllers: [ arm_controller ]
+[gazebo-1] [INFO] [1791917011.952862902] [controller_manager]: Successfully switched controllers!
+[spawner-9] [INFO] [1791917011.957347726] [spawner_arm_controller]: Configured and activated arm_controller
+[spawner-9] [INFO] [1791917011.967689357] [spawner_arm_controller]: Setting controller param "params_file" to "['/tmp/launch_params_23xaed6m']" for gripper_controller
+[gazebo-1] [INFO] [1791917011.969230018] [controller_manager]: Loading controller : 'gripper_controller' of type 'joint_trajectory_controller/JointTrajectoryController'
+[gazebo-1] [INFO] [1791917011.969285796] [controller_manager]: Loading controller 'gripper_controller'
+[gazebo-1] [INFO] [1791917011.969727813] [controller_manager]: Controller 'gripper_controller' node arguments: --ros-args --params-file /home/xd/ros2_ws/install/sim_bridge_gazebo/share/sim_bridge_gazebo/config/gazebo_controllers.yaml --params-file /home/xd/ros2_ws/install/beach_description/share/beach_description/config/arm_controllers.yaml --params-file /tmp/launch_params_23xaed6m --param use_sim_time:=true 
+[spawner-9] [INFO] [1791917012.005822198] [spawner_arm_controller]: Loaded gripper_controller
+[gazebo-1] [INFO] [1791917012.006159764] [controller_manager]: Configuring controller: 'gripper_controller'
+[gazebo-1] [INFO] [1791917012.006519062] [gripper_controller]: No specific joint names are used for command interfaces. Using 'joints' parameter.
+[gazebo-1] [INFO] [1791917012.006549423] [gripper_controller]: Command interfaces are [position velocity] and state interfaces are [position velocity].
+[gazebo-1] [INFO] [1791917012.006563875] [gripper_controller]: Using 'splines' interpolation method.
+[gazebo-1] [INFO] [1791917012.009644758] [gripper_controller]: Action status changes will be monitored at 20.00 Hz.
+[gazebo-1] [INFO] [1791917012.021063497] [gripper_controller]: No scaling interface set. This controller will not read speed scaling from the hardware.
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [INFO] [1791917012.024683333] [controller_manager]: Activating controllers: [ gripper_controller ]
+[gazebo-1] [INFO] [1791917012.027465885] [controller_manager]: Successfully switched controllers!
+[spawner-9] [INFO] [1791917012.031765456] [spawner_arm_controller]: Configured and activated gripper_controller
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[INFO] [spawner-9]: process has finished cleanly [pid 140445]
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[legubiao_adapter-6] [INFO] [1791917014.251026351] [locomotion.legubiao_adapter]: stand-up: command 2
+[gazebo-1] [INFO] [1791917014.255163546] [basic_quadruped_controller]: Switched from passive to fixed down
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[legubiao_adapter-6] [INFO] [1791917019.638212255] [locomotion.legubiao_adapter]: stand-up: command 2
+[gazebo-1] [INFO] [1791917019.642175939] [basic_quadruped_controller]: Switched from fixed down to fixed stand
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[legubiao_adapter-6] [INFO] [1791917026.240434478] [locomotion.legubiao_adapter]: stand-up: command 4
+[gazebo-1] [INFO] [1791917026.243807041] [basic_quadruped_controller]: Switched from fixed stand to trotting
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[legubiao_adapter-6] [INFO] [1791917029.957759178] [locomotion.legubiao_adapter]: stand-up done, following /cmd_vel
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[gazebo-1] [1;33m[Wrn] [NavSat.cc:259] [0m[1;33mFailed to update NavSat sensor enity [[0m[1;33m36[0m[1;33m]. Spherical coordinates not set.[0m[1;33m[0m
+[robot_state_publisher-4] [INFO] [1791917078.704728659] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-2] [INFO] [1791917078.704828328] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-2] Failed to delete datawriter, at ./src/publisher.cpp:45 during '__function__'
+[legubiao_adapter-6] Traceback (most recent call last):
+[legubiao_adapter-6]   File "/home/xd/ros2_ws/install/locomotion/lib/locomotion/legubiao_adapter", line 33, in <module>
+[legubiao_adapter-6]     sys.exit(load_entry_point('locomotion', 'console_scripts', 'legubiao_adapter')())
+[legubiao_adapter-6]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[legubiao_adapter-6]   File "/home/xd/ros2_ws/build/locomotion/locomotion/legubiao_adapter.py", line 135, in main
+[legubiao_adapter-6]     rclpy.spin(node)
+[legubiao_adapter-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[legubiao_adapter-6]     executor.spin_once()
+[legubiao_adapter-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[legubiao_adapter-6]     self._spin_once_impl(timeout_sec)
+[legubiao_adapter-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[legubiao_adapter-6]     handler, entity, node = self.wait_for_ready_callbacks(
+[legubiao_adapter-6]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[legubiao_adapter-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[legubiao_adapter-6]     return next(self._cb_iter)
+[legubiao_adapter-6]            ^^^^^^^^^^^^^^^^^^^
+[legubiao_adapter-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[legubiao_adapter-6]     raise ExternalShutdownException()
+[legubiao_adapter-6] rclpy.executors.ExternalShutdownException
+[gnss_relay.py-3] Traceback (most recent call last):
+[gnss_relay.py-3]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/gnss_relay.py", line 53, in <module>
+[gnss_relay.py-3]     main()
+[gnss_relay.py-3]   File "/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/gnss_relay.py", line 44, in main
+[gnss_relay.py-3]     rclpy.spin(node)
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[gnss_relay.py-3]     executor.spin_once()
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[gnss_relay.py-3]     self._spin_once_impl(timeout_sec)
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[gnss_relay.py-3]     handler, entity, node = self.wait_for_ready_callbacks(
+[gnss_relay.py-3]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[gnss_relay.py-3]     return next(self._cb_iter)
+[gnss_relay.py-3]            ^^^^^^^^^^^^^^^^^^^
+[gnss_relay.py-3]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[gnss_relay.py-3]     raise ExternalShutdownException()
+[gnss_relay.py-3] rclpy.executors.ExternalShutdownException
+[gazebo-1] [INFO] [1791917078.825434545] [controller_manager.pal_statistics]: Async messages lost 0
+[gazebo-1] [INFO] [1791917078.825515864] [controller_manager.pal_statistics]: publish_async_failures_ 0
+[INFO] [robot_state_publisher-4]: process has finished cleanly [pid 140025]
+[INFO] [parameter_bridge-2]: process has finished cleanly [pid 140022]
+[gazebo-1] [INFO] [1791917078.831473999] [controller_manager.pal_statistics]: Async messages lost 0
+[gazebo-1] [INFO] [1791917078.831523648] [controller_manager.pal_statistics]: publish_async_failures_ 0
+[ERROR] [legubiao_adapter-6]: process has died [pid 140031, exit code 1, cmd '/home/xd/ros2_ws/install/locomotion/lib/locomotion/legubiao_adapter --ros-args -r __ns:=/locomotion --params-file /home/xd/ros2_ws/install/locomotion/share/locomotion/config/legubiao_adapter.yaml --params-file /tmp/launch_params_c6195zdu'].
+[ERROR] [gnss_relay.py-3]: process has died [pid 140024, exit code 1, cmd '/home/xd/ros2_ws/install/sim_bridge_gazebo/lib/sim_bridge_gazebo/gnss_relay.py --ros-args --params-file /tmp/launch_params_7oi1rcu9'].
+[INFO] [gazebo-1]: process has finished cleanly [pid 140019]
+[INFO] [launch]: process[gazebo-1] was required: shutting down launched system

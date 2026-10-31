@@ -1,0 +1,330 @@
+schema_version: 1
+scenes:
+- seed: 9
+  area:
+    size:
+    - 40.0
+    - 30.0
+  geo:
+    latitude_deg: 41.3784
+    longitude_deg: 2.1925
+    elevation_m: 0.0
+  terrain:
+    z_min: -1.0
+    z_max: 6.0
+    heightmap:
+      pixels: 257
+      size: 64.0
+      center:
+      - 20.0
+      - 15.0
+    waterline_y: 3.926
+    wet_zone_width: 4.747
+    wet_zone_height: 0.03
+    beach_slope: 0.018
+    roughness:
+    - amplitude: 0.0048
+      wavelength: 8.333
+      direction_deg: 1.158
+      phase: 3.1591
+    - amplitude: 0.0094
+      wavelength: 4.404
+      direction_deg: 99.769
+      phase: 3.8745
+    - amplitude: 0.0042
+      wavelength: 5.895
+      direction_deg: 126.626
+      phase: 2.8401
+    - amplitude: 0.0084
+      wavelength: 4.786
+      direction_deg: 42.842
+      phase: 0.6971
+    - amplitude: 0.007
+      wavelength: 8.619
+      direction_deg: 106.277
+      phase: 4.8645
+    dunes:
+    - x: 30.843
+      y: 24.647
+      height: 0.11988738731295041
+      sigma_x: 4.184
+      sigma_y: 4.184
+    - x: 28.204
+      y: 22.351
+      height: 0.1914432101070674
+      sigma_x: 3.336
+      sigma_y: 3.336
+    - x: 14.206
+      y: 36.367
+      height: 1.243
+      sigma_x: 5.709
+      sigma_y: 2.503
+    - x: 15.027
+      y: 38.583
+      height: 2.046
+      sigma_x: 5.139
+      sigma_y: 2.618
+    - x: 33.229
+      y: 38.403
+      height: 2.164
+      sigma_x: 5.004
+      sigma_y: 2.882
+    friction:
+      dry_sand: 0.6
+      wet_sand: 0.8
+  geofence:
+    polygon:
+    - - 0.5
+      - 4.926
+    - - 39.5
+      - 4.926
+    - - 39.5
+      - 28.5
+    - - 0.5
+      - 28.5
+  robot_start:
+    pose:
+    - 4.0
+    - 14.682
+    - 0.0
+  bins:
+  - id: bin_recyclable
+    model: bin_recyclable
+    bin_id: recyclable
+    pose:
+    - 1.5
+    - 14.082
+    - 0.0
+  - id: bin_residual
+    model: bin_residual
+    bin_id: residual
+    pose:
+    - 1.5
+    - 15.282
+    - 0.0
+  landmarks:
+  - id: lifeguard_tower
+    model: lifeguard_tower
+    pose:
+    - 17.216
+    - 26.549
+    - -1.7909
+  - id: fence_post_00
+    model: fence_post
+    pose:
+    - 0.0
+    - 29.5
+    - 0.0
+  - id: fence_post_01
+    model: fence_post
+    pose:
+    - 3.0
+    - 29.5
+    - 0.0
+  - id: fence_post_02
+    model: fence_post
+    pose:
+    - 6.0
+    - 29.5
+    - 0.0
+  - id: fence_post_03
+    model: fence_post
+    pose:
+    - 9.0
+    - 29.5
+    - 0.0
+  - id: fence_post_04
+    model: fence_post
+    pose:
+    - 12.0
+    - 29.5
+    - 0.0
+  - id: fence_post_05
+    model: fence_post
+    pose:
+    - 15.0
+    - 29.5
+    - 0.0
+  - id: fence_post_06
+    model: fence_post
+    pose:
+    - 18.0
+    - 29.5
+    - 0.0
+  - id: fence_post_07
+    model: fence_post
+    pose:
+    - 21.0
+    - 29.5
+    - 0.0
+  - id: fence_post_08
+    model: fence_post
+    pose:
+    - 24.0
+    - 29.5
+    - 0.0
+  - id: fence_post_09
+    model: fence_post
+    pose:
+    - 27.0
+    - 29.5
+    - 0.0
+  - id: fence_post_10
+    model: fence_post
+    pose:
+    - 30.0
+    - 29.5
+    - 0.0
+  - id: fence_post_11
+    model: fence_post
+    pose:
+    - 33.0
+    - 29.5
+    - 0.0
+  - id: fence_post_12
+    model: fence_post
+    pose:
+    - 36.0
+    - 29.5
+    - 0.0
+  - id: fence_post_13
+    model: fence_post
+    pose:
+    - 39.0
+    - 29.5
+    - 0.0
+  trash:
+  - id: trash_00
+    model: cigarette_pack
+    material: residual
+    pose:
+    - 29.527
+    - 22.264
+    - 0.473
+    half_buried: false
+  - id: trash_01
+    model: food_container
+    material: residual
+    pose:
+    - 1.956
+    - 25.308
+    - -0.6134
+    half_buried: false
+  - id: trash_02
+    model: food_tin
+    material: metal
+    pose:
+    - 35.775
+    - 8.793
+    - 1.4828
+    half_buried: false
+  - id: trash_03
+    model: pet_bottle_1500
+    material: pet
+    pose:
+    - 33.357
+    - 17.225
+    - 1.1794
+    half_buried: false
+  - id: trash_04
+    model: pet_bottle_1500
+    material: pet
+    pose:
+    - 34.195
+    - 7.659
+    - -0.8447
+    half_buried: false
+  - id: trash_05
+    model: cigarette_pack
+    material: residual
+    pose:
+    - 8.732
+    - 9.654
+    - 2.808
+    half_buried: false
+  - id: trash_06
+    model: food_tin
+    material: metal
+    pose:
+    - 29.543
+    - 13.879
+    - -3.1377
+    half_buried: false
+  - id: trash_07
+    model: glass_bottle_330
+    material: glass
+    pose:
+    - 4.958
+    - 10.225
+    - 1.9773
+    half_buried: false
+  distractors:
+  - id: distractor_00
+    model: rock_small
+    type: rock
+    pose:
+    - 4.591
+    - 23.359
+    - -2.9821
+  - id: distractor_01
+    model: shell
+    type: shell
+    pose:
+    - 31.964
+    - 16.65
+    - 1.316
+  - id: distractor_02
+    model: rock_medium
+    type: rock
+    pose:
+    - 22.553
+    - 6.636
+    - 0.929
+  - id: distractor_03
+    model: driftwood
+    type: driftwood
+    pose:
+    - 37.635
+    - 14.476
+    - -0.7982
+  - id: distractor_04
+    model: shell
+    type: shell
+    pose:
+    - 14.918
+    - 20.645
+    - -2.0668
+  - id: distractor_05
+    model: rock_small
+    type: rock
+    pose:
+    - 1.73
+    - 26.994
+    - 1.9452
+  - id: distractor_06
+    model: rock_small
+    type: rock
+    pose:
+    - 37.334
+    - 28.086
+    - 0.6695
+  - id: distractor_07
+    model: driftwood
+    type: driftwood
+    pose:
+    - 30.89
+    - 12.068
+    - -3.0486
+  person:
+    id: person_0
+    speed: 1.011
+    loop: true
+    waypoints:
+    - - -5.0
+      - 18.812
+    - - 45.0
+      - 19.053
+    - - 45.0
+      - 13.453
+    - - -5.0
+      - 25.843

@@ -28,6 +28,7 @@ Recorded 2026-10-12 on the dev machine (native, no container).
 | robot-localization | 3.8.3 | CHAMP candidate (evaluation); our localization in A4 |
 | vision-msgs | 4.1.1 | `/sim/ground_truth/objects`, `/people` (A1b) |
 | gz-transport-vendor (Python bindings `gz.transport13`, `gz.msgs10`) | 0.0.9 | sim_bridge_gazebo nodes talk to Gazebo directly (A1b); comes with ros-gz |
+| navigation2 (Nav2), incl. `nav2_regulated_pure_pursuit_controller`, `nav2_navfn_planner`, `nav2_velocity_smoother`, `nav2_bt_navigator` | 1.3.13 | navigation (A2): `packages/navigation` |
 
 ## Python (system, Ubuntu 24.04 packages)
 

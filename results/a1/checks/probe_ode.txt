@@ -1,0 +1,629 @@
+header {
+  stamp {
+    sec: 7
+    nsec: 314000000
+  }
+}
+pose {
+  name: "terrain"
+  id: 4
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "probe_00"
+  id: 8
+  position {
+    x: 2
+    y: -5.0003086613127259
+    z: -0.38038955331405716
+  }
+  orientation {
+    x: 2.9888255889256176e-07
+    y: -2.6871140194456026e-17
+    z: -1.0466716786834503e-17
+    w: 0.99999999999995537
+  }
+}
+pose {
+  name: "probe_01"
+  id: 11
+  position {
+    x: 2
+    y: 1.9977481554593122
+    z: -0.026934221761483492
+  }
+  orientation {
+    x: 0.01983817037780124
+    y: 4.4980100429419987e-19
+    z: -1.0679661941953161e-17
+    w: 0.99980320413372414
+  }
+}
+pose {
+  name: "probe_02"
+  id: 14
+  position {
+    x: 2
+    y: 8
+    z: 0.076534223592263292
+  }
+  orientation {
+    x: 1.4208377398347014e-17
+    y: -1.0455182474970895e-16
+    z: -2.4304265394180362e-18
+    w: 1
+  }
+}
+pose {
+  name: "probe_03"
+  id: 17
+  position {
+    x: 1.9998757954018209
+    y: 13.999904157582222
+    z: 0.22165519445769061
+  }
+  orientation {
+    x: 0.00012616787727367666
+    y: -0.00012591299380261295
+    z: -2.6000896736365006e-05
+    w: 0.99999998377576937
+  }
+}
+pose {
+  name: "probe_04"
+  id: 20
+  position {
+    x: 1.9899656778718118
+    y: 19.411251333804763
+    z: 0.39341385056366024
+  }
+  orientation {
+    x: 0.99922331367454842
+    y: 0.029172877971121738
+    z: 0.01453092201687735
+    w: -0.02214869985972923
+  }
+}
+pose {
+  name: "probe_05"
+  id: 23
+  position {
+    x: 1.5430165338478481
+    y: 26.000147254376714
+    z: 0.49882460660213
+  }
+  orientation {
+    x: -0.00064200347110096362
+    y: -0.71690005768359655
+    z: 0.0011240574382818164
+    w: 0.69717474970029891
+  }
+}
+pose {
+  name: "probe_06"
+  id: 26
+  position {
+    x: 2.4106549441190341
+    y: 28.442788500914869
+    z: 0.59383344185900933
+  }
+  orientation {
+    x: 0.626283936564521
+    y: 0.27989356902616747
+    z: 0.65261561162469928
+    w: -0.32174661502921942
+  }
+}
+pose {
+  name: "probe_07"
+  id: 29
+  position {
+    x: 0.865454805307159
+    y: 40.656441852768729
+    z: 1.2462772820995618
+  }
+  orientation {
+    x: -0.61372361572382894
+    y: 0.350311455863035
+    z: -0.48300565679565866
+    w: 0.5170403687309
+  }
+}
+pose {
+  name: "probe_08"
+  id: 32
+  position {
+    x: 20
+    y: -5.0003086613127259
+    z: -0.38038955331405716
+  }
+  orientation {
+    x: 2.9888255892271248e-07
+    y: 8.3595680993527555e-18
+    z: 5.10036450670295e-18
+    w: 0.99999999999995537
+  }
+}
+pose {
+  name: "probe_09"
+  id: 35
+  position {
+    x: 20
+    y: 1.9977481554593122
+    z: -0.026934221761483492
+  }
+  orientation {
+    x: 0.01983817037780124
+    y: -7.3964372282284069e-19
+    z: 2.0853856104642087e-17
+    w: 0.99980320413372414
+  }
+}
+pose {
+  name: "probe_10"
+  id: 38
+  position {
+    x: 20
+    y: 8
+    z: 0.076534223592263292
+  }
+  orientation {
+    x: -2.5386458226708728e-18
+    y: -3.7336813862800719e-17
+    z: 7.3688011906703031e-18
+    w: 1
+  }
+}
+pose {
+  name: "probe_11"
+  id: 41
+  position {
+    x: 19.999581834460589
+    y: 13.999239127092103
+    z: 0.22142837966613946
+  }
+  orientation {
+    x: 0.0059300915849882924
+    y: -0.0037212088819690925
+    z: 3.556424760524005e-05
+    w: 0.99997549237640559
+  }
+}
+pose {
+  name: "probe_12"
+  id: 44
+  position {
+    x: 20.000763702797808
+    y: 19.997777869913385
+    z: 0.34168709880140991
+  }
+  orientation {
+    x: 0.020148280729649665
+    y: 0.0069105070918955309
+    z: -0.00012019785786285195
+    w: 0.99977311287503978
+  }
+}
+pose {
+  name: "probe_13"
+  id: 47
+  position {
+    x: 19.999206104988062
+    y: 25.999605011060726
+    z: 0.49373813845846692
+  }
+  orientation {
+    x: 0.0036389572350458755
+    y: -0.0073588330584903475
+    z: -3.4316741015158632e-05
+    w: 0.99996630162651989
+  }
+}
+pose {
+  name: "probe_14"
+  id: 50
+  position {
+    x: 20.778860155553581
+    y: 28.681826888371422
+    z: 0.62488602406821536
+  }
+  orientation {
+    x: -0.59039536368274492
+    y: -0.32585158062086034
+    z: 0.29485643342073448
+    w: 0.6769887337461461
+  }
+}
+pose {
+  name: "probe_15"
+  id: 53
+  position {
+    x: 20.432710515740904
+    y: 40.705824082642593
+    z: 2.913650460988304
+  }
+  orientation {
+    x: 0.692875523605482
+    y: -0.43680534479260313
+    z: -0.57366790345593632
+    w: -0.0054530811029170649
+  }
+}
+pose {
+  name: "probe_16"
+  id: 56
+  position {
+    x: 38
+    y: -5.0003086613127259
+    z: -0.38038955331405716
+  }
+  orientation {
+    x: 2.9888255893853543e-07
+    y: -6.7036809354788732e-18
+    z: -7.513654702672728e-18
+    w: 0.99999999999995537
+  }
+}
+pose {
+  name: "probe_17"
+  id: 59
+  position {
+    x: 38
+    y: 1.9977481554593122
+    z: -0.026934221761483485
+  }
+  orientation {
+    x: 0.019838170377801296
+    y: -6.338098656422195e-20
+    z: -1.6749067007737073e-18
+    w: 0.99980320413372414
+  }
+}
+pose {
+  name: "probe_18"
+  id: 62
+  position {
+    x: 38
+    y: 8
+    z: 0.076534223592263292
+  }
+  orientation {
+    x: 2.3675352574824245e-17
+    y: -2.2975777419779864e-17
+    z: -2.0709640828297778e-18
+    w: 1
+  }
+}
+pose {
+  name: "probe_19"
+  id: 65
+  position {
+    x: 38.000612353841788
+    y: 13.997908840037438
+    z: 0.18703751630832968
+  }
+  orientation {
+    x: 0.01821540851014352
+    y: 0.0057580263954474624
+    z: -0.00027328271549937867
+    w: 0.99981746801173432
+  }
+}
+pose {
+  name: "probe_20"
+  id: 68
+  position {
+    x: 37.999525076327885
+    y: 19.999819562572803
+    z: 0.34978475138931486
+  }
+  orientation {
+    x: 0.001774803113142751
+    y: -0.0045678899813553255
+    z: -4.668838923517741e-07
+    w: 0.99998799215531076
+  }
+}
+pose {
+  name: "probe_21"
+  id: 71
+  position {
+    x: 37.999989921831265
+    y: 25.999858670845558
+    z: 0.49607922746634425
+  }
+  orientation {
+    x: 1.3436548617540929e-07
+    y: 2.1169316734597215e-08
+    z: 4.2248457940367228e-06
+    w: 0.999999999991066
+  }
+}
+pose {
+  name: "probe_22"
+  id: 74
+  position {
+    x: 39.124670321644686
+    y: 28.739249818440634
+    z: 0.57241480791397836
+  }
+  orientation {
+    x: 0.50999997388018048
+    y: 0.49237437604775541
+    z: 0.52699429540977571
+    w: 0.46876914687226667
+  }
+}
+pose {
+  name: "probe_23"
+  id: 77
+  position {
+    x: 36.553968766835609
+    y: 39.565311604986377
+    z: 1.4401981656164655
+  }
+  orientation {
+    x: 0.31514523223863417
+    y: 0.640586010049158
+    z: 0.56640063479252845
+    w: 0.41173215472340519
+  }
+}
+pose {
+  name: "link"
+  id: 5
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 9
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 12
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 15
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 18
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 21
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 24
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 27
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 30
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 33
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 36
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 39
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 42
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 45
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 48
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 51
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 54
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 57
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 60
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 63
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 66
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 69
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 72
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 75
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "link"
+  id: 78
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "visual"
+  id: 6
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "sunVisual"
+  id: 81
+  position {
+  }
+  orientation {
+    w: 1
+  }
+}
+pose {
+  name: "sun"
+  id: 80
+  position {
+    z: 20
+  }
+  orientation {
+    w: 1
+  }
+}
+
