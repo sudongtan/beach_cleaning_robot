@@ -4,6 +4,7 @@ tick() at a fixed rate with a Snapshot; tests use a fake io.
 SEARCH -> APPROACH -> PICK -> CLASSIFY -> STORE (or PUT_BACK) -> SEARCH ...
        -> (basket full, or search finished) GO_TO_BIN -> PLACE (one item per call) -> SEARCH
        -> DONE when the search is finished, no trash is left and the basket is empty.
+       -> FELL (terminal) as soon as the body tilt exceeds fall_tilt_deg.
 
 io interface (actions return handles with done() and result()):
   nav_to(x, y, yaw), cancel_nav()          result: bool
@@ -45,6 +46,7 @@ class Snapshot:
     compartments: dict              # bin id -> [item ids]
     load_kg: float = 0.0
     safety_ok: bool = True
+    tilt_deg: float = 0.0           # body tilt from vertical
 
 
 @dataclass
@@ -148,8 +150,16 @@ class Task:
 
     # --- main loop ----------------------------------------------------------------------
     def tick(self, snap):
-        if self.state == 'DONE':
+        if self.state in ('DONE', 'FELL'):
             return
+        if snap.tilt_deg > self.cfg['fall_tilt_deg']:
+            if self.pending is not None:
+                self.io.cancel_nav()
+                self.pending = None
+            self.io.cmd_vel(0.0, 0.0, 0.0)
+            self.io.log({'t': round(snap.t, 2), 'event': 'fell', 'tilt_deg': round(snap.tilt_deg, 1),
+                         'robot': [round(v, 3) for v in snap.robot], 'state': self.state, 'item': self.item})
+            return self.go('FELL', snap)
         if not snap.safety_ok and self.pending is None:
             if self.state in ('APPROACH', 'GO_TO_BIN') and self.sub == 'final':
                 self.io.cmd_vel(0.0, 0.0, 0.0)

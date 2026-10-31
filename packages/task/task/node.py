@@ -146,6 +146,7 @@ class TaskNode(Node):
                          allowed=lambda x, y: self.free_cell(occ, res, x, y))
 
         self.robot = None
+        self.tilt = 0.0
         self.items, self.compartments, self.load = {}, {}, 0.0
         self.safety = 'stop'
         self.image = Image()
@@ -185,7 +186,9 @@ class TaskNode(Node):
 
     def on_odom(self, msg):
         p = msg.pose.pose
-        self.robot = (p.position.x, p.position.y, yaw_of(p.orientation))
+        q = p.orientation
+        self.robot = (p.position.x, p.position.y, yaw_of(q))
+        self.tilt = math.degrees(math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * (q.x * q.x + q.y * q.y)))))
 
     def on_world_model(self, msg):
         with self.lock:
@@ -277,7 +280,7 @@ class TaskNode(Node):
                 and self.update_client.service_is_ready())
 
     def tick(self):
-        if self.robot is None or self.task.state == 'DONE':
+        if self.robot is None or self.task.state in ('DONE', 'FELL'):
             return
         if not self.started:                      # a missing server would otherwise fail every goal
             if not self.servers_ready():
@@ -286,7 +289,8 @@ class TaskNode(Node):
             self.log({'event': 'servers_ready'})
         with self.lock:
             snap = Snapshot(self.now(), self.robot, dict(self.items),
-                            {k: list(v) for k, v in self.compartments.items()}, self.load, self.safety == 'ok')
+                            {k: list(v) for k, v in self.compartments.items()}, self.load, self.safety == 'ok',
+                            self.tilt)
         self.task.tick(snap)
         state = f'{self.task.state} {self.task.item}'.strip()
         if state != self.last_state:

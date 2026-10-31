@@ -26,3 +26,4 @@ task:
     nav_retries: 2               # failed navigation goals per target before it is skipped
     item_timeout_s: 180.0        # no progress on one item for this long -> skipped (no_progress)
     nav_timeout_s: 120.0         # one navigation goal
+    fall_tilt_deg: 30.0          # body tilt beyond this = fallen: stop everything, end the run (FELL)

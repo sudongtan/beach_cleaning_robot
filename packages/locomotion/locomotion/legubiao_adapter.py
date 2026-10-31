@@ -8,9 +8,16 @@ At startup it waits for the controller's odometry (= controller active), then wa
 controller's FSM from passive to trotting (commands 2, 2, 4). Trotting with zero velocity
 is "standing". Without /cmd_vel for `cmd_timeout` seconds it commands zero velocity.
 
+Fall: if the body tilt (from the controller's own orientation estimate) stays above
+`fall_tilt_deg` for `fall_hold_s`, it sends PASSIVE (command 1: legs limp) and ignores
+/cmd_vel from then on. A fallen robot kept walking its legs and crawled out of the geofence
+(A2b run 5); there is no automatic stand-up.
+
 The controller publishes its twist in the odom frame; /leg_odom carries it in base_link
 (nav_msgs/Odometry convention). Simulator-agnostic: talks to the controller over ROS only.
 """
+
+import math
 
 import rclpy
 from control_input_msgs.msg import Inputs
@@ -22,6 +29,12 @@ from tf2_ros import TransformBroadcaster
 
 def clamp(v, lo=-1.0, hi=1.0):
     return max(lo, min(hi, v))
+
+
+def tilt_deg(q):
+    """Angle between the body z axis and world up, for orientation quaternion q (x, y, z, w)."""
+    x, y, z, w = q
+    return math.degrees(math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * (x * x + y * y)))))
 
 
 def rotate_to_body(q, v):
@@ -50,6 +63,11 @@ class LegubiaoAdapter(Node):
         self.odom_frame = p('odom_frame', 'odom').value
         self.base_frame = p('base_frame', 'base_link').value
         self.publish_tf = p('publish_tf', True).value
+        self.fall_tilt = p('fall_tilt_deg', 30.0).value
+        self.fall_hold = p('fall_hold_s', 0.3).value
+        self.tilt = 0.0
+        self.tilted_since = None
+        self.fallen = False
 
         self.inputs_pub = self.create_publisher(Inputs, 'control_input', 10)
         self.odom_pub = self.create_publisher(Odometry, '/leg_odom', 10)
@@ -76,6 +94,7 @@ class LegubiaoAdapter(Node):
         if self.first_odom_time is None:
             self.first_odom_time = self.now()
         q = msg.pose.pose.orientation
+        self.tilt = tilt_deg((q.x, q.y, q.z, q.w))
         out = Odometry()
         out.header.stamp = msg.header.stamp
         out.header.frame_id = self.odom_frame
@@ -99,6 +118,21 @@ class LegubiaoAdapter(Node):
     def tick(self):
         now = self.now()
         msg = Inputs()
+        if self.fallen:
+            self.inputs_pub.publish(msg)               # zero inputs; the controller stays passive
+            return
+        if self.step >= len(self.seq):                 # only once standing (stand-up starts lying down)
+            if self.tilt > self.fall_tilt:
+                self.tilted_since = now if self.tilted_since is None else self.tilted_since
+                if now - self.tilted_since >= self.fall_hold:
+                    self.fallen = True
+                    msg.command = 1                    # PASSIVE (StateTrotting::checkChange)
+                    self.inputs_pub.publish(msg)
+                    self.get_logger().error(f'FALL: tilt {self.tilt:.0f} deg; controller set to passive, '
+                                            '/cmd_vel ignored from now on')
+                    return
+            else:
+                self.tilted_since = None
         # stand-up sequence: mode commands are edge-triggered, sent for one tick each
         if self.step < len(self.seq):
             if self.first_odom_time is None or now - self.first_odom_time < self.standup_delay:

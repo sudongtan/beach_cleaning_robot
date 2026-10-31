@@ -16,3 +16,5 @@ legubiao_adapter:
     base_frame: base_link
     # A0: nothing else publishes odom -> base_link. From A2 the local EKF owns it -> false.
     publish_tf: true
+    fall_tilt_deg: 30.0      # body tilt beyond this for fall_hold_s = fallen -> controller passive
+    fall_hold_s: 0.3

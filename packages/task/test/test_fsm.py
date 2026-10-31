@@ -334,3 +334,26 @@ def test_safety_pause_during_final_approach_is_not_no_progress():
     w.safe = lambda now: not (pause_from <= now < pause_from + 3 * CFG['final_approach']['progress_timeout_s'])
     run(t, w)
     assert w.known['a'].status == PLACED
+
+
+def test_fall_stops_everything_and_ends_the_run():
+    w = FakeWorld(ITEMS, MATS)
+    t = make(w, PATH)
+    fell_at = None
+    while t.state not in ('DONE', 'FELL') and w.tick_no < 20000:
+        snap = w.snapshot()
+        if w.known.get('a') is not None and w.known['a'].status == COLLECTED and fell_at is None:
+            fell_at = w.t                               # fall right after the first store
+        if fell_at is not None:
+            snap.tilt_deg = 95.0
+        t.tick(snap)
+        w.step()
+    assert t.state == 'FELL' and w.cmd == (0.0, 0.0, 0.0)
+    calls = len(w.log_records)
+    for _ in range(50):                                 # nothing happens any more
+        snap = w.snapshot()
+        snap.tilt_deg = 0.0                             # even if it "looks" upright again
+        t.tick(snap)
+        w.step()
+    assert t.state == 'FELL' and len(w.log_records) == calls
+    assert [r for r in w.log_records if r['event'] == 'fell'][0]['tilt_deg'] == 95.0
