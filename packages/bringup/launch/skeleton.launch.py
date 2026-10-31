@@ -15,9 +15,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 
 # component -> {implementation: (package, executable)}
 IMPLEMENTATIONS = {
@@ -64,6 +64,10 @@ def launch_setup(context):
         Node(package='task', executable='task', output='screen',
              parameters=[{**scene, 'run_id': cfg['run_id']}]),
     ]
+    # all our nodes (and Nav2) take the 100 Hz sim-time clock from sim_bridge_gazebo's clock_throttle
+    # instead of the 1 kHz /clock (CPU; decisions 2026-10-31). Empty clock_topic = /clock.
+    if cfg['clock_topic']:
+        return [GroupAction([SetRemap('/clock', cfg['clock_topic']), *nodes])]
     return nodes
 
 
@@ -76,6 +80,8 @@ def generate_launch_description():
         DeclareLaunchArgument('navigation', default_value='nav2'),
         DeclareLaunchArgument('grasp_mode', default_value='attach'),
         DeclareLaunchArgument('run_id', default_value='', description='event log name (default: time + seed)'),
+        DeclareLaunchArgument('clock_topic', default_value='',
+                              description='clock topic for all nodes (sim.launch.py: /sim/clock_throttled)'),
         *args,
         OpaqueFunction(function=launch_setup),
     ])

@@ -1,6 +1,6 @@
 # ros_gz_bridge: Gazebo topics -> the architecture topics (notes/architecture.md).
 # Frame ids come from the sensors' <gz_frame_id> (beach_robot_gazebo.urdf.xacro).
-- ros_topic_name: /clock
+- ros_topic_name: /clock     # every physics step (1 kHz); clock_throttle makes /sim/clock_throttled
   gz_topic_name: /clock
   ros_type_name: rosgraph_msgs/msg/Clock
   gz_type_name: gz.msgs.Clock

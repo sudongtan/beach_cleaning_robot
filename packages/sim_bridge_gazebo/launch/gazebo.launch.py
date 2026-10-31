@@ -109,6 +109,8 @@ def launch_setup(context):
             launch_arguments={'gz_args': gz_args, 'on_exit_shutdown': 'true'}.items()),
         Node(package='ros_gz_bridge', executable='parameter_bridge', output='screen',
              parameters=[{'config_file': os.path.join(SHARE, 'config', 'bridge.yaml')}]),
+        # /sim/clock_throttled: 100 Hz sim-time copy of /clock for our own nodes (CPU, decisions 2026-10-31)
+        Node(package='sim_bridge_gazebo', executable='clock_throttle', output='screen'),
         # relays messages unchanged (stamps included): no clock needed
         Node(package='sim_bridge_gazebo', executable='gnss_relay.py', output='screen',
              parameters=[{'sensors_file': os.path.join(SHARE, 'config', 'sensors.yaml')}]),
