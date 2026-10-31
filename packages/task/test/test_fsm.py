@@ -128,8 +128,8 @@ class FakeWorld:
         self.t += DT
 
 
-def make(world, waypoints, capacity=Capacity(5, 2.0, 0.2), cfg=None):
-    return Task(world, cfg or CFG, GRASP, capacity, waypoints, BINS)
+def make(world, waypoints, capacity=Capacity(5, 2.0, 0.2), cfg=None, allowed=None):
+    return Task(world, cfg or CFG, GRASP, capacity, waypoints, BINS, allowed=allowed)
 
 
 def run(task, world, max_ticks=20000):
@@ -284,3 +284,53 @@ def test_bin_approach_ends_at_the_place_distance():
     bx, by, _, _ = BINS['recyclable']
     assert math.hypot(w.robot[0] - bx, w.robot[1] - by) == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
     assert w.cmd == (0.0, 0.0, 0.0)
+
+
+def test_items_outside_the_allowed_area_are_never_targeted():
+    items = dict(ITEMS, e={'cls': 'trash', 'x': 20.0, 'y': 11.0})         # seen, but in a forbidden area
+    w = FakeWorld(items, dict(MATS, e='pet'))
+    t = run(make(w, PATH, allowed=lambda x, y: y > 12.0), w)
+    assert t.state == 'DONE' and w.known['e'].status == SEEN
+    assert not any(r.get('item') == 'e' for r in w.log_records if r['event'] in ('target', 'pick'))
+
+
+class PhantomWorld(FakeWorld):
+    """An item whose map position moves with the robot (a localization/TF artefact): it stays
+    1 m ahead-left of the robot whatever the robot does."""
+
+    def snapshot(self):
+        snap = super().snapshot()
+        if 'ghost' in self.known:
+            x, y, yaw = self.robot
+            g = self.known['ghost']
+            g.x, g.y = x + math.cos(yaw + 0.5), y + math.sin(yaw + 0.5)
+        return snap
+
+
+def test_phantom_item_is_given_up_quickly_and_the_robot_stays_put():
+    w = PhantomWorld({'ghost': {'cls': 'trash', 'x': 5.0, 'y': 14.5}}, {'ghost': 'pet'})
+    t = make(w, PATH)
+    start = None
+    while w.tick_no < 3000 and w.known.get('ghost', None) is None or (w.known['ghost'].status == SEEN
+                                                                         and w.tick_no < 3000):
+        t.tick(w.snapshot())
+        if t.state == 'APPROACH' and t.sub == 'final' and start is None:
+            start = (w.t, tuple(w.robot))
+        w.step()
+    g = w.known['ghost']
+    assert (g.status, g.skip_reason) == (SKIPPED, 'no_progress')
+    fa = CFG['final_approach']
+    assert w.t - start[0] <= fa['progress_timeout_s'] + 2.0
+    assert math.dist(w.robot[:2], start[1][:2]) <= fa['max_vx'] * (fa['progress_timeout_s'] + 2.0) + 0.01
+
+
+def test_safety_pause_during_final_approach_is_not_no_progress():
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    t = make(w, PATH)
+    while not (t.state == 'APPROACH' and t.sub == 'final') and w.tick_no < 5000:
+        t.tick(w.snapshot())
+        w.step()
+    pause_from = w.t
+    w.safe = lambda now: not (pause_from <= now < pause_from + 3 * CFG['final_approach']['progress_timeout_s'])
+    run(t, w)
+    assert w.known['a'].status == PLACED

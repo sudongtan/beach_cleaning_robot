@@ -49,13 +49,20 @@ def duration(secs):
 
 
 class RosIo:
-    """The io interface of grasping.sequence.Runner on top of ROS (called from action threads)."""
+    """The io interface of grasping.sequence.Runner on top of ROS (called from action threads).
+
+    Timeouts run on sim time (the node clock): at RTF 0.2-0.3 a 2.5 s arm move takes ~10 s of
+    wall time, and a wall-clock limit expired just before the controller succeeded. A wall-time
+    cap (WALL_CAP x the sim limit) still ends a wait if the simulation stops.
+    """
+
+    WALL_CAP = 20.0
 
     def __init__(self, node):
         self.n = node
 
     def now(self):
-        return time.monotonic()
+        return self.n.get_clock().now().nanoseconds * 1e-9
 
     def sleep(self, s):
         time.sleep(s)
@@ -81,12 +88,14 @@ class RosIo:
             return 'failed'
         handle = sent.result()
         result = handle.get_result_async()
-        end = time.monotonic() + secs + 10.0
+        limit = secs + 10.0
+        end, wall_end = self.now() + limit, time.monotonic() + self.WALL_CAP * limit
         while not result.done():
             if watch_safety and not self.safety_ok():
                 self._wait(handle.cancel_goal_async(), 2.0)
                 return 'interrupted'
-            if time.monotonic() > end:
+            if self.now() > end or time.monotonic() > wall_end:
+                self.n.get_logger().warn(f'{client._action_name}: no result after {limit:.1f} s sim time')
                 return 'failed'
             time.sleep(0.02)
         return 'ok' if result.result().result.error_code == 0 else 'failed'
@@ -227,7 +236,8 @@ class GraspingNode(Node):
             c = (pose.position.x, pose.position.y, pose.position.z)
             ok, why, plan = plan_pick(self.arm, c, self.cfg['assumed_item_height_m'], self.cfg)
             if not ok:
-                return self.refuse(goal_handle, result, why)
+                return self.refuse(goal_handle, result, f'{why} (item at x {c[0]:.3f} y {c[1]:.3f} z {c[2]:.3f} '
+                                                        f'in {self.base_frame})')
             hover_tips = self.arm.fk(plan['hover'], TIPS)[0]
             obj = self.sim_object(g.id, tuple(hover_tips))
             if not obj:

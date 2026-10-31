@@ -83,6 +83,8 @@ class Task:
     bins: dict                      # bin id -> (x, y, rim_z, yaw): front of the bin is its +x
     fallback_bin: str = 'residual'
     confidence_threshold: float = 0.6
+    allowed: object = None          # allowed(x, y): may the robot go for an item there (free map cell
+                                    # inside the geofence)? None = everywhere
     state: str = 'SEARCH'
     wp: int = 0
     item: str = ''
@@ -97,6 +99,8 @@ class Task:
     bin_id: str = ''
     unload: list = field(default_factory=list)   # (bin id, item id) still to place
     stuck: set = field(default_factory=set)      # items that could not be placed: left in the basket
+    best_dist: float = None                      # final approach: closest distance so far ...
+    best_since: float = 0.0                      # ... and since when
 
     # --- helpers ------------------------------------------------------------------------
     def go(self, state, snap, item=None, sub=''):
@@ -105,6 +109,11 @@ class Task:
             if item != self.item:
                 self.item_since = snap.t
                 self.nav_fails = 0
+                it = snap.items.get(item)
+                if it is not None:                       # where the target is, for debugging runs
+                    self.io.log({'t': round(snap.t, 2), 'event': 'target', 'item': item,
+                                 'x': round(it.x, 3), 'y': round(it.y, 3), 'z': round(it.z, 3),
+                                 'robot': [round(v, 3) for v in snap.robot]})
             self.item = item
         self.io.log({'t': round(snap.t, 2), 'event': 'state', 'state': state, 'item': self.item})
 
@@ -120,6 +129,7 @@ class Task:
         self.io.log({'t': round(snap.t, 2), 'event': 'skipped', 'item': self.item, 'reason': reason})
         self.io.cmd_vel(0.0, 0.0, 0.0)
         self.item = ''
+        self.best_dist = None
         self.go('SEARCH', snap)
 
     def nav(self, snap, x, y, yaw):
@@ -128,7 +138,8 @@ class Task:
 
     def nearest_trash(self, snap):
         rx, ry, _ = snap.robot
-        todo = [it for it in snap.items.values() if it.status == SEEN and it.object_class == 'trash']
+        todo = [it for it in snap.items.values() if it.status == SEEN and it.object_class == 'trash'
+                and (self.allowed is None or self.allowed(it.x, it.y))]
         return min(todo, key=lambda it: math.hypot(it.x - rx, it.y - ry), default=None)
 
     def basket_items(self, snap):
@@ -142,6 +153,8 @@ class Task:
         if not snap.safety_ok and self.pending is None:
             if self.state in ('APPROACH', 'GO_TO_BIN') and self.sub == 'final':
                 self.io.cmd_vel(0.0, 0.0, 0.0)
+                self.best_since = snap.t                    # a safety pause is not "no progress"
+
             return                                      # pause: start nothing new
         if self.item and self.state in ('APPROACH',) and snap.t - self.item_since > self.cfg['item_timeout_s']:
             if self.pending is not None:
@@ -207,13 +220,20 @@ class Task:
         # final approach on the item position relative to the robot
         fa = self.cfg['final_approach']
         x, y = to_robot(snap.robot, it.x, it.y)
-        lo, hi = self.grasp['reach_x_m']
-        if lo <= x <= hi and abs(y) <= self.grasp['reach_y_max_m']:
+        dist = math.hypot(x - fa['target_x_m'], y)
+        if self.best_dist is None or dist < self.best_dist - fa['progress_min_m']:
+            self.best_dist, self.best_since = dist, snap.t
+        elif snap.t - self.best_since > fa['progress_timeout_s']:
+            self.best_dist = None
+            return self.skip(snap, 'no_progress')
+        # stop near the middle of the envelope: grasping checks it in 3D (body pitch shifts x)
+        if abs(x - fa['target_x_m']) <= fa['tolerance_m'] and abs(y) <= fa['tolerance_m']:
             self.io.cmd_vel(0.0, 0.0, 0.0)
             if self.settle_since is None:
                 self.settle_since = snap.t
             if snap.t - self.settle_since >= fa['settle_s']:
                 self.settle_since = None
+                self.best_dist = None
                 self.go('PICK', snap)
             return
         self.settle_since = None

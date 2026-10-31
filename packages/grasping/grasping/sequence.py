@@ -85,7 +85,10 @@ class Runner:
 
     def run(self, steps, feedback=lambda phase: None, cancelled=lambda: False):
         """Execute steps; returns (success, message). A move stopped for safety is repeated
-        once the state is ok again. Every step starts only while the state is ok."""
+        once the state is ok again. Every step starts only while the state is ok. Once the item
+        has been released (detach succeeded) it is where it was meant to go, so a later failure
+        (e.g. the move back to `up`) is reported as success with a note."""
+        released = False
         for step in steps:
             while True:
                 if cancelled():
@@ -98,6 +101,8 @@ class Runner:
                     if r == 'interrupted':
                         continue
                     if r != 'ok':
+                        if released:
+                            return True, f'released; then arm_failed ({step.phase})'
                         return False, f'arm_failed ({step.phase})'
                 elif step.kind == 'fingers':
                     if not self.io.fingers(step.value, self.finger_time):
@@ -108,6 +113,7 @@ class Runner:
                 elif step.kind == 'detach':
                     if not self.io.detach(step.value):
                         return False, 'detach_failed'
+                    released = True
                 else:
                     raise ValueError(step.kind)
                 break

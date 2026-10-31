@@ -126,3 +126,15 @@ def test_cancel():
     calls = iter([False, False, True])
     assert runner(io).run(pick_steps(PLAN, POSES, ['show'], 0.075, 0.01, 'x'),
                           cancelled=lambda: next(calls, True)) == (False, 'cancelled')
+
+
+def test_failure_after_release_still_counts_as_placed():
+    """The item is in the compartment once detached; failing the move back to `up` doesn't undo that."""
+    class FailLastUp(FakeIo):
+        def move_arm(self, q, secs):
+            if q[0] == 'up' and ('detach', 'a') in self.log:
+                return 'failed'
+            return super().move_arm(q, secs)
+    io = FailLastUp()
+    ok, msg = runner(io).run(store_steps(POSES, 'residual', 0.075, 'a'))
+    assert ok and msg == 'released; then arm_failed (up)'

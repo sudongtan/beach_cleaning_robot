@@ -167,4 +167,4 @@ def test_unreachable_pick_is_refused(system):
     g = pick_goal()
     g.pose.pose.position.x = 1.2
     r = send(node, PickObject, '/grasp/pick', g)
-    assert not r.success and r.message == 'outside_envelope' and fakes.arm_goals == []
+    assert not r.success and r.message.startswith('outside_envelope') and fakes.arm_goals == []

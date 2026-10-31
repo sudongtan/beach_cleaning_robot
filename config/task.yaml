@@ -14,11 +14,14 @@ task:
     bin_place_distance_m: 0.7    # then straight in until base_link is this far (head ~5 cm from the wall)
     final_approach:              # APPROACH step 2: small /cmd_vel_nav steps until the item is in reach
       target_x_m: 0.49           # item centre ahead of base_link (middle of the grasp envelope)
+      tolerance_m: 0.03          # stop within this of target_x and of y = 0, not at the envelope's edge
       gain: 0.8
       max_vx: 0.15
       max_vy: 0.10
       max_wz: 0.3
       settle_s: 1.0              # stand still this long before the arm moves
+      progress_timeout_s: 10.0   # give up (no_progress) if the distance to the item hasn't shrunk ...
+      progress_min_m: 0.05       # ... by this much in progress_timeout_s
     grasp_retries: 3             # failed picks per item before it is skipped
     nav_retries: 2               # failed navigation goals per target before it is skipped
     item_timeout_s: 180.0        # no progress on one item for this long -> skipped (no_progress)

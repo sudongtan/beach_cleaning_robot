@@ -70,7 +70,8 @@ def test_world_model_node():
         while time.monotonic() < end:
             noise = rng.normal(0, 0.05, 2)
             pub.publish(detections([('trash_04', 'trash', (3.0 + noise[0], noise[1], -0.3)),
-                                    ('', 'trash', (0.4, 0.0, 0.16))]))         # the held item at the gripper
+                                    ('', 'trash', (0.4, 0.0, 0.16)),            # the held item at the gripper
+                                    ('', 'trash', (0.0, -11.0, -0.3))]))        # map (10, 4): outside the geofence
             ex.spin_once(timeout_sec=0.05)
         last = got[-1]
         assert len(last.items) == 1

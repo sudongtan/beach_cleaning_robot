@@ -35,10 +35,13 @@ class GroundTruthDetector(Node):
         self.create_subscription(Detection3DArray, '/sim/ground_truth/objects', self.on_objects, 10)
 
     def on_objects(self, msg):
+        # camera pose at the time of the ground truth, not the latest one: at RTF ~0.25 the latest
+        # pose can be far off while the robot turns (A2b run 3: phantom items)
         try:
-            tf = self.tf_buffer.lookup_transform(self.camera_frame, msg.header.frame_id, Time())
+            tf = self.tf_buffer.lookup_transform(self.camera_frame, msg.header.frame_id,
+                                                 Time.from_msg(msg.header.stamp))
         except TransformException as e:
-            self.get_logger().warn(f'no camera pose, nothing published: {e}', throttle_duration_sec=2.0)
+            self.get_logger().warn(f'no camera pose at the message time, skipped: {e}', throttle_duration_sec=5.0)
             return
         out = Detection3DArray()
         out.header.stamp, out.header.frame_id = msg.header.stamp, self.camera_frame

@@ -142,7 +142,8 @@ class TaskNode(Node):
         self.task = Task(self, cfg['fsm'], grasp,
                          Capacity(wmc['max_items_per_compartment'], limits['basket_load_max_kg'],
                                   wmc['default_item_mass_kg']),
-                         waypoints, bins, sorting['fallback_bin'], sorting['confidence_threshold'])
+                         waypoints, bins, sorting['fallback_bin'], sorting['confidence_threshold'],
+                         allowed=lambda x, y: self.free_cell(occ, res, x, y))
 
         self.robot = None
         self.items, self.compartments, self.load = {}, {}, 0.0
@@ -171,6 +172,12 @@ class TaskNode(Node):
         self.create_timer(1.0 / cfg['fsm']['rate_hz'], self.tick, callback_group=MutuallyExclusiveCallbackGroup())
         self.last_state = None
         self.started = False
+
+    @staticmethod
+    def free_cell(occ, res, x, y):
+        """Inside the map and not lethal (/map marks everything outside the geofence lethal)."""
+        i, j = int(y // res), int(x // res)
+        return 0 <= i < occ.shape[0] and 0 <= j < occ.shape[1] and not lethal_at(occ, res, x, y)
 
     # --- inputs ---------------------------------------------------------------------------
     def now(self):

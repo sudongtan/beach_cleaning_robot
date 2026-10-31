@@ -68,8 +68,11 @@ class WorldModelNode(Node):
         xs = (np.arange(int(round(w / res))) + 0.5) * res
         ys = (np.arange(int(round(h / res))) + 0.5) * res
         X, Y = np.meshgrid(xs, ys)
-        self.coverage = Coverage(w, h, res, inside_polygon(X, Y, scene['geofence']['polygon']),
-                                 terrain_mod.height_at(scene['terrain'], X, Y))
+        poly = scene['geofence']['polygon']
+        self.coverage = Coverage(w, h, res, inside_polygon(X, Y, poly), terrain_mod.height_at(scene['terrain'], X, Y))
+        self.fence = None
+        if cfg['ignore_outside_geofence']:
+            self.fence = lambda x, y: bool(inside_polygon(np.array([[x]]), np.array([[y]]), poly)[0, 0])
         self.fov = Fov(yaml.safe_load(open(repo / 'config' / 'sensors.yaml'))['camera'])
 
         self.tf_buffer = Buffer()
@@ -82,9 +85,11 @@ class WorldModelNode(Node):
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
 
-    def lookup(self, target, source):
+    def lookup(self, target, source, stamp=None):
+        """Transform at `stamp` (a builtin Time), or the latest one; None if not available."""
         try:
-            return self.tf_buffer.lookup_transform(target, source, Time()).transform
+            t = Time() if stamp is None else Time.from_msg(stamp)
+            return self.tf_buffer.lookup_transform(target, source, t).transform
         except TransformException as e:
             self.get_logger().warn(f'no transform {target} <- {source}: {e}', throttle_duration_sec=2.0)
             return None
@@ -92,8 +97,9 @@ class WorldModelNode(Node):
     def on_detections(self, msg):
         if not msg.detections:
             return
-        to_map = self.lookup(self.map_frame, msg.header.frame_id)
-        tcp = self.lookup(self.map_frame, self.tcp_frame)
+        # the robot's pose when the camera saw them, not the latest (A2b run 3: phantom items)
+        to_map = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
+        tcp = self.lookup(self.map_frame, self.tcp_frame, msg.header.stamp)
         if to_map is None:
             return
         tf = TransformStamped()
@@ -103,6 +109,8 @@ class WorldModelNode(Node):
             if tcp is not None and math.dist((p.x, p.y, p.z), (tcp.translation.x, tcp.translation.y,
                                                                tcp.translation.z)) < self.ignore_near_gripper:
                 continue
+            if self.fence is not None and not self.fence(p.x, p.y):
+                continue                                  # outside the geofence: not ours to collect
             hyp = d.results[0].hypothesis
             self.wm.add_detection(self.now(), hyp.class_id, p.x, p.y, p.z, hyp.score, d.id)
 
