@@ -12,6 +12,6 @@ robot_limits:
   bin_drop:                    # the jaw tips must get over the bin opening to drop an item
     clearance_above_rim_m: 0.05
     inside_wall_m: 0.08        # tips this far past the near wall, into the opening
-    body_to_bin_m: 0.05        # gap between the robot's head and the bin wall
+    arm_wall_clearance_m: 0.02 # every arm move at the bin keeps this far from the bin's near wall below the rim
     body_heights_m: [0.285, 0.361]   # loaded walking height, full stand height (A0)
     max_tilt_deg: 45

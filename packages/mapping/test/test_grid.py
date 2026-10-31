@@ -46,13 +46,13 @@ def test_robot_start_is_free(scene_grid):
 
 
 def test_bins_are_lethal_and_reachable_from_the_front(scene_grid):
-    """Bin centres are lethal; 0.7 m in front of each (+x, towards the beach) is free: base_link there puts
-    the robot's head ~5 cm from the bin wall, where the arm reaches over the rim (decisions 2026-10-13)."""
+    """Bin centres are lethal; the task's place spot in front of each (+x, towards the beach) is free."""
     s, occ = scene_grid
+    place = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']['bin_place_distance_m']
     for b in s['bins']:
         x, y, yaw = b['pose']
         assert lethal_at(occ, RES, x, y)
-        assert not lethal_at(occ, RES, x + math.cos(yaw) * 0.7, y + math.sin(yaw) * 0.7)
+        assert not lethal_at(occ, RES, x + math.cos(yaw) * place, y + math.sin(yaw) * place)
 
 
 def test_large_distractors_are_lethal(scene_grid):

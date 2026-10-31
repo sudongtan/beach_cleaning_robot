@@ -132,22 +132,64 @@ def test_added_mass_within_budget():
     assert total <= LIMITS['added_mass_budget_kg'], f'added mass {total:.2f} kg'
 
 
-@pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
-def test_jaw_tips_reach_over_the_bin(body_height):
-    pin = pytest.importorskip('pinocchio')
+TASK = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']
+
+
+def bin_geometry(body_height):
+    """(rim height, near-wall x) in base_link with the robot at the task's place distance, facing the bin."""
+    boxes = [p for p in OBJECTS['bins']['bin_recyclable']['collision'] if p['type'] == 'box']
+    rim = max(p['pose'][2] + p['size'][2] / 2 for p in boxes)
+    half_depth = max(abs(p['pose'][0]) + p['size'][0] / 2 for p in boxes)
+    return rim - body_height, TASK['bin_place_distance_m'] - half_depth
+
+
+@lru_cache(maxsize=None)
+def arm_model():
+    pytest.importorskip('pinocchio')
     sys.path.insert(0, str(DESC / 'scripts'))
     import reach_check as rc
-    bd = LIMITS['bin_drop']
     model = rc.build_model(VARIANT)
-    data = model.createData()
-    q0 = rc.stand_config(model)
-    head_x = rc.frame_pos(model, data, q0, 'camera_link')[0]
-    rim = max(p['pose'][2] + p['size'][2] / 2 for p in OBJECTS['bins']['bin_recyclable']['collision']
-              if p['type'] == 'box')
-    ground_z = -body_height
-    target = np.array([head_x + bd['body_to_bin_m'] + bd['inside_wall_m'], 0.0,
-                       ground_z + rim + bd['clearance_above_rim_m']])
-    ok, _, err, tilt = rc.solve(model, data, q0, target, bd['max_tilt_deg'], np.random.default_rng(0),
+    return rc, model, model.createData(), rc.stand_config(model)
+
+
+def release_q(body_height):
+    rc, model, data, q0 = arm_model()
+    bd = LIMITS['bin_drop']
+    rim, wall = bin_geometry(body_height)
+    target = np.array([wall + bd['inside_wall_m'], 0.0, rim + bd['clearance_above_rim_m']])
+    ok, q, err, tilt = rc.solve(model, data, q0, target, bd['max_tilt_deg'], np.random.default_rng(0),
                                 frame='arm_jaw_tips_link')
-    assert ok, (f'jaw tips cannot reach {target.round(3)} (bin rim {rim} m, body height {body_height} m): '
-                f'error {err * 100:.1f} cm, tilt {tilt:.0f} deg')
+    return ok, q, target, err, tilt
+
+
+@pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
+def test_jaw_tips_reach_over_the_bin(body_height):
+    """From the task's place distance the jaw tips get over the rim and past the near wall."""
+    ok, _, target, err, tilt = release_q(body_height)
+    assert ok, (f'jaw tips cannot reach {target.round(3)} from {TASK["bin_place_distance_m"]} m '
+                f'(body height {body_height} m): error {err * 100:.1f} cm, tilt {tilt:.0f} deg')
+
+
+@pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
+def test_arm_moves_at_the_bin_clear_its_wall(body_height):
+    """rest -> up -> over the bin -> up -> rest (joint-space moves, as the controller runs them) never
+    passes the bin's near wall below the rim. At 0.7 m the arm hit the bin and tipped the robot (A2b)."""
+    import pinocchio as pin
+    rc, model, data, q0 = arm_model()
+    poses = yaml.safe_load(open(DESC / 'config' / 'arm_poses_custom.yaml'))['poses']
+    ok, rel, *_ = release_q(body_height)
+    assert ok
+    idx = [model.joints[model.getJointId(n)].idx_q for n in rc.ARM]
+    rest, up, rel = np.array(poses['rest']['arm']), np.array(poses['up']['arm']), rel[idx]
+    rim, wall = bin_geometry(body_height)
+    clear = LIMITS['bin_drop']['arm_wall_clearance_m']
+    frames = [f.name for f in model.frames if f.name.startswith('arm_') and f.type == pin.FrameType.BODY]
+    for name, a, b in (('rest->up', rest, up), ('up->bin', up, rel), ('bin->up', rel, up), ('up->rest', up, rest)):
+        for s in np.linspace(0, 1, 81):
+            q = q0.copy()
+            q[idx] = a + s * (b - a)
+            pin.framesForwardKinematics(model, data, q)
+            for f in frames:
+                p = data.oMf[model.getFrameId(f)].translation
+                assert not (abs(p[0] - wall) < clear and p[2] < rim + clear and abs(p[1]) < 0.3), \
+                    f'{name}: {f} at {p.round(3)} hits the bin wall (x {wall:.3f}, rim {rim:.3f}) at s={s:.2f}'

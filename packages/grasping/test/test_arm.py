@@ -88,8 +88,8 @@ def test_named_pose_is_over_its_compartment(arm, comp):
 def test_reaches_over_the_bin(arm, body_height):
     bd = LIMITS['bin_drop']
     rim = max(p['pose'][2] + p['size'][2] / 2 for p in OBJECTS['bins']['bin_recyclable']['collision'])
-    head_x = arm.frame('camera_link')[0]
-    near_wall = head_x + bd['body_to_bin_m']
-    target = bin_release_target((near_wall + 0.3, 0.0, -body_height + rim), near_wall, bd)
+    place = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']['bin_place_distance_m']
+    near_wall = place - 0.3
+    target = bin_release_target((place, 0.0, -body_height + rim), near_wall, bd)
     ok, q, err, tilt = arm.ik(target, bd['max_tilt_deg'])
     assert ok, f'err {err * 100:.1f} cm, tilt {tilt:.0f} deg'
