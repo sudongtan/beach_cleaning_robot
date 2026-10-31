@@ -3,8 +3,8 @@
 report what happened on the way (A1b DoD 6: dry sand, wet sand, dune slope).
 
 A test tool, not navigation: turn towards the waypoint, walk straight, repeat.
-Publishes /cmd_vel directly (A1: there is no safety supervisor yet; from A2 on,
-test drivers must publish /cmd_vel_nav).
+Publishes --topic, default /cmd_vel_nav (from A2 on test drivers go through the safety
+supervisor, CLAUDE.md; A1 used /cmd_vel directly).
 
     goto.py x1,y1 [x2,y2 ...] [--yaw Y] [--speed 0.3] [--scene bench/scenes.yaml --seed N]
             [--accel 0.3 --ang-accel 0.5]
@@ -52,12 +52,12 @@ def wrap(a):
 
 
 class Goto(Node):
-    def __init__(self):
+    def __init__(self, topic):
         super().__init__('goto_test')
         self.pose = None
         self.last_update = time.monotonic()
         self.create_subscription(Odometry, '/sim/ground_truth/pose', self.cb, 10)
-        self.pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.pub = self.create_publisher(Twist, topic, 10)
 
     def cb(self, m):
         self.pose = m
@@ -75,6 +75,8 @@ def main():
     ap.add_argument('--seed', type=int)
     ap.add_argument('--accel', type=float, help='max linear acceleration, m/s^2 (default: none)')
     ap.add_argument('--ang-accel', type=float, help='max angular acceleration, rad/s^2 (default: none)')
+    ap.add_argument('--topic', default='/cmd_vel_nav', help='velocity topic (default /cmd_vel_nav: through the '
+                                                          'safety supervisor)')
     a = ap.parse_args()
     wps = [tuple(map(float, w.split(','))) for w in a.waypoints]
     terrain = None
@@ -82,7 +84,7 @@ def main():
         terrain = [s for s in yaml.safe_load(open(a.scene))['scenes'] if s['seed'] == a.seed][0]['terrain']
 
     rclpy.init()
-    n = Goto()
+    n = Goto(a.topic)
     while n.pose is None:
         rclpy.spin_once(n, timeout_sec=0.1)
     max_tilt, fell, last_log, zones = 0.0, False, 0.0, set()

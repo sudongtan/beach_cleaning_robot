@@ -38,7 +38,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from vision_msgs.msg import Detection3DArray
 
 from grasping.arm import ARM, TIPS, Arm, bin_release_target, plan_pick
-from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, store_steps
+from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, recovery_steps, store_steps
 
 LATCHED = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
 FINGERS = ['arm_left_finger', 'arm_right_finger']
@@ -207,6 +207,10 @@ class GraspingNode(Node):
             msg.phase = phase
             goal_handle.publish_feedback(msg)
         ok, message = self.runner.run(steps, feedback, lambda: goal_handle.is_cancel_requested)
+        if not ok and not goal_handle.is_cancel_requested:
+            # never leave the arm where a failure stopped it: the robot walks next (best effort)
+            rec_ok, rec_msg = self.runner.run(recovery_steps(self.arm.poses), feedback)
+            message += '' if rec_ok else f'; recovery to rest failed: {rec_msg}'
         result.success, result.message = ok, message
         if goal_handle.is_cancel_requested:
             goal_handle.canceled()

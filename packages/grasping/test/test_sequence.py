@@ -4,7 +4,7 @@ import pytest
 
 from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, store_steps
 
-POSES = {'up': {'arm': ['up']}, 'over_recyclable': {'arm': ['over_rec']}, 'over_residual': {'arm': ['over_res']}}
+POSES = {'up': {'arm': ['up']}, 'rest': {'arm': ['rest']}, 'over_recyclable': {'arm': ['over_rec']}, 'over_residual': {'arm': ['over_res']}}
 PLAN = {'above': ['above'], 'hover': ['hover'], 'lift': ['lift']}
 
 
@@ -82,7 +82,7 @@ def test_attach_happens_at_hover_before_closing():
 def test_store_and_bin_and_ground_sequences():
     io = FakeIo()
     assert runner(io).run(store_steps(POSES, 'residual', 0.075, 'a'))[0]
-    assert ('arm', 'over_res') in io.log and io.log[-2:] == [('detach', 'a'), ('arm', 'up')]
+    assert ('arm', 'over_res') in io.log and io.log[-3:] == [('detach', 'a'), ('arm', 'up'), ('arm', 'rest')]
     io = FakeIo()
     assert runner(io).run(bin_steps(POSES, 'recyclable', ['bin'], 0.075, 0.01, 'b'))[0]
     order = [e for e in io.log if e[0] in ('arm', 'attach', 'detach')]
@@ -138,3 +138,10 @@ def test_failure_after_release_still_counts_as_placed():
     io = FailLastUp()
     ok, msg = runner(io).run(store_steps(POSES, 'residual', 0.075, 'a'))
     assert ok and msg == 'released; then arm_failed (up)'
+
+
+def test_every_walking_sequence_ends_in_rest():
+    """The robot walks after store, put-back and bin: the arm must be in the walking pose."""
+    for steps in (store_steps(POSES, 'residual', 0.075, 'a'), ground_steps(PLAN, POSES, 0.075, 'a'),
+                  bin_steps(POSES, 'recyclable', ['bin'], 0.075, 0.01, 'a')):
+        assert steps[-1].value == ['rest'] and steps[-2].value == ['up']

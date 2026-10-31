@@ -1,6 +1,10 @@
 """Pick / place step sequences and the runner that executes them under the arm safety rule,
 as plain Python (no ROS). The node supplies an `io` object; tests use a fake one.
 
+Every sequence after which the robot walks ends in `rest`, the walking pose from A0: walking
+with the arm at `up` fell in the wet-zone test (A2b, 2026-10-31). Pick ends at the camera-view
+pose (the robot stands still to classify, then stores).
+
 io interface:
   move_arm(q, secs) -> 'ok' | 'interrupted' | 'failed'   ('interrupted': stopped for safety)
   fingers(value, secs) -> bool
@@ -37,7 +41,8 @@ def store_steps(poses, bin_id, finger_open, object_id):
             Step('arm', poses[f'over_{bin_id}']['arm'], f'over_{bin_id}'),
             Step('fingers', finger_open, 'open'),
             Step('detach', object_id, 'release'),
-            Step('arm', poses['up']['arm'], 'up')]
+            Step('arm', poses['up']['arm'], 'up'),
+            Step('arm', poses['rest']['arm'], 'rest')]
 
 
 def ground_steps(plan, poses, finger_open, object_id):
@@ -48,7 +53,8 @@ def ground_steps(plan, poses, finger_open, object_id):
             Step('fingers', finger_open, 'open'),
             Step('detach', object_id, 'release'),
             Step('arm', plan['above'], 'above'),
-            Step('arm', poses['up']['arm'], 'up')]
+            Step('arm', poses['up']['arm'], 'up'),
+            Step('arm', poses['rest']['arm'], 'rest')]
 
 
 def bin_steps(poses, bin_id, release_q, finger_open, finger_closed, object_id):
@@ -62,7 +68,13 @@ def bin_steps(poses, bin_id, release_q, finger_open, finger_closed, object_id):
             Step('arm', release_q, 'over_bin'),
             Step('fingers', finger_open, 'open'),
             Step('detach', object_id, 'release'),
-            Step('arm', poses['up']['arm'], 'up')]
+            Step('arm', poses['up']['arm'], 'up'),
+            Step('arm', poses['rest']['arm'], 'rest')]
+
+
+def recovery_steps(poses):
+    """Back to the walking pose after a failed sequence (via `up`, like every named move)."""
+    return [Step('arm', poses['up']['arm'], 'up'), Step('arm', poses['rest']['arm'], 'rest')]
 
 
 class Runner:
