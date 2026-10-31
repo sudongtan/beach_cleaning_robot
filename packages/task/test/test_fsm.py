@@ -19,6 +19,10 @@ DT = 1.0 / CFG['rate_hz']
 class Handle:
     def __init__(self, world, ticks, value):
         self.world, self.at, self.value = world, world.tick_no + ticks, value
+        self.cancelled = False
+
+    def cancel(self):
+        self.cancelled = True
 
     def done(self):
         return self.world.tick_no >= self.at
@@ -357,3 +361,16 @@ def test_fall_stops_everything_and_ends_the_run():
         w.step()
     assert t.state == 'FELL' and len(w.log_records) == calls
     assert [r for r in w.log_records if r['event'] == 'fell'][0]['tilt_deg'] == 95.0
+
+
+def test_fall_during_an_arm_action_cancels_it():
+    w = FakeWorld(ITEMS, MATS)
+    t = make(w, PATH)
+    while t.state != 'PICK' or t.pending is None:
+        t.tick(w.snapshot())
+        w.step()
+    handle = t.pending
+    snap = w.snapshot()
+    snap.tilt_deg = 40.0
+    t.tick(snap)
+    assert t.state == 'FELL' and handle.cancelled

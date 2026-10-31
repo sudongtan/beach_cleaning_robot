@@ -155,6 +155,8 @@ class Task:
         if snap.tilt_deg > self.cfg['fall_tilt_deg']:
             if self.pending is not None:
                 self.io.cancel_nav()
+                if hasattr(self.pending, 'cancel'):        # a grasp action: stop the arm too
+                    self.pending.cancel()
                 self.pending = None
             self.io.cmd_vel(0.0, 0.0, 0.0)
             self.io.log({'t': round(snap.t, 2), 'event': 'fell', 'tilt_deg': round(snap.tilt_deg, 1),
