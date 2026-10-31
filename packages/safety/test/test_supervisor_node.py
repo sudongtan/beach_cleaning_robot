@@ -13,7 +13,7 @@ rclpy = pytest.importorskip('rclpy')
 os.environ.setdefault('ROS_DOMAIN_ID', '61')
 os.environ['ROS_AUTOMATIC_DISCOVERY_RANGE'] = 'LOCALHOST'
 
-from geometry_msgs.msg import TransformStamped, Twist  # noqa: E402
+from geometry_msgs.msg import Point32, PolygonStamped, TransformStamped, Twist  # noqa: E402
 from rclpy.executors import SingleThreadedExecutor  # noqa: E402
 from rclpy.parameter import Parameter  # noqa: E402
 from rclpy.qos import DurabilityPolicy, QoSProfile  # noqa: E402
@@ -39,6 +39,10 @@ def test_person_approach_and_estop():
         cmd_pub = fake.create_publisher(Twist, '/cmd_vel_nav', 10)
         people_pub = fake.create_publisher(Detection3DArray, '/people', 10)
         estop_pub = fake.create_publisher(Bool, '/estop', LATCHED)
+        fence = PolygonStamped()
+        fence.header.frame_id = 'map'
+        fence.polygon.points = [Point32(x=x, y=y) for x, y in ((-50.0, -50.0), (50.0, -50.0), (50.0, 50.0), (-50.0, 50.0))]
+        fake.create_publisher(PolygonStamped, '/geofence', LATCHED).publish(fence)
         tf = TransformStamped()
         tf.header.frame_id, tf.child_frame_id = 'map', 'base_link'
         tf.transform.rotation.w = 1.0

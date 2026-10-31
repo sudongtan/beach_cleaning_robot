@@ -8,8 +8,12 @@ State, in priority order:
 Leaving stop or slow needs the person beyond the threshold + release_margin for
 release_hold_s (hysteresis). Output velocity: zero in estop/stop or when /cmd_vel_nav is
 stale, scaled by slow_factor in slow, passed through in ok.
+Geofence (any state): within geofence_margin of the polygon's edge, or outside it, the
+outward velocity component is removed; no geofence or no robot pose -> zero linear velocity
+(turning stays allowed). The geofence never changes the state.
 """
 
+import math
 from dataclasses import dataclass
 
 OK, SLOW, STOP, ESTOP = 'ok', 'slow', 'stop', 'estop'
@@ -26,6 +30,7 @@ class Params:
     release_hold_s: float = 1.0
     people_timeout_s: float = 0.5
     cmd_timeout_s: float = 0.5
+    geofence_margin_m: float = 0.3
 
     @classmethod
     def from_dict(cls, d):
@@ -43,6 +48,15 @@ class Supervisor:
         self.cmd = ZERO            # (vx, vy, wz)
         self.level = STOP          # ok / slow / stop, with hysteresis
         self.clear_since = None    # since when the person has been far enough to step down
+        self.fence = None          # [(x, y)] in map
+        self.pose = None           # (x, y, yaw) of base_link in map, None = unknown
+
+    def on_geofence(self, polygon):
+        self.fence = [tuple(p) for p in polygon] if len(polygon) >= 3 else None
+
+    def on_pose(self, pose):
+        """Current robot pose, or None when it isn't known (or too old)."""
+        self.pose = pose
 
     def on_estop(self, active):
         self.estop = bool(active)
@@ -86,6 +100,59 @@ class Supervisor:
             return STOP, ZERO
         if self.cmd_t is None or t - self.cmd_t > self.p.cmd_timeout_s:
             return self.level, ZERO
-        if self.level == SLOW:
-            return SLOW, tuple(v * self.p.slow_factor for v in self.cmd)
-        return OK, self.cmd
+        cmd = tuple(v * self.p.slow_factor for v in self.cmd) if self.level == SLOW else self.cmd
+        return self.level, self.fenced(cmd)
+
+    def fenced(self, cmd):
+        vx, vy, wz = cmd
+        if self.fence is None or self.pose is None:
+            return 0.0, 0.0, wz
+        vx, vy = geofence_filter((vx, vy), self.pose, self.fence, self.p.geofence_margin_m)
+        return vx, vy, wz
+
+
+def inside_polygon(x, y, poly):
+    inside = False
+    for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]):
+        if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+            inside = not inside
+    return inside
+
+
+def closest_on_segment(px, py, a, b):
+    (ax, ay), (bx, by) = a, b
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy
+    t = 0.0 if L2 == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / L2))
+    return ax + t * dx, ay + t * dy
+
+
+def geofence_filter(v_body, pose, poly, margin):
+    """Remove the outward part of a body-frame velocity near or outside the polygon."""
+    x, y, yaw = pose
+    c, s = math.cos(yaw), math.sin(yaw)
+    vx, vy = c * v_body[0] - s * v_body[1], s * v_body[0] + c * v_body[1]      # into map
+    inside = inside_polygon(x, y, poly)
+    edges = list(zip(poly, poly[1:] + poly[:1]))
+    near = []
+    for a, b in edges:
+        qx, qy = closest_on_segment(x, y, a, b)
+        d = math.hypot(qx - x, qy - y)
+        near.append((d, qx, qy, a, b))
+    if not inside:
+        near = [min(near)]                                  # outside: only the nearest edge
+    for d, qx, qy, a, b in near:
+        if inside and d >= margin:
+            continue
+        if d > 1e-9:
+            nx, ny = ((qx - x) / d, (qy - y) / d) if inside else ((x - qx) / d, (y - qy) / d)
+        else:                                               # on the edge: use the edge normal
+            ex, ey = b[0] - a[0], b[1] - a[1]
+            L = math.hypot(ex, ey)
+            nx, ny = ey / L, -ex / L
+            if inside_polygon(x + 0.01 * nx, y + 0.01 * ny, poly):
+                nx, ny = -nx, -ny
+        out = vx * nx + vy * ny
+        if out > 0:
+            vx, vy = vx - out * nx, vy - out * ny
+    return c * vx + s * vy, -s * vx + c * vy                                    # back to body

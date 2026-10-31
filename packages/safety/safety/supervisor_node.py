@@ -1,6 +1,7 @@
 """Safety supervisor node: the only publisher of /cmd_vel (notes/architecture.md).
 
-  /cmd_vel_nav (Twist), /people (Detection3DArray), /estop (Bool, latched)
+  /cmd_vel_nav (Twist), /people (Detection3DArray), /estop (Bool, latched),
+  /geofence (PolygonStamped, latched), robot pose from TF map -> base_link
     -> /cmd_vel (Twist), /safety/state (String: ok / slow / stop / estop)
 
 Rules and hysteresis live in safety.supervisor (unit-tested); this node only converts
@@ -12,7 +13,7 @@ Thresholds: config/safety.yaml.
 import math
 
 import rclpy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PolygonStamped, Twist
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from rclpy.time import Time
@@ -43,6 +44,8 @@ class SupervisorNode(Node):
         values = {n: self.declare_parameter(n, getattr(Params, n)).value for n in names}
         self.sup = Supervisor(Params.from_dict(values))
         self.base_frame = self.declare_parameter('base_frame', 'base_link').value
+        self.map_frame = self.declare_parameter('map_frame', 'map').value
+        self.pose_timeout = self.declare_parameter('pose_timeout_s', 0.5).value
         rate = self.declare_parameter('rate_hz', 20.0).value
 
         self.tf_buffer = Buffer()
@@ -52,6 +55,7 @@ class SupervisorNode(Node):
         self.create_subscription(Twist, '/cmd_vel_nav', self.on_cmd, 10)
         self.create_subscription(Detection3DArray, '/people', self.on_people, 10)
         self.create_subscription(Bool, '/estop', self.on_estop, LATCHED)
+        self.create_subscription(PolygonStamped, '/geofence', self.on_geofence, LATCHED)
         self.create_timer(1.0 / rate, self.tick)
         self.last_state = None
 
@@ -78,7 +82,23 @@ class SupervisorNode(Node):
                 dists.append(math.hypot(x, y))
         self.sup.on_people(self.now(), dists)
 
+    def on_geofence(self, msg):
+        self.sup.on_geofence([(p.x, p.y) for p in msg.polygon.points])
+
+    def robot_pose(self):
+        """(x, y, yaw) of base_link in map from TF, or None if missing or older than pose_timeout_s."""
+        try:
+            tf = self.tf_buffer.lookup_transform(self.map_frame, self.base_frame, Time())
+        except TransformException:
+            return None
+        stamp = tf.header.stamp.sec + tf.header.stamp.nanosec * 1e-9
+        if stamp > 0 and self.now() - stamp > self.pose_timeout:             # stamp 0: static transform
+            return None
+        t, q = tf.transform.translation, tf.transform.rotation
+        return t.x, t.y, math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+
     def tick(self):
+        self.sup.on_pose(self.robot_pose())
         state, (vx, vy, wz) = self.sup.step(self.now())
         cmd = Twist()
         cmd.linear.x, cmd.linear.y, cmd.angular.z = vx, vy, wz

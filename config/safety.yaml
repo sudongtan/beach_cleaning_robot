@@ -11,3 +11,8 @@ safety_supervisor:
     people_timeout_s: 0.5      # no /people message for longer -> stop (fail-safe)
     cmd_timeout_s: 0.5         # no /cmd_vel_nav for longer -> zero velocity
     rate_hz: 20.0              # /cmd_vel and /safety/state publish rate
+    # Geofence: within this distance of the /geofence edge (or outside it) base_link may not move
+    # further out. Smaller than the search lanes' 0.5 m inset (config/task.yaml), so lanes along
+    # the edge aren't blocked; at 0.3 m/s and 0.3 m/s^2 the robot stops within 0.15 m.
+    geofence_margin_m: 0.3
+    pose_timeout_s: 0.5        # robot pose (TF map -> base_link) older than this counts as missing
