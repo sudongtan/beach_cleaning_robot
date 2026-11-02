@@ -38,6 +38,7 @@ class Fakes:
     def __init__(self, node):
         self.n = node
         self.arm_goals, self.cancelled, self.sim_calls = [], 0, []
+        self.fail_goal = None                       # number of the arm goal that fails (1 = first)
         cb = ReentrantCallbackGroup()
         for name in ('arm_controller', 'gripper_controller'):
             ActionServer(node, FollowJointTrajectory, f'/{name}/follow_joint_trajectory',
@@ -59,6 +60,8 @@ class Fakes:
                     return FollowJointTrajectory.Result()
                 time.sleep(0.01)
             goal_handle.succeed()
+            if name == 'arm_controller' and len(self.arm_goals) == self.fail_goal:
+                return FollowJointTrajectory.Result(error_code=-5)   # GOAL_TOLERANCE_VIOLATED
             return FollowJointTrajectory.Result(error_code=0)
         return cb
 
@@ -216,3 +219,45 @@ def test_pick_refused_when_the_item_is_not_at_the_grasp_point(system):
     r = send(node, PickObject, '/grasp/pick', g)
     assert r.success, r.message
     assert fakes.sim_calls == [('attach', 'trash_03')]
+
+
+def bin_goal():
+    g = PlaceObject.Goal(target=PlaceObject.Goal.BIN, item_id='wm_000', bin_id='recyclable')
+    g.pose = PoseStamped()
+    g.pose.header.frame_id = 'base_link'
+    g.pose.pose.position.x, g.pose.pose.position.z = 0.87, 0.5 - 0.285     # bin rim centre ahead
+    g.pose.pose.orientation.w = 1.0
+    return g
+
+
+def test_bin_place_takes_the_item_from_inside_the_compartment(system):
+    """A2b a2b_bin2: attaching from above the rim dragged the item through the basket wall."""
+    from grasping.arm import compartment
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    c = compartment(grasping.arm, 'recyclable')
+    item = ((c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2, c['floor'] + 0.011)   # cigarette pack
+    grasping.gt = gt_objects(('trash_03', item))
+    grasping.gt.detections[0].bbox.size.x, grasping.gt.detections[0].bbox.size.y = 0.088, 0.055
+    grasping.gt.detections[0].bbox.size.z = 0.022
+    r = send(node, PlaceObject, '/grasp/place', bin_goal())
+    assert r.success, r.message
+    assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]
+    hover = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]                     # up, over, above, hover
+    assert hover[2] == pytest.approx(item[2] + 0.011 + grasping.cfg['hover_above_item_m'], abs=0.006)
+    assert hover[:2] == pytest.approx(item[:2], abs=0.01)
+    release = fakes.arm_goals[-3]
+    assert abs(release[0]) <= 1.0 + 1e-6                                     # front side: no half-turn swing
+
+
+def test_failed_bin_place_releases_the_item(system):
+    from grasping.arm import compartment
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    c = compartment(grasping.arm, 'recyclable')
+    grasping.gt = gt_objects(('trash_03', ((c['x'][0] + c['x'][1]) / 2, 0.07, c['floor'] + 0.03)))
+    grasping.gt.detections[0].bbox.size.z = 0.06
+    fakes.fail_goal = 5                         # up, over, above, hover, then the lift out fails
+    r = send(node, PlaceObject, '/grasp/place', bin_goal())
+    assert not r.success and 'item released' in r.message
+    assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]

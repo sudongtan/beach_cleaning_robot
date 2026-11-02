@@ -57,17 +57,23 @@ def ground_steps(plan, poses, finger_open, object_id):
             Step('arm', poses['rest']['arm'], 'rest')]
 
 
-def bin_steps(poses, bin_id, release_q, finger_open, finger_closed, object_id):
-    """Take item object_id from compartment bin_id and release it over the bin (one item)."""
+def bin_steps(poses, bin_id, plan, release_q, finger_open, finger_closed, object_id):
+    """Take item object_id out of compartment bin_id and release it over the bin (one item).
+    plan (grasping.arm.plan_unload): jaws hover just above the item, then lift straight up until
+    it clears the rim. Attaching from above the rim instead (the item ~23 cm below the jaws)
+    dragged it through the basket wall (A2b a2b_bin2)."""
     return [Step('arm', poses['up']['arm'], 'up'),
-            Step('fingers', finger_open, 'open'),
+            Step('fingers', finger_closed, 'close'),          # jaws closed inside the compartment
             Step('arm', poses[f'over_{bin_id}']['arm'], f'over_{bin_id}'),
+            Step('arm', plan['above'], 'above_item'),
+            Step('arm', plan['hover'], 'descend'),
             Step('attach', object_id, 'attach'),
-            Step('fingers', finger_closed, 'close'),
+            Step('arm', plan['above'], 'lift'),
             Step('arm', poses['up']['arm'], 'up'),
             Step('arm', release_q, 'over_bin'),
             Step('fingers', finger_open, 'open'),
             Step('detach', object_id, 'release'),
+            Step('fingers', finger_closed, 'close'),
             Step('arm', poses['up']['arm'], 'up'),
             Step('arm', poses['rest']['arm'], 'rest')]
 
@@ -82,6 +88,7 @@ class Runner:
     def __init__(self, io, move_time, finger_time, hold_timeout, poll=0.1):
         self.io, self.move_time, self.finger_time = io, move_time, finger_time
         self.hold_timeout, self.poll = hold_timeout, poll
+        self.held = None                # object attached by the last attach step, until its detach
 
     def wait_safe(self, feedback, phase):
         """Hold until /safety/state is ok. False if that takes longer than the hold timeout."""
@@ -122,10 +129,11 @@ class Runner:
                 elif step.kind == 'attach':
                     if not self.io.attach(step.value):
                         return False, 'attach_failed'
+                    self.held = step.value
                 elif step.kind == 'detach':
                     if not self.io.detach(step.value):
                         return False, 'detach_failed'
-                    released = True
+                    self.held, released = None, True
                 else:
                     raise ValueError(step.kind)
                 break

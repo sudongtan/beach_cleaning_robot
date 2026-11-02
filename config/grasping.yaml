@@ -19,6 +19,21 @@ grasping:
   # After a pick the item is held in front of the head camera for /classify (A1c: item hangs
   # in full view below the jaws, seen edge-on). Order as arm_controller joints.
   show_pose: [0.0, 1.685, -1.78, -3.099, -1.687, -0.089]
+  # Taking an item out of a basket compartment for the bin (attach mode): jaws closed and along
+  # the compartment (the 18 cm gripper bar doesn't fit across a 15 cm compartment), tips at
+  # hover_above_item_m above the item, then straight up until the item is rim_clearance_m above
+  # the rim. Over the bin the release point is raised by the item's height for the same reason.
+  unload:
+    wall_clearance_m: 0.01      # gripper bar to the compartment walls
+    rim_clearance_m: 0.03       # item bottom above the rim before the arm swings to the bin
+    above_max_tilt_deg: 25      # the lift point is high and behind the arm: vertical (10 deg) only reaches ~0.36 m
+    # IK stays within this of the over-compartment pose, per joint in arm_controller order
+    # (waist and forearm roll; .inf = free): no flipped solutions, no half-turn swings
+    joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, .inf]
+  # Release over the bin: IK stays within this of `up` (waist, forearm roll, wrist rotate). Unbounded,
+  # IK chose a flipped pose (waist 3.14); every move to it swung the arm half a turn with the item
+  # attached and tipped the robot over (A2b a2b_bin4).
+  release_joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, 1.0]
   move_time_s: 2.5              # duration of each arm move
   finger_time_s: 1.0
   safety_hold_timeout_s: 120.0  # give up a pick/place if /safety/state stays not-ok this long

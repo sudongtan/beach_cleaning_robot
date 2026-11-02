@@ -37,7 +37,7 @@ from tf2_ros import Buffer, TransformException, TransformListener
 from trajectory_msgs.msg import JointTrajectoryPoint
 from vision_msgs.msg import Detection3DArray
 
-from grasping.arm import ARM, TIPS, Arm, bin_release_target, plan_pick
+from grasping.arm import ARM, TIPS, Arm, bin_release_target, near, plan_pick, plan_unload
 from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, recovery_steps, store_steps
 
 LATCHED = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -213,6 +213,12 @@ class GraspingNode(Node):
             msg.phase = phase
             goal_handle.publish_feedback(msg)
         ok, message = self.runner.run(steps, feedback, lambda: goal_handle.is_cancel_requested)
+        if not ok and self.runner.held:
+            # never walk on with an item attached (A2b a2b_bin2: the next try found it "already
+            # attached", and the recovery dragged it along); it drops where it is
+            if self.runner.io.detach(self.runner.held):
+                self.runner.held = None
+            message += '; item released'
         if not ok and not goal_handle.is_cancel_requested:
             # never leave the arm where a failure stopped it: the robot walks next (best effort)
             rec_ok, rec_msg = self.runner.run(recovery_steps(self.arm.poses), feedback)
@@ -277,18 +283,46 @@ class GraspingNode(Node):
                     return self.refuse(goal_handle, result, 'no_pick_plan')
                 steps = ground_steps(self.picks.pop(g.item_id), self.arm.poses, self.arm.finger_open, obj)
             elif g.target == PlaceObject.Goal.BIN:
-                q = self.bin_release(g.pose)
+                item = self.gt_item(obj)
+                if item is None:
+                    return self.refuse(goal_handle, result, 'item_not_found')
+                centre, height = item
+                ok, why, plan = plan_unload(self.arm, g.bin_id, centre, height, self.cfg)
+                if not ok:
+                    return self.refuse(goal_handle, result, f'unload {why} (item at x {centre[0]:.3f} '
+                                                            f'y {centre[1]:.3f} z {centre[2]:.3f})')
+                q = self.bin_release(g.pose, height + self.cfg['hover_above_item_m'])
                 if q is None:
                     return self.refuse(goal_handle, result, 'bin_unreachable')
-                steps = bin_steps(self.arm.poses, g.bin_id, q, self.arm.finger_open, self.arm.finger_closed, obj)
+                steps = bin_steps(self.arm.poses, g.bin_id, plan, q, self.arm.finger_open,
+                                  self.arm.finger_closed, obj)
             else:
                 return self.refuse(goal_handle, result, f'unknown target {g.target}')
             return self.run(goal_handle, steps, result)
         finally:
             self.busy.release()
 
-    def bin_release(self, pose_stamped):
-        """Joint target with the jaw tips over the bin opening (pose: opening centre at the rim)."""
+    def gt_item(self, object_id):
+        """(bbox centre, vertical extent) of a simulator object in base_link (attach mode: the
+        item lying in a compartment, from ground truth), or None."""
+        d = next((d for d in (self.gt.detections if self.gt else []) if d.id == object_id), None)
+        if d is None:
+            return None
+        try:
+            tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
+        except TransformException:
+            return None
+        p = do_transform_pose(d.bbox.center, tf)
+        q = p.orientation
+        # third row of the item's rotation in base_link: how much of each bbox axis is vertical
+        r2 = (2 * (q.x * q.z - q.w * q.y), 2 * (q.y * q.z + q.w * q.x), 1 - 2 * (q.x * q.x + q.y * q.y))
+        size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
+        height = sum(abs(r) * s for r, s in zip(r2, size))
+        return (p.position.x, p.position.y, p.position.z), height
+
+    def bin_release(self, pose_stamped, hang=0.0):
+        """Joint target with the jaw tips over the bin opening (pose: opening centre at the rim),
+        raised by `hang` (how far the held item reaches below the tips), on the front side of `up`."""
         pose = self.to_base(pose_stamped)
         if pose is None:
             return None
@@ -296,8 +330,10 @@ class GraspingNode(Node):
         rel_yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
         depth = abs(math.cos(rel_yaw)) * self.bin_half[0] + abs(math.sin(rel_yaw)) * self.bin_half[1]
         c = (pose.position.x, pose.position.y, pose.position.z)
-        target = bin_release_target(c, c[0] - depth, self.limits['bin_drop'])
-        ok, arm_q, err, tilt = self.arm.ik(target, self.limits['bin_drop']['max_tilt_deg'])
+        target = bin_release_target(c, c[0] - depth, self.limits['bin_drop'], hang)
+        up = self.arm.poses['up']['arm']
+        ok, arm_q, err, tilt = self.arm.ik(target, self.limits['bin_drop']['max_tilt_deg'], seed_q=up,
+                                           bounds=near(up, self.cfg['release_joint_spread_rad']))
         return np.asarray(arm_q) if ok else None
 
 

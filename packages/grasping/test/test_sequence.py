@@ -84,10 +84,12 @@ def test_store_and_bin_and_ground_sequences():
     assert runner(io).run(store_steps(POSES, 'residual', 0.075, 'a'))[0]
     assert ('arm', 'over_res') in io.log and io.log[-3:] == [('detach', 'a'), ('arm', 'up'), ('arm', 'rest')]
     io = FakeIo()
-    assert runner(io).run(bin_steps(POSES, 'recyclable', ['bin'], 0.075, 0.01, 'b'))[0]
+    assert runner(io).run(bin_steps(POSES, 'recyclable', PLAN, ['bin'], 0.075, 0.01, 'b'))[0]
     order = [e for e in io.log if e[0] in ('arm', 'attach', 'detach')]
-    assert order.index(('attach', 'b')) == order.index(('arm', 'over_rec')) + 1
-    assert order.index(('detach', 'b')) == order.index(('arm', 'bin')) + 1
+    # into the compartment above the item, down, attach, straight up, only then swing
+    assert order[order.index(('arm', 'over_rec')):order.index(('arm', 'bin')) + 2] == [
+        ('arm', 'over_rec'), ('arm', 'above'), ('arm', 'hover'), ('attach', 'b'), ('arm', 'above'),
+        ('arm', 'up'), ('arm', 'bin'), ('detach', 'b')]
     io = FakeIo()
     assert runner(io).run(ground_steps(PLAN, POSES, 0.075, 'c'))[0]
     assert io.log.index(('detach', 'c')) > io.log.index(('arm', 'hover'))
@@ -143,5 +145,16 @@ def test_failure_after_release_still_counts_as_placed():
 def test_every_walking_sequence_ends_in_rest():
     """The robot walks after store, put-back and bin: the arm must be in the walking pose."""
     for steps in (store_steps(POSES, 'residual', 0.075, 'a'), ground_steps(PLAN, POSES, 0.075, 'a'),
-                  bin_steps(POSES, 'recyclable', ['bin'], 0.075, 0.01, 'a')):
+                  bin_steps(POSES, 'recyclable', PLAN, ['bin'], 0.075, 0.01, 'a')):
         assert steps[-1].value == ['rest'] and steps[-2].value == ['up']
+
+
+def test_runner_tracks_the_held_item():
+    """The node releases a held item after a failure (A2b: an item stayed attached)."""
+    io = FakeIo(fail={'up'})
+    r = runner(io)
+    ok, _ = r.run(bin_steps(POSES, 'recyclable', PLAN, ['bin'], 0.075, 0.01, 'b')[3:])   # from above_item
+    assert not ok and r.held == 'b'
+    io = FakeIo()
+    r = runner(io)
+    assert r.run(bin_steps(POSES, 'recyclable', PLAN, ['bin'], 0.075, 0.01, 'b'))[0] and r.held is None

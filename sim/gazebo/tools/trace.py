@@ -1,5 +1,6 @@
 """Dense trace every 0.5 s wall: ground-truth pose, height, tilt / roll / pitch, arm joints, /cmd_vel_nav, /cmd_vel,
-safety and task state.  trace.py <duration_s>"""
+safety and task state, and every ground-truth object within 0.8 m of base_link (robot frame x/y,
+map z: shows items leaving the basket).  trace.py <duration_s>"""
 import math
 import sys
 import time
@@ -11,11 +12,12 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
+from vision_msgs.msg import Detection3DArray
 
 L = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
 rclpy.init()
 n = Node('trace')
-st = {'pose': None, 'nav': None, 'out': None, 'safety': '', 'task': '', 'arm': None}
+st = {'pose': None, 'nav': None, 'out': None, 'safety': '', 'task': '', 'arm': None, 'objs': None}
 n.create_subscription(Odometry, '/sim/ground_truth/pose', lambda m: st.__setitem__('pose', m), 10)
 n.create_subscription(Twist, '/cmd_vel_nav', lambda m: st.__setitem__('nav', m), 10)
 n.create_subscription(Twist, '/cmd_vel', lambda m: st.__setitem__('out', m), 10)
@@ -27,6 +29,7 @@ def on_js(m):
     if all(a in d for a in ARM):
         st['arm'] = [d[a] for a in ARM]
 n.create_subscription(JointState, '/joint_states', on_js, 10)
+n.create_subscription(Detection3DArray, '/sim/ground_truth/objects', lambda m: st.__setitem__('objs', m), 10)
 end = time.monotonic() + float(sys.argv[1])
 last = 0
 
@@ -46,6 +49,13 @@ while time.monotonic() < end:
         roll = math.degrees(math.atan2(2 * (q.w * q.x + q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y)))
         pitch = math.degrees(math.asin(max(-1, min(1, 2 * (q.w * q.y - q.z * q.x)))))
         arm = ' '.join(f'{v:+.2f}' for v in st['arm']) if st['arm'] else '-'
+        near = []
+        for d in (st['objs'].detections if st['objs'] else []):
+            o = d.bbox.center.position
+            dx, dy = o.x - p.position.x, o.y - p.position.y
+            if math.hypot(dx, dy) < 0.8:
+                c, s_ = math.cos(yaw), math.sin(yaw)
+                near.append(f'{d.id}({c * dx + s_ * dy:+.2f},{-s_ * dx + c * dy:+.2f},z{o.z:.2f})')
         print(f"t {st['pose'].header.stamp.sec:4d} pos {p.position.x:6.2f} {p.position.y:6.2f} z {p.position.z:5.2f} "
               f"yaw {math.degrees(yaw):5.0f} tilt {tilt:4.1f} roll {roll:+5.1f} pitch {pitch:+5.1f} arm [{arm}] nav {tw(st['nav'])} out {tw(st['out'])} "
-              f"{st['safety']:5s} {st['task']}", flush=True)
+              f"{st['safety']:5s} {st['task']} near {' '.join(near) or '-'}", flush=True)

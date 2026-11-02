@@ -10,7 +10,8 @@ import yaml
 pytest.importorskip('pinocchio')
 pytest.importorskip('ament_index_python')
 
-from grasping.arm import TCP, TIPS, Arm, bin_release_target, graspable, in_envelope, plan_pick  # noqa: E402
+from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, in_envelope,  # noqa: E402
+                          near, plan_pick, plan_unload)
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
@@ -90,6 +91,79 @@ def test_reaches_over_the_bin(arm, body_height):
     rim = max(p['pose'][2] + p['size'][2] / 2 for p in OBJECTS['bins']['bin_recyclable']['collision'])
     place = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']['bin_place_distance_m']
     near_wall = place - 0.3
-    target = bin_release_target((place, 0.0, -body_height + rim), near_wall, bd)
-    ok, q, err, tilt = arm.ik(target, bd['max_tilt_deg'])
-    assert ok, f'err {err * 100:.1f} cm, tilt {tilt:.0f} deg'
+    up = arm.poses['up']['arm']
+    for hang in (0.0, MAX_H + CFG['hover_above_item_m']):            # empty jaws / the tallest item held
+        target = bin_release_target((place, 0.0, -body_height + rim), near_wall, bd, hang)
+        ok, q, err, tilt = arm.ik(target, bd['max_tilt_deg'], seed_q=up,
+                                  bounds=near(up, CFG['release_joint_spread_rad']))
+        assert ok, f'hang {hang}: err {err * 100:.1f} cm, tilt {tilt:.0f} deg'
+        assert abs(q[0]) < 1.0 + 1e-6                                 # on the front side, no half-turn swing
+
+
+def item_sizes():
+    """(name, vertical extent, lying length) of every trash item as it lies (flat, largest face down)."""
+    return [(n, box_size(s)[2], box_size(s)[0]) for n, s in OBJECTS['trash'].items()]
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_items_can_be_taken_out_of_the_basket(arm, comp):
+    """Anywhere it can lie in a compartment, every item gets an unload plan: tips hover above it,
+    the gripper bar stays inside the compartment, and the lift takes the item over the rim."""
+    c = compartment(arm, comp)
+    u = CFG['unload']
+    fails = []
+    for name, h, length in item_sizes():
+        half = min(length, c['x'][1] - c['x'][0]) / 2
+        for x in np.linspace(c['x'][0] + half, c['x'][1] - half, 3):
+            for y in np.linspace(c['y'][0] + 0.035, c['y'][1] - 0.035, 2):
+                centre = (x, y, c['floor'] + h / 2)
+                ok, why, plan = plan_unload(arm, comp, centre, h, CFG)
+                if not ok:
+                    fails.append((name, round(x, 3), round(y, 3), why))
+                    continue
+                tips = arm.fk(plan['hover'], TIPS)[0]
+                assert tips[2] == pytest.approx(c['floor'] + h + CFG['hover_above_item_m'], abs=0.006)
+                assert abs(arm.jaw_axis(plan['hover'])[0]) > 0.99            # bar along the compartment
+                bar = arm.bar[1] / 2
+                assert c['x'][0] + bar <= tips[0] + 1e-6 and tips[0] - 1e-6 <= c['x'][1] - bar
+                lifted = arm.fk(plan['above'], TIPS)[0][2] - CFG['hover_above_item_m'] - h
+                assert lifted >= c['rim'] + u['rim_clearance_m'] - 0.006       # item bottom over the rim
+    assert not fails
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_unload_moves_stay_on_one_side(arm, comp):
+    """over -> above -> hover never swings a joint by more than the configured spread."""
+    c = compartment(arm, comp)
+    ok, why, plan = plan_unload(arm, comp, ((c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2,
+                                            c['floor'] + 0.033), 0.066, CFG)
+    assert ok, why
+    over = np.array(arm.poses[f'over_{comp}']['arm'])
+    for q in plan.values():
+        assert abs(q[0] - over[0]) <= 1.0 + 1e-6 and abs(q[3] - over[3]) <= 1.0 + 1e-6
+
+
+@pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
+def test_release_moves_with_the_item_clear_the_bin_wall(arm, body_height):
+    """up -> release -> up (joint space, as the controller runs it) with the tallest item hanging
+    below the tips: neither the arm frames nor the item's lowest point pass the near wall below the rim."""
+    import pinocchio as pin
+    bd = LIMITS['bin_drop']
+    rim = max(p['pose'][2] + p['size'][2] / 2 for p in OBJECTS['bins']['bin_recyclable']['collision']) - body_height
+    place = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']['bin_place_distance_m']
+    wall = place - 0.3
+    hang = MAX_H + CFG['hover_above_item_m']
+    up = np.array(arm.poses['up']['arm'])
+    ok, rel, *_ = arm.ik(bin_release_target((place, 0.0, rim), wall, bd, hang), bd['max_tilt_deg'], seed_q=up,
+                         bounds=near(up, CFG['release_joint_spread_rad']))
+    assert ok
+    clear = bd['arm_wall_clearance_m']
+    frames = [f.name for f in arm.model.frames if f.name.startswith('arm_') and f.type == pin.FrameType.BODY]
+    for s in np.linspace(0, 1, 41):
+        q = up + s * (rel - up)
+        tips, axis = arm.fk(q, TIPS)
+        points = {'item': tips + hang * axis}
+        pin.framesForwardKinematics(arm.model, arm.data, arm.full(q))
+        points.update({f: arm.data.oMf[arm.model.getFrameId(f)].translation for f in frames})
+        for name, p in points.items():
+            assert not (abs(p[0] - wall) < clear and p[2] < rim + clear), f'{name} at {p.round(3)}, s={s:.2f}'
