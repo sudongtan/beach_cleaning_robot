@@ -68,7 +68,7 @@ class FakeWorld:
     def cancel_nav(self):
         pass
 
-    def pick(self, iid, pos):
+    def pick(self, iid, pose, size):
         self._call()
         if self.pick_fail.get(iid, 0) > 0:
             self.pick_fail[iid] -= 1

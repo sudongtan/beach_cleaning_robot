@@ -105,14 +105,17 @@ class WorldModelNode(Node):
         tf = TransformStamped()
         tf.transform = to_map
         for d in msg.detections:
-            p = do_transform_pose(d.bbox.center, tf).position
+            pose = do_transform_pose(d.bbox.center, tf)
+            p, q = pose.position, pose.orientation
             if tcp is not None and math.dist((p.x, p.y, p.z), (tcp.translation.x, tcp.translation.y,
                                                                tcp.translation.z)) < self.ignore_near_gripper:
                 continue
             if self.fence is not None and not self.fence(p.x, p.y):
                 continue                                  # outside the geofence: not ours to collect
             hyp = d.results[0].hypothesis
-            self.wm.add_detection(self.now(), hyp.class_id, p.x, p.y, p.z, hyp.score, d.id)
+            yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+            size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
+            self.wm.add_detection(self.now(), hyp.class_id, p.x, p.y, p.z, hyp.score, d.id, yaw, size)
 
     def on_update(self, req, res):
         res.success, res.message = self.wm.update(req.id, req.status, req.material, req.bin_id, req.skip_reason)
@@ -138,7 +141,8 @@ class WorldModelNode(Node):
                                                                       it.material, it.bin_id)
             m.pose.header = msg.header
             m.pose.pose.position.x, m.pose.pose.position.y, m.pose.pose.position.z = it.x, it.y, it.z
-            m.pose.pose.orientation.w = 1.0
+            m.pose.pose.orientation.z, m.pose.pose.orientation.w = math.sin(it.yaw / 2), math.cos(it.yaw / 2)
+            m.size.x, m.size.y, m.size.z = (float(v) for v in it.size)
             m.confidence, m.status, m.skip_reason, m.times_seen = (float(it.confidence), it.status,
                                                                    it.skip_reason, it.times_seen)
             m.last_seen.sec = int(it.last_seen)

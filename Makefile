@@ -5,6 +5,8 @@
 #                                  VARIANT=custom (default) | stock robot
 #                                  HEADLESS=true: server only; RVIZ=true: RViz with camera images;
 #                                  needs `colcon build` first
+#   make run SEED=3                scene 3 + the A2 skeleton (the robot cleans the beach);
+#                                  HEADLESS / RVIZ as for scene; RUN_ID names the event log
 #   make world SEED=3              Gazebo GUI with scene 3, no robot
 #   make world-headless SEED=3     same, server only, headless rendering
 #   make assets                    regenerate meshes and textures in sim/common
@@ -17,6 +19,7 @@ SIM ?= gazebo
 HEADLESS ?= false
 VARIANT ?= custom
 RVIZ ?= false
+RUN_ID ?=
 # Optional own Gazebo transport partition (e.g. GZ_PARTITION=a1) to keep parallel
 # simulations apart; empty = the normal shared partition.
 GZ_PARTITION ?=
@@ -28,7 +31,7 @@ export BEACH_REPO := $(CURDIR)
 WORLD = sim/gazebo/worlds/generated/scene_$(SEED).sdf
 MANIFEST = $(CURDIR)/sim/gazebo/worlds/generated/scene_$(SEED).manifest.yaml
 
-.PHONY: generate test assets terrain scene world world-headless clean
+.PHONY: generate test assets terrain scene run world world-headless clean
 
 generate:
 	$(PYTHON) sim/common/generate_scene.py --seeds $(SEEDS)
@@ -49,6 +52,11 @@ scene: $(WORLD)
 	@[ "$(SIM)" = gazebo ] || { echo "SIM=$(SIM): only gazebo exists so far (isaac comes in B0)"; exit 1; }
 	source $(ROS_SETUP) && source $(WS_SETUP) && $(GZ_ENV) ros2 launch bringup sim.launch.py sim:=$(SIM) \
 	  scene:=$(MANIFEST) headless:=$(HEADLESS) rviz:=$(RVIZ)
+
+run: $(WORLD)
+	@[ "$(SIM)" = gazebo ] || { echo "SIM=$(SIM): only gazebo exists so far (isaac comes in B0)"; exit 1; }
+	source $(ROS_SETUP) && source $(WS_SETUP) && $(GZ_ENV) ros2 launch bringup sim.launch.py sim:=$(SIM) \
+	  scene:=$(MANIFEST) headless:=$(HEADLESS) rviz:=$(RVIZ) skeleton:=true run_id:=$(RUN_ID)
 
 world: $(WORLD)
 	source $(ROS_SETUP) && $(GZ_ENV) gz sim -r $(WORLD)

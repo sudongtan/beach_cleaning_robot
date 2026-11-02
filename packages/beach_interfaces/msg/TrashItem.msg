@@ -9,7 +9,8 @@ string scene_id                     # id from bench/scenes.yaml if known (ground
 string object_class                 # trash | distractor
 string material                     # pet | metal | glass | residual; empty until classified
 string bin_id                       # recyclable | residual: compartment (COLLECTED) or bin (PLACED); else empty
-geometry_msgs/PoseStamped pose      # map frame
+geometry_msgs/PoseStamped pose      # map frame; bbox centre (half the height above the base), orientation = item yaw
+geometry_msgs/Vector3 size          # bbox size in the item frame (z = height); all zero = unknown
 float32 confidence                  # detection confidence
 uint8 status
 string skip_reason                  # e.g. unreachable, grasp_failed, no_progress, distractor

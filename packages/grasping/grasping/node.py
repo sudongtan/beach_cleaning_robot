@@ -238,7 +238,8 @@ class GraspingNode(Node):
             if pose is None:
                 return self.refuse(goal_handle, result, 'no_transform')
             c = (pose.position.x, pose.position.y, pose.position.z)
-            ok, why, plan = plan_pick(self.arm, c, self.cfg['assumed_item_height_m'], self.cfg)
+            height = g.size.z if g.size.z > 0 else self.cfg['assumed_item_height_m']
+            ok, why, plan = plan_pick(self.arm, c, height, self.cfg)
             if not ok:
                 return self.refuse(goal_handle, result, f'{why} (item at x {c[0]:.3f} y {c[1]:.3f} z {c[2]:.3f} '
                                                         f'in {self.base_frame})')

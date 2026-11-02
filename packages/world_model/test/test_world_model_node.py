@@ -42,6 +42,7 @@ def detections(objs):
         d.id = oid
         d.bbox.center.position.x, d.bbox.center.position.y, d.bbox.center.position.z = x, y, z
         d.bbox.center.orientation.w = 1.0
+        d.bbox.size.x, d.bbox.size.y, d.bbox.size.z = 0.115, 0.066, 0.066
         h = ObjectHypothesisWithPose()
         h.hypothesis.class_id, h.hypothesis.score = cls, 1.0
         d.results.append(h)
@@ -78,6 +79,7 @@ def test_world_model_node():
         it = last.items[0]
         assert it.scene_id == 'trash_04' and it.status == TrashItem.SEEN and it.times_seen > 10
         assert abs(it.pose.pose.position.x - 13.0) < 0.05 and abs(it.pose.pose.position.y - 15.0) < 0.05
+        assert (it.size.x, it.size.y, it.size.z) == pytest.approx((0.115, 0.066, 0.066))
         assert sum(v == 100 for v in last.coverage.data) > 0
 
         req = UpdateItem.Request(id=it.id, status=TrashItem.COLLECTED, material='glass', bin_id='recyclable')

@@ -1,6 +1,7 @@
 # /grasp/pick: pick an object from the ground in front of the robot (robot standing still).
 string id                           # world-model id
-geometry_msgs/PoseStamped pose      # object pose, any frame with a TF to base_link
+geometry_msgs/PoseStamped pose      # bbox centre + item yaw, any frame with a TF to base_link
+geometry_msgs/Vector3 size          # bbox size in the item frame (z = height); all zero = unknown
 ---
 bool success
 string message                      # failure reason, e.g. unreachable, safety_hold_timeout, attach_failed

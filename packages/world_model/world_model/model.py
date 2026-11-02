@@ -25,6 +25,8 @@ class Item:
     z: float
     confidence: float
     scene_id: str = ''
+    yaw: float = 0.0
+    size: tuple = (0.0, 0.0, 0.0)                    # bbox (x, y, z = height); zeros = unknown
     mass_kg: float = 0.0
     material: str = ''
     bin_id: str = ''
@@ -46,8 +48,10 @@ class WorldModel:
     next_id: int = 0
 
     # --- detections -----------------------------------------------------------------
-    def add_detection(self, t, object_class, x, y, z, confidence, scene_id=''):
-        """Merge one map-frame detection; returns the item id."""
+    def add_detection(self, t, object_class, x, y, z, confidence, scene_id='', yaw=0.0, size=(0.0, 0.0, 0.0)):
+        """Merge one map-frame detection; returns the item id. Position is averaged over the
+        detections; yaw and size are taken from the latest one (a yaw average is ill-defined for
+        items that look the same turned by 180 degrees)."""
         best, best_d = None, self.dedup_radius_m
         for it in self.items.values():
             if it.status in (SEEN, SKIPPED) and it.object_class == object_class:
@@ -57,11 +61,12 @@ class WorldModel:
         if best is None:
             iid = f'wm_{self.next_id:03d}'
             self.next_id += 1
-            self.items[iid] = Item(iid, object_class, x, y, z, confidence, scene_id,
+            self.items[iid] = Item(iid, object_class, x, y, z, confidence, scene_id, yaw, tuple(size),
                                    self.masses.get(scene_id, self.default_item_mass_kg), last_seen=t)
             return iid
         n = best.times_seen
         best.x, best.y, best.z = ((best.x * n + x) / (n + 1), (best.y * n + y) / (n + 1), (best.z * n + z) / (n + 1))
+        best.yaw, best.size = yaw, tuple(size)
         best.confidence = max(best.confidence, confidence)
         best.times_seen, best.last_seen = n + 1, t
         best.scene_id = best.scene_id or scene_id

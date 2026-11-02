@@ -196,7 +196,8 @@ class TaskNode(Node):
             for it in msg.items:
                 p = it.pose.pose.position
                 old = self.items.get(it.id)
-                view = ItemView(it.id, it.object_class, p.x, p.y, p.z, it.status, it.bin_id)
+                view = ItemView(it.id, it.object_class, p.x, p.y, p.z, it.status, it.bin_id,
+                                yaw_of(it.pose.pose.orientation), (it.size.x, it.size.y, it.size.z))
                 if old is not None and getattr(old, 'override_until', 0) > self.now() and old.status != it.status:
                     view = old                    # our own update hasn't reached /world_model yet
                 fresh[it.id] = view
@@ -222,8 +223,9 @@ class TaskNode(Node):
         if self.nav_handle is not None:
             self.nav_handle.cancel()
 
-    def pick(self, item_id, pos):
-        goal = PickObject.Goal(id=item_id, pose=pose_stamped('map', *pos))
+    def pick(self, item_id, pose, size):
+        goal = PickObject.Goal(id=item_id, pose=pose_stamped('map', *pose))
+        goal.size.x, goal.size.y, goal.size.z = (float(v) for v in size)
         return ActionHandle(self.pick_client, goal,
                             lambda r: (False, 'no_server') if r is None else (r.result.success, r.result.message))
 

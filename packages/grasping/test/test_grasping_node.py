@@ -26,6 +26,7 @@ from rclpy.parameter import Parameter  # noqa: E402
 from rclpy.qos import DurabilityPolicy, QoSProfile  # noqa: E402
 from std_msgs.msg import String  # noqa: E402
 
+from grasping.arm import TIPS  # noqa: E402
 from grasping.node import GraspingNode  # noqa: E402
 
 REPO = str(Path(__file__).resolve().parents[3])
@@ -168,3 +169,15 @@ def test_unreachable_pick_is_refused(system):
     g.pose.pose.position.x = 1.2
     r = send(node, PickObject, '/grasp/pick', g)
     assert not r.success and r.message.startswith('outside_envelope') and fakes.arm_goals == []
+
+
+def test_pick_hovers_over_the_item_height_from_the_goal(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    g = pick_goal()
+    g.size.x, g.size.y, g.size.z = 0.115, 0.066, 0.066
+    r = send(node, PickObject, '/grasp/pick', g)
+    assert r.success, r.message
+    tips_z = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0][2]          # hover
+    top = g.pose.pose.position.z + g.size.z / 2
+    assert tips_z == pytest.approx(top + grasping.cfg['hover_above_item_m'], abs=grasping.cfg['ik_tolerance_m'])

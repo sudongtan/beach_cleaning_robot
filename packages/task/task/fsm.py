@@ -8,7 +8,7 @@ SEARCH -> APPROACH -> PICK -> CLASSIFY -> STORE (or PUT_BACK) -> SEARCH ...
 
 io interface (actions return handles with done() and result()):
   nav_to(x, y, yaw), cancel_nav()          result: bool
-  pick(item_id, (x, y, z))                 result: (success, message)
+  pick(item_id, (x, y, z, yaw), size)      result: (success, message)   size: bbox (x, y, z)
   classify()                               result: (material, bin_id, confidence)
   place(target, item_id, bin_id, (x, y, z, yaw))  target: 'compartment' | 'bin' | 'ground'
                                            result: (success, message)
@@ -36,6 +36,8 @@ class ItemView:
     z: float
     status: int = SEEN
     bin_id: str = ''
+    yaw: float = 0.0
+    size: tuple = (0.0, 0.0, 0.0)   # bbox (x, y, z = height); zeros = unknown
 
 
 @dataclass
@@ -260,7 +262,7 @@ class Task:
         if self.pending is None:
             if it is None or it.status != SEEN:
                 return self.go('SEARCH', snap)
-            self.pending = self.io.pick(self.item, (it.x, it.y, it.z))
+            self.pending = self.io.pick(self.item, (it.x, it.y, it.z, it.yaw), it.size)
             return
         r = self.result()
         if r is None:

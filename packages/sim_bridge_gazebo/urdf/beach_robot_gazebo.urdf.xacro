@@ -159,7 +159,7 @@
 
   <!-- RGB-D camera. Gazebo cameras look along +x of their frame (camera_link);
        messages carry the ROS optical frame. Topics: camera/image, camera/depth_image,
-       camera/camera_info, camera/points (bridged in config/bridge.yaml). -->
+       camera/camera_info (bridged in config/bridge.yaml), camera/points (not bridged: no consumer yet). -->
   <gazebo reference="camera_link">
     <sensor name="rgbd_camera" type="rgbd_camera">
       <always_on>1</always_on>

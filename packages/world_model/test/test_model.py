@@ -145,3 +145,16 @@ def test_coverage_never_marks_outside_the_geofence():
     cov = Coverage(20.0, 10.0, 0.5, inside, np.zeros((20, 40)))
     cov.mark(np.eye(3), (5.0, 5.0, 0.34), fov)
     assert (cov.grid == -1).all() and cov.fraction() == 0.0
+
+
+def test_position_averaged_yaw_and_size_from_latest():
+    m = wm()
+    a = m.add_detection(0, 'trash', 5.0, 3.0, 0.03, 1.0, yaw=0.2, size=(0.11, 0.066, 0.066))
+    assert m.add_detection(1, 'trash', 5.1, 3.0, 0.03, 1.0, yaw=0.4, size=(0.12, 0.07, 0.06)) == a
+    it = m.items[a]
+    assert it.x == pytest.approx(5.05) and it.yaw == 0.4 and it.size == (0.12, 0.07, 0.06)
+
+
+def test_size_unknown_by_default():
+    m = wm()
+    assert m.items[m.add_detection(0, 'trash', 5, 3, 0, 1)].size == (0.0, 0.0, 0.0)
