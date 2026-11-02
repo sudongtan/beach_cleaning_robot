@@ -60,7 +60,11 @@ controller_server:
       regulated_linear_scaling_min_speed: 0.1
       use_rotate_to_heading: true
       rotate_to_heading_min_angle: 0.6
-      max_angular_accel: 0.5
+      # Nav2 default. RPP clamps its rotate-in-place command to the *measured* yaw rate (/odom) +- this
+      # x dt; a walking robot's yaw rate wobbles with each stride, so at 0.5 the command followed the
+      # wobble (sawtooth wz 0.14-0.42) and fed it back into the legs (A2b walking falls). The velocity
+      # smoother (open loop, 0.5 rad/s^2) does the ramping instead.
+      max_angular_accel: 3.2
       allow_reversing: false
       max_robot_pose_search_dist: 10.0
 
