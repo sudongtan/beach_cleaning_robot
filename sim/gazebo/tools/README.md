@@ -16,11 +16,23 @@ on their own Gazebo partition / ROS domain (`scene_env.sh`: `GZ_PARTITION=a1b`,
 | `check_sensors.py` | GNSS error vs ground truth + covariance, IMU, saves camera rgb/depth PNGs |
 | `check_people.py <seed>` | `/people` vs the rendered actor (top-down segmentation camera; no robot needed) |
 | `dump_objects.py out.yaml` / `--compare a b` | world state at a sim time, to compare two launches |
-| `goto.py x,y ...` | walk through waypoints on ground truth (publishes `/cmd_vel`: A1 only), logs zone/slope/tilt |
+| `goto.py x,y ...` | walk through waypoints on ground truth, logs zone/slope/tilt; publishes `/cmd_vel_nav` (through the safety supervisor, A2+; `--topic /cmd_vel` only for A1-style tests without the supervisor) |
 | `slope_test.sh <seed> <deg>` | climb a seed's steepest line with the dunes scaled to `deg` (0 = as generated), and back |
 | `slope_variant.py` | builds those variants (used by `slope_test.sh`) |
 | `arm_pose.py <pose>` / `--joints` | move the arm to a named pose from `arm_poses.yaml` or to joint angles |
 | `attach_test.py <item>` | gripper down, `/sim/attach`, lift, over the basket, `/sim/detach` |
+
+## A2b (full skeleton runs)
+
+| Script | What it does |
+|---|---|
+| `stop_sim.sh` | stop every Gazebo / A2 stack process by PID (incl. `kill -9` for the Gazebo server); prints `remaining: 0` when clean. Run before and after every run |
+| `watch_until.py <limit_s> <stall_s>` | follow a run: task / safety state changes, pose every 120 s; stops on DONE / FELL / a stall |
+| `trace.py <duration_s>` | dense trace every 0.5 s: pose, tilt, roll / pitch, arm joints, `/cmd_vel_nav`, `/cmd_vel`, states (found the falls and the bin tip-over) |
+| `zone_walk_test.sh <seed> <label> <x0> <x1> <ya> <yb> [lanes]` | lane walks in one terrain zone through the supervisor; env `ARM_POSE`, `SPEED`, `SMOOTH` |
+| `rtf_measure.sh` | real-time factor of a running scene |
+
+Full-run recipe: `notes/logs/A2.md`, "A2b".
 
 ## A1c (custom robot)
 
