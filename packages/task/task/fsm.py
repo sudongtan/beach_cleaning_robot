@@ -2,7 +2,8 @@
 tick() at a fixed rate with a Snapshot; tests use a fake io.
 
 SEARCH -> APPROACH -> PICK -> CLASSIFY -> STORE (or PUT_BACK) -> SEARCH ...
-       -> (basket full, or search finished) GO_TO_BIN -> PLACE (one item per call) -> SEARCH
+       -> (basket full, or search finished) GO_TO_BIN -> PLACE (one item per call; then back out
+          to bin_standoff_m, since Nav2 won't start facing the bin) -> GO_TO_BIN (next bin) -> SEARCH
        -> DONE when the search is finished, no trash is left and the basket is empty.
        -> FELL (terminal) as soon as the body tilt exceeds fall_tilt_deg.
 
@@ -13,7 +14,7 @@ io interface (actions return handles with done() and result()):
   place(target, item_id, bin_id, (x, y, z, yaw))  target: 'compartment' | 'bin' | 'ground'
                                            result: (success, message)
   update(item_id, status, material='', bin_id='', skip_reason='') -> bool    (world model)
-  cmd_vel(vx, vy, wz)                      final approach, through the safety supervisor
+  cmd_vel(vx, vy, wz)                      final approach / leaving a bin, through the safety supervisor
   log(record)                              event log (dict)
 
 While /safety/state != ok no new action starts and the final approach sends zero velocity
@@ -102,6 +103,8 @@ class Task:
     material: str = ''
     bin_id: str = ''
     unload: list = field(default_factory=list)   # (bin id, item id) still to place
+    at_bin: str = ''                             # the bin GO_TO_BIN / PLACE is working at
+    leave_since: float = 0.0
     stuck: set = field(default_factory=set)      # items that could not be placed: left in the basket
     best_dist: float = None                      # final approach: closest distance so far ...
     best_since: float = 0.0                      # ... and since when
@@ -165,7 +168,7 @@ class Task:
                          'robot': [round(v, 3) for v in snap.robot], 'state': self.state, 'item': self.item})
             return self.go('FELL', snap)
         if not snap.safety_ok and self.pending is None:
-            if self.state in ('APPROACH', 'GO_TO_BIN') and self.sub == 'final':
+            if (self.state, self.sub) in (('APPROACH', 'final'), ('GO_TO_BIN', 'final'), ('PLACE', 'leave')):
                 self.io.cmd_vel(0.0, 0.0, 0.0)
                 self.best_since = snap.t                    # a safety pause is not "no progress"
 
@@ -337,7 +340,8 @@ class Task:
             self.unload = self.basket_items(snap)
             if not self.unload:
                 return self.go('SEARCH', snap)
-            bx, by, _, byaw = self.bins[self.unload[0][0]]
+            self.at_bin = self.unload[0][0]
+            bx, by, _, byaw = self.bins[self.at_bin]
             d = self.cfg['bin_standoff_m']
             return self.nav(snap, bx + d * math.cos(byaw), by + d * math.sin(byaw), wrap(byaw + math.pi))
         r = self.result()
@@ -349,9 +353,9 @@ class Task:
             self.sub = 'final'
         elif r is False:
             self.nav_fails += 1
-            self.io.log({'t': round(snap.t, 2), 'event': 'bin_nav_failed', 'bin': self.unload[0][0]})
+            self.io.log({'t': round(snap.t, 2), 'event': 'bin_nav_failed', 'bin': self.at_bin})
             if self.nav_fails > self.cfg['nav_retries']:
-                stuck = [i for b, i in self.unload if b == self.unload[0][0]]
+                stuck = [i for b, i in self.unload if b == self.at_bin]
                 self.stuck.update(stuck)
                 self.io.log({'t': round(snap.t, 2), 'event': 'left_in_basket', 'items': stuck})
                 self.nav_fails = 0
@@ -360,7 +364,7 @@ class Task:
     def bin_final_approach(self, snap):
         """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
         fa = self.cfg['final_approach']
-        bx, by, _, _ = self.bins[self.unload[0][0]]
+        bx, by, _, _ = self.bins[self.at_bin]
         x, y = to_robot(snap.robot, bx, by)
         err = x - self.cfg['bin_place_distance_m']
         if abs(err) <= 0.03 and abs(y) <= 0.05:
@@ -377,10 +381,13 @@ class Task:
                         clip(fa['gain'] * math.atan2(y, x), fa['max_wz']))
 
     def state_place(self, snap):
+        if self.sub == 'leave':
+            return self.leave_bin(snap)
         if self.pending is None:
-            here = [u for u in self.unload if u[0] == self.unload[0][0]] if self.unload else []
+            here = [u for u in self.unload if u[0] == self.at_bin]
             if not here:
-                return self.go('GO_TO_BIN', snap)       # next bin, or back to SEARCH when empty
+                self.leave_since = snap.t
+                return self.go('PLACE', snap, sub='leave')
             bin_id, iid = here[0]
             bx, by, rim, byaw = self.bins[bin_id]
             self.item = iid
@@ -404,3 +411,16 @@ class Task:
             self.stuck.add(self.item)
             self.io.log({'t': round(snap.t, 2), 'event': 'left_in_basket', 'items': [self.item]})
         self.item = ''
+
+    def leave_bin(self, snap):
+        """Back straight out until base_link is bin_standoff_m from the bin centre, then GO_TO_BIN
+        (next bin, or back to SEARCH): at the place distance the footprint is inside the bin's
+        inflation and Nav2's controller refuses to move ("collision ahead"; reversing is off)."""
+        fa = self.cfg['final_approach']
+        bx, by, _, _ = self.bins[self.at_bin]
+        x, _ = to_robot(snap.robot, bx, by)
+        err = x - self.cfg['bin_standoff_m']            # negative while too close
+        if err >= -fa['tolerance_m'] or snap.t - self.leave_since > self.cfg['bin_leave_timeout_s']:
+            self.io.cmd_vel(0.0, 0.0, 0.0)
+            return self.go('GO_TO_BIN', snap)
+        self.io.cmd_vel(max(-fa['max_vx'], fa['gain'] * err), 0.0, 0.0)

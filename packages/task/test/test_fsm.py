@@ -50,6 +50,11 @@ class FakeWorld:
         self.log_records, self.calls_while_unsafe = [], 0
         self.cmd = (0.0, 0.0, 0.0)
         self.target_item = None
+        self.nav_from_bin = 0                                       # Nav2 goals sent while facing a bin up close
+
+    def bin_dist(self, bin_id):
+        bx, by, _, _ = BINS[bin_id]
+        return math.hypot(self.robot[0] - bx, self.robot[1] - by)
 
     # --- io -----------------------------------------------------------------------------
     def _call(self):
@@ -58,6 +63,9 @@ class FakeWorld:
 
     def nav_to(self, x, y, yaw):
         self._call()
+        if any(self.bin_dist(b) < CFG['bin_standoff_m'] - 0.05 for b in BINS):
+            self.nav_from_bin += 1                                  # Nav2 refuses: lethal cells ahead
+            return Handle(self, 5, False)
         near = [i for i in self.nav_fail if i in self.known and
                 math.hypot(self.known[i].x - x, self.known[i].y - y) < 1.0]
         if near:
@@ -88,6 +96,8 @@ class FakeWorld:
         self._call()
         if target == 'bin' and iid in self.place_fail:
             return Handle(self, 3, (False, 'attach_failed'))
+        if target == 'bin' and self.bin_dist(bin_id) > CFG['bin_place_distance_m'] + 0.1:
+            return Handle(self, 3, (False, 'bin_unreachable'))
         if target == 'ground':
             self.held = None
         return Handle(self, 3, (True, 'ok'))
@@ -374,3 +384,44 @@ def test_fall_during_an_arm_action_cancels_it():
     snap.tilt_deg = 40.0
     t.tick(snap)
     assert t.state == 'FELL' and handle.cancelled
+
+
+def test_first_bin_fails_then_the_robot_walks_to_the_second():
+    """A2b a2b_bin2: after the recyclable item failed, the residual one was placed from the recyclable
+    bin's spot (bin_unreachable). The fake world refuses placing from further than the place distance."""
+    w = FakeWorld(ITEMS, MATS, place_fail={'a'})
+    t = make(w, PATH)
+    placed_from = {}
+    real_place = w.place
+
+    def place(target, iid, bin_id, pose):
+        if target == 'bin':
+            placed_from[iid] = (bin_id, w.bin_dist(bin_id))
+        return real_place(target, iid, bin_id, pose)
+    w.place = place
+    run(t, w)
+    assert t.state == 'DONE' and w.known['b'].status == PLACED and w.known['b'].bin_id == 'residual'
+    assert placed_from['b'][0] == 'residual'
+    assert placed_from['b'][1] == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
+
+
+def test_robot_backs_out_of_the_bin_before_navigating():
+    """A2b a2b_bin2: facing the bin at the place distance, Nav2 saw 'collision ahead' and never moved."""
+    w = FakeWorld(ITEMS, MATS)
+    t = run(make(w, PATH, capacity=Capacity(1, 2.0, 0.05)), w)
+    assert t.state == 'DONE' and all(w.known[i].status == PLACED for i in 'abc')
+    assert w.nav_from_bin == 0                               # every Nav2 goal from outside the bin zone
+
+
+def test_safety_pause_while_backing_out_stops_the_robot():
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    t = make(w, [])
+    while not (t.state == 'PLACE' and t.sub == 'leave') and w.tick_no < 10000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.sub == 'leave'
+    t.tick(w.snapshot())
+    assert w.cmd[0] < 0.0                                     # backing out
+    w.safe = lambda now: False
+    t.tick(w.snapshot())
+    assert w.cmd == (0.0, 0.0, 0.0) and w.calls_while_unsafe == 0

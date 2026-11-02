@@ -183,17 +183,23 @@ class GraspingNode(Node):
         return p
 
     def sim_object(self, item_id, near_base=None):
-        """Simulator object id for attach mode."""
-        if self.scene_ids.get(item_id):
-            return self.scene_ids[item_id]
-        if self.gt is None or near_base is None:
-            return ''
+        """Simulator object id for attach mode: the item's scene id, else the ground-truth object
+        nearest the jaw tips. For a pick (near_base given) the object must be within 0.15 m of the
+        tips: a phantom item carried the scene id of an item already in the basket, and attaching
+        it there dragged it out through the basket wall (A2b)."""
+        scene_id = self.scene_ids.get(item_id, '')
+        if near_base is None:
+            return scene_id
+        if self.gt is None:
+            return scene_id
         try:
             tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
         except TransformException:
-            return ''
+            return scene_id
         best, best_d = '', 0.15
         for d in self.gt.detections:
+            if scene_id and d.id != scene_id:
+                continue
             p = do_transform_pose(d.bbox.center, tf).position
             dist = math.dist((p.x, p.y, p.z), near_base)
             if dist < best_d:

@@ -16,6 +16,8 @@ task:
     # so the near wall (0.30 m from the centre) must be >= 0.57 m ahead (A2b: at 0.7 m the arm hit
     # the bin and tipped the robot over). Checked by sim/common/tests/test_cross_phase.py.
     bin_place_distance_m: 0.87
+    bin_leave_timeout_s: 20.0    # after placing, back straight out to bin_standoff_m (Nav2 won't start facing
+                                 # the bin); give up after this long and let Nav2 try anyway
     final_approach:              # APPROACH step 2: small /cmd_vel_nav steps until the item is in reach
       target_x_m: 0.49           # item centre ahead of base_link (middle of the grasp envelope)
       tolerance_m: 0.03          # stop within this of target_x and of y = 0, not at the envelope's edge

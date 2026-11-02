@@ -5,7 +5,8 @@
   /world_model (beach_interfaces/WorldModel, 2 Hz), /world_model/update_item (UpdateItem)
 
 Detections within ignore_near_gripper_m of the gripper TCP are dropped: that is the item
-held up to the camera. Item masses for the basket load come from bench/scenes.yaml +
+held up to the camera. The TCP is taken in the camera frame at the message time, else the
+latest one (the camera is fixed to the body, so only arm motion in the lag matters). Item masses for the basket load come from bench/scenes.yaml +
 sim/common/objects.yaml when the detection carries a scene id (ground truth), else the
 configured default. Parameters: repo, seed. Thresholds: config/world_model.yaml.
 """
@@ -85,13 +86,14 @@ class WorldModelNode(Node):
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
 
-    def lookup(self, target, source, stamp=None):
+    def lookup(self, target, source, stamp=None, warn=True):
         """Transform at `stamp` (a builtin Time), or the latest one; None if not available."""
         try:
             t = Time() if stamp is None else Time.from_msg(stamp)
             return self.tf_buffer.lookup_transform(target, source, t).transform
         except TransformException as e:
-            self.get_logger().warn(f'no transform {target} <- {source}: {e}', throttle_duration_sec=2.0)
+            if warn:
+                self.get_logger().warn(f'no transform {target} <- {source}: {e}', throttle_duration_sec=2.0)
             return None
 
     def on_detections(self, msg):
@@ -99,17 +101,21 @@ class WorldModelNode(Node):
             return
         # the robot's pose when the camera saw them, not the latest (A2b run 3: phantom items)
         to_map = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
-        tcp = self.lookup(self.map_frame, self.tcp_frame, msg.header.stamp)
         if to_map is None:
             return
+        # the arm's TFs often lag the camera's: without a fallback the held item became a new item
+        # (A2b: phantoms next to every picked item, then picks of the item already in the basket)
+        tcp = (self.lookup(msg.header.frame_id, self.tcp_frame, msg.header.stamp, warn=False)
+               or self.lookup(msg.header.frame_id, self.tcp_frame))
         tf = TransformStamped()
         tf.transform = to_map
         for d in msg.detections:
-            pose = do_transform_pose(d.bbox.center, tf)
-            p, q = pose.position, pose.orientation
-            if tcp is not None and math.dist((p.x, p.y, p.z), (tcp.translation.x, tcp.translation.y,
+            c = d.bbox.center.position
+            if tcp is not None and math.dist((c.x, c.y, c.z), (tcp.translation.x, tcp.translation.y,
                                                                tcp.translation.z)) < self.ignore_near_gripper:
                 continue
+            pose = do_transform_pose(d.bbox.center, tf)
+            p, q = pose.position, pose.orientation
             if self.fence is not None and not self.fence(p.x, p.y):
                 continue                                  # outside the geofence: not ours to collect
             hyp = d.results[0].hypothesis

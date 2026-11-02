@@ -181,3 +181,38 @@ def test_pick_hovers_over_the_item_height_from_the_goal(system):
     tips_z = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0][2]          # hover
     top = g.pose.pose.position.z + g.size.z / 2
     assert tips_z == pytest.approx(top + grasping.cfg['hover_above_item_m'], abs=grasping.cfg['ik_tolerance_m'])
+
+
+def gt_objects(*objs):
+    from vision_msgs.msg import Detection3D, Detection3DArray
+    arr = Detection3DArray()
+    arr.header.frame_id = 'base_link'
+    for oid, (x, y, z) in objs:
+        d = Detection3D(id=oid)
+        d.bbox.center.position.x, d.bbox.center.position.y, d.bbox.center.position.z = x, y, z
+        d.bbox.center.orientation.w = 1.0
+        arr.detections.append(d)
+    return arr
+
+
+def test_pick_refused_when_the_item_is_not_at_the_grasp_point(system):
+    """A2b: a phantom item carried the scene id of an item already in the basket; attach mode
+    attached it there, far from the jaws."""
+    from vision_msgs.msg import Detection3DArray
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    pub = node.create_publisher(Detection3DArray, '/sim/ground_truth/objects', 10)
+    end = time.monotonic() + 3.0
+    while time.monotonic() < end and grasping.gt is None:
+        pub.publish(gt_objects(('trash_03', (-0.2, 0.0, 0.05))))      # in the basket
+        time.sleep(0.05)
+    r = send(node, PickObject, '/grasp/pick', pick_goal())
+    assert not r.success and r.message == 'no_sim_object'
+    assert fakes.sim_calls == [] and fakes.arm_goals == []
+
+    g = pick_goal()                                                   # really there: picked
+    p = g.pose.pose.position
+    grasping.gt = gt_objects(('trash_03', (p.x, p.y, p.z)))
+    r = send(node, PickObject, '/grasp/pick', g)
+    assert r.success, r.message
+    assert fakes.sim_calls == [('attach', 'trash_03')]

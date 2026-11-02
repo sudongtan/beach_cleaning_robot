@@ -16,9 +16,10 @@ os.environ['ROS_AUTOMATIC_DISCOVERY_RANGE'] = 'LOCALHOST'
 from beach_interfaces.msg import TrashItem, WorldModel  # noqa: E402
 from beach_interfaces.srv import UpdateItem  # noqa: E402
 from geometry_msgs.msg import TransformStamped  # noqa: E402
+from rclpy.duration import Duration  # noqa: E402
 from rclpy.executors import SingleThreadedExecutor  # noqa: E402
 from rclpy.parameter import Parameter  # noqa: E402
-from tf2_ros import StaticTransformBroadcaster  # noqa: E402
+from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster  # noqa: E402
 from vision_msgs.msg import Detection3D, Detection3DArray, ObjectHypothesisWithPose  # noqa: E402
 
 from world_model.node import WorldModelNode  # noqa: E402
@@ -92,5 +93,35 @@ def test_world_model_node():
             ex.spin_once(timeout_sec=0.05)
         assert got[-1].compartment_recyclable == [it.id]
         assert got[-1].basket_load_kg == pytest.approx(0.114)                  # seed 3 trash_04 is the glass jar
+    finally:
+        rclpy.try_shutdown()
+
+
+def test_held_item_ignored_when_the_arm_tf_lags():
+    """A2b: the gripper TF wasn't available at the detection's stamp yet ("extrapolation into the
+    future"), the held item wasn't filtered and became a phantom next to the picked one."""
+    rclpy.init()
+    try:
+        node = WorldModelNode(parameter_overrides=[Parameter('repo', value=REPO), Parameter('seed', value=3)])
+        fake = rclpy.create_node('fake')
+        now = fake.get_clock().now()
+        StaticTransformBroadcaster(fake).sendTransform([tf('camera_link', (10.0, 15.0, 0.34))])
+        grip = tf('arm_ee_gripper_link', (10.4, 15.0, 0.5))
+        grip.header.stamp = now.to_msg()
+        dyn = TransformBroadcaster(fake)
+        pub = fake.create_publisher(Detection3DArray, '/detections', 10)
+        got = []
+        fake.create_subscription(WorldModel, '/world_model', got.append, 10)
+        ex = SingleThreadedExecutor()
+        ex.add_node(node)
+        ex.add_node(fake)
+        end = time.monotonic() + 2.0
+        while time.monotonic() < end:
+            dyn.sendTransform(grip)                                            # always the old stamp
+            msg = detections([('trash_04', 'trash', (0.4, 0.0, 0.16))])        # the held item
+            msg.header.stamp = (now + Duration(seconds=1.0)).to_msg()
+            pub.publish(msg)
+            ex.spin_once(timeout_sec=0.05)
+        assert got and len(got[-1].items) == 0
     finally:
         rclpy.try_shutdown()
