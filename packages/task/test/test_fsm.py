@@ -34,7 +34,8 @@ class Handle:
 class FakeWorld:
     """Robot, items and world model; `io` of the task. Items are discovered within 5 m."""
 
-    def __init__(self, items, materials, pick_fail=None, nav_fail=None, place_fail=(), confidence=None):
+    def __init__(self, items, materials, pick_fail=None, nav_fail=None, place_fail=(), confidence=None, lost=(),
+                 store_full=()):
         self.tick_no, self.t = 0, 0.0
         self.robot = [4.0, 14.0, 0.0]
         self.truth = {k: dict(v) for k, v in items.items()}        # id -> {cls, x, y}
@@ -44,6 +45,9 @@ class FakeWorld:
         self.pick_fail = dict(pick_fail or {})                      # id -> failures before success
         self.nav_fail = set(nav_fail or ())                         # item ids whose stand-off can't be reached
         self.place_fail = set(place_fail)
+        self.lost = set(lost)                                       # fall out of the basket once, back where picked
+        self.picked_at = {}
+        self.store_full = set(store_full)                           # compartment_full once on storing
         self.confidence = confidence or {}
         self.held = None
         self.safe = lambda t: True
@@ -94,6 +98,12 @@ class FakeWorld:
 
     def place(self, target, iid, bin_id, pose):
         self._call()
+        if target == 'compartment' and iid in self.store_full:
+            self.store_full.discard(iid)
+            return Handle(self, 3, (False, 'compartment_full (pile 0.120)'))
+        if target == 'bin' and iid in self.lost:
+            self.lost.discard(iid)
+            return Handle(self, 3, (False, 'not_in_basket (item at x -20.392 y -2.813 z -0.528)'))
         if target == 'bin' and iid in self.place_fail:
             return Handle(self, 3, (False, 'attach_failed'))
         if target == 'bin' and self.bin_dist(bin_id) > CFG['bin_place_distance_m'] + 0.1:
@@ -107,7 +117,11 @@ class FakeWorld:
         if status == COLLECTED:
             self.compartments[bin_id].append(iid)
             it.bin_id = bin_id
-            self.truth.pop(iid, None)
+            self.picked_at[iid] = self.truth.pop(iid, None)
+        if status == SEEN and it.status == COLLECTED:
+            self.compartments[it.bin_id].remove(iid)
+            it.bin_id = ''
+            self.truth[iid] = self.picked_at[iid]                  # lies where it was picked
         if status == PLACED:
             self.compartments[it.bin_id].remove(iid)
             it.bin_id = bin_id
@@ -425,3 +439,30 @@ def test_safety_pause_while_backing_out_stops_the_robot():
     w.safe = lambda now: False
     t.tick(w.snapshot())
     assert w.cmd == (0.0, 0.0, 0.0) and w.calls_while_unsafe == 0
+
+
+def test_item_not_in_the_basket_frees_its_slot_and_is_picked_again():
+    """A2b a2b_full1: the tin fell back out of the basket; three unload attempts on an item 20 m
+    away, and it kept using a compartment slot."""
+    w = FakeWorld(ITEMS, MATS, lost={'a'})
+    t = run(make(w, PATH), w)
+    assert t.state == 'DONE'
+    assert statuses(w)['a'] == (PLACED, 'recyclable')               # found again, placed on the next trip
+    places = [r for r in w.log_records if r['event'] == 'place' and r['item'] == 'a']
+    assert [r['success'] for r in places] == [False, True]          # no retries on a missing item
+    assert any(r['event'] == 'lost_from_basket' and r['item'] == 'a' for r in w.log_records)
+    assert not any(r['event'] == 'left_in_basket' for r in w.log_records)
+    assert w.compartments == {'recyclable': [], 'residual': []}
+
+
+def test_store_refused_as_full_puts_the_item_back_and_empties_the_basket_first():
+    """Grasping found no spot that keeps the item below the rim (the count limit isn't reached)."""
+    w = FakeWorld(ITEMS, MATS, store_full={'c'})
+    t = run(make(w, PATH), w)
+    assert t.state == 'DONE'
+    s = statuses(w)
+    assert s['a'] == (PLACED, 'recyclable') and s['c'] == (PLACED, 'recyclable')
+    ev = [(r['event'], r.get('item')) for r in w.log_records]
+    i = ev.index(('store', 'c'))
+    states = [r['state'] for r in w.log_records[i:] if r['event'] == 'state']
+    assert states[:2] == ['PUT_BACK', 'GO_TO_BIN']

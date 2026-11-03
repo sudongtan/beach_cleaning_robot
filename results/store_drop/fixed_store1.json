@@ -1,0 +1,236 @@
+{
+ "rounds": [
+  [
+   {
+    "name": "drop_0_recyclable_00",
+    "model": "pet_bottle_500",
+    "comp": "recyclable",
+    "drop": {
+     "rel_cm": [
+      0.4,
+      -1.0,
+      -14.7
+     ],
+     "inside": true,
+     "world_z_cm": 47.5
+    },
+    "walk": {
+     "rel_cm": [
+      0.4,
+      -1.2,
+      -14.5
+     ],
+     "inside": true,
+     "world_z_cm": 47.4
+    }
+   },
+   {
+    "name": "drop_0_recyclable_01",
+    "model": "food_tin",
+    "comp": "recyclable",
+    "drop": {
+     "rel_cm": [
+      -0.0,
+      1.0,
+      -8.2
+     ],
+     "inside": true,
+     "world_z_cm": 54.0
+    },
+    "walk": {
+     "rel_cm": [
+      -1.8,
+      -1.7,
+      -8.0
+     ],
+     "inside": true,
+     "world_z_cm": 53.9
+    }
+   },
+   {
+    "name": "drop_0_recyclable_02",
+    "model": "can_330",
+    "comp": "recyclable",
+    "drop": {
+     "rel_cm": [
+      0.3,
+      0.3,
+      -2.1
+     ],
+     "inside": true,
+     "world_z_cm": 60.1
+    },
+    "walk": {
+     "rel_cm": [
+      17.7,
+      -54.6,
+      -52.7
+     ],
+     "inside": false,
+     "world_z_cm": 8.8
+    }
+   },
+   {
+    "name": "drop_0_recyclable_03",
+    "model": "glass_bottle_330",
+    "comp": "recyclable",
+    "drop": {
+     "rel_cm": [
+      1.2,
+      -0.3,
+      -1.5
+     ],
+     "inside": true,
+     "world_z_cm": 60.7
+    },
+    "walk": {
+     "rel_cm": [
+      0.0,
+      -4.3,
+      -0.7
+     ],
+     "inside": true,
+     "world_z_cm": 61.2
+    }
+   },
+   {
+    "name": "drop_0_recyclable_04",
+    "model": "glass_jar",
+    "comp": "recyclable",
+    "drop": {
+     "rel_cm": [
+      -0.8,
+      0.4,
+      -2.4
+     ],
+     "inside": true,
+     "world_z_cm": 59.6
+    },
+    "walk": {
+     "rel_cm": [
+      0.2,
+      1.7,
+      -0.6
+     ],
+     "inside": true,
+     "world_z_cm": 61.3
+    }
+   },
+   {
+    "name": "drop_0_residual_05",
+    "model": "food_container",
+    "comp": "residual",
+    "drop": {
+     "rel_cm": [
+      0.6,
+      0.4,
+      -14.7
+     ],
+     "inside": true,
+     "world_z_cm": 47.2
+    },
+    "walk": {
+     "rel_cm": [
+      0.6,
+      0.2,
+      -14.7
+     ],
+     "inside": true,
+     "world_z_cm": 47.2
+    }
+   },
+   {
+    "name": "drop_0_residual_06",
+    "model": "poly_cup",
+    "comp": "residual",
+    "drop": {
+     "rel_cm": [
+      0.6,
+      -0.7,
+      -9.7
+     ],
+     "inside": true,
+     "world_z_cm": 52.2
+    },
+    "walk": {
+     "rel_cm": [
+      1.8,
+      0.9,
+      -9.7
+     ],
+     "inside": true,
+     "world_z_cm": 52.1
+    }
+   },
+   {
+    "name": "drop_0_residual_07",
+    "model": "cigarette_pack",
+    "comp": "residual",
+    "drop": {
+     "rel_cm": [
+      0.1,
+      0.5,
+      -3.7
+     ],
+     "inside": true,
+     "world_z_cm": 58.2
+    },
+    "walk": {
+     "rel_cm": [
+      1.7,
+      2.0,
+      -3.7
+     ],
+     "inside": true,
+     "world_z_cm": 58.2
+    }
+   },
+   {
+    "name": "drop_0_residual_08",
+    "model": "food_container",
+    "comp": "residual",
+    "drop": {
+     "rel_cm": [
+      -1.0,
+      0.7,
+      -1.2
+     ],
+     "inside": true,
+     "world_z_cm": 60.7
+    },
+    "walk": {
+     "rel_cm": [
+      -3.1,
+      -0.2,
+      -2.0
+     ],
+     "inside": true,
+     "world_z_cm": 59.9
+    }
+   },
+   {
+    "name": "drop_0_residual_09",
+    "model": "poly_cup",
+    "comp": "residual",
+    "drop": {
+     "rel_cm": [
+      0.5,
+      0.7,
+      -1.7
+     ],
+     "inside": true,
+     "world_z_cm": 60.1
+    },
+    "walk": {
+     "rel_cm": [
+      4.0,
+      2.5,
+      -1.5
+     ],
+     "inside": true,
+     "world_z_cm": 60.4
+    }
+   }
+  ]
+ ]
+}

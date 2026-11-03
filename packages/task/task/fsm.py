@@ -310,6 +310,9 @@ class Task:
                      'success': ok, 'message': msg})
         if ok:
             self.io.update(self.item, COLLECTED, self.material, self.bin_id)
+        elif msg.startswith('compartment_full'):
+            # no room left that keeps it below the rim (still held): as a full count in CLASSIFY
+            return self.go('PUT_BACK', snap, self.item, 'full')
         else:
             self.io.update(self.item, SKIPPED, skip_reason='store_failed')
         self.item = ''
@@ -402,6 +405,14 @@ class Task:
                      'success': ok, 'message': msg})
         if ok:
             self.io.update(self.item, PLACED, bin_id=bin_id)
+        elif msg.startswith('not_in_basket'):
+            # it fell out (a2b_full1): free its compartment slot and look for it again; a detection
+            # near where it was picked merges into it, elsewhere it is a new item
+            self.io.update(self.item, SEEN)
+            self.io.log({'t': round(snap.t, 2), 'event': 'lost_from_basket', 'item': self.item})
+            self.unload = [u for u in self.unload if u[1] != self.item]
+            self.item = ''
+            return
         else:
             self.attempts[self.item] = self.attempts.get(self.item, 0) + 1
             if self.attempts[self.item] < self.cfg['grasp_retries']:

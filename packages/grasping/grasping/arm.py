@@ -58,6 +58,12 @@ class Arm:
         M = self.data.oMf[self.model.getFrameId(frame)]
         return M.translation.copy(), M.rotation[:, 0].copy()
 
+    def pose(self, arm_q, frame=TIPS):
+        """(position, rotation) of a frame in base_link."""
+        pin.framesForwardKinematics(self.model, self.data, self.full(arm_q))
+        M = self.data.oMf[self.model.getFrameId(frame)]
+        return M.translation.copy(), M.rotation.copy()
+
     def jaw_axis(self, arm_q):
         """Direction the fingers open along (tool y) in base_link."""
         pin.framesForwardKinematics(self.model, self.data, self.full(arm_q))
@@ -161,6 +167,16 @@ def compartment(arm, bin_id):
             'y': (rim[1] - half_y, rim[1] + half_y), 'floor': rim[2] - height + wall, 'rim': rim[2]}
 
 
+def in_basket(arm, p, margin=0.03):
+    """Is point p (base_link) in the basket: inside its walls (+ margin), from the floor up to a
+    basket height above the rim (items lying on others)?"""
+    rec, res = compartment(arm, 'recyclable'), compartment(arm, 'residual')
+    y_lo, y_hi = min(rec['y'][0], res['y'][0]), max(rec['y'][1], res['y'][1])
+    height = arm.basket[2]
+    return (rec['x'][0] - margin <= p[0] <= rec['x'][1] + margin and y_lo - margin <= p[1] <= y_hi + margin
+            and rec['floor'] - margin <= p[2] <= rec['rim'] + height)
+
+
 def plan_unload(arm, bin_id, centre, height, cfg):
     """Arm joint targets to take an item (bbox centre in base_link, vertical extent `height`)
     out of compartment bin_id. The jaws (and the gripper bar, wider than a compartment) point
@@ -191,6 +207,94 @@ def plan_unload(arm, bin_id, centre, height, cfg):
             return False, 'wrist_limit', {}
         plan[phase], seed = q, q
     return True, '', plan
+
+
+def held_item(arm, q, held):
+    """Pose of a held item at arm pose q. held: item centre 'p' and rotation 'R' in the jaw-tips
+    frame (fixed while attached), bbox 'size'. Returns (centre, rotation, extents along base x/y/z)."""
+    t, R = arm.pose(q, TIPS)
+    Rb = R @ np.asarray(held['R'])
+    return t + R @ np.asarray(held['p']), Rb, np.abs(Rb) @ np.asarray(held['size'], dtype=float)
+
+
+def item_yaw(Rb, size):
+    """Yaw of an item's longest horizontal bbox axis (a line: defined modulo pi)."""
+    i = max(range(3), key=lambda k: size[k] * np.hypot(Rb[0, k], Rb[1, k]))
+    return math.atan2(Rb[1, i], Rb[0, i])
+
+
+def align_item(arm, q, held, yaw=0.0):
+    """Turn the wrist so the held item's long side points along `yaw` (base_link)."""
+    _, Rb, _ = held_item(arm, q, held)
+    a = arm.jaw_axis(q)
+    jaw = math.atan2(a[1], a[0]) + (yaw - item_yaw(Rb, held['size']))
+    return align_jaws(arm, q, (math.cos(jaw), math.sin(jaw)))
+
+
+def pile_top(slot, half, others, floor, tolerance=0.0):
+    """Highest top among items whose footprint overlaps a footprint of half extents `half` at slot
+    by more than `tolerance` (others: dicts with 'centre', 'half' (x, y) and 'top'); the floor if none."""
+    return max([o['top'] for o in others if abs(o['centre'][0] - slot[0]) < half[0] + o['half'][0] - tolerance
+                and abs(o['centre'][1] - slot[1]) < half[1] + o['half'][1] - tolerance] + [floor])
+
+
+def plan_store(arm, bin_id, held, others, cfg):
+    """Arm joint targets to put a held item (see held_item) into compartment bin_id: long side
+    along the compartment, at the lowest free spot (others: items already in the basket, see
+    pile_top), released `drop_gap_m` above what lies there, but never so low that the gripper bar
+    (across the compartment when the item is turned) reaches the rim. Spots: slots_x x slots_y
+    along / across the compartment. An item that would stick out above the rim (less than
+    top_below_rim_m below it) is refused as compartment_full. Returns (ok, reason, {'above',
+    'release'}, info)."""
+    st = cfg['store']
+    c = compartment(arm, bin_id)
+    over = arm.poses[f'over_{bin_id}']['arm']
+    bounds = near(over, cfg['unload']['joint_spread_rad'])
+    q0 = align_item(arm, over, held)
+    if q0 is None:
+        return False, 'wrist_limit', {}, {}
+    t0, _ = arm.fk(q0, TIPS)
+    c0, _, ext = held_item(arm, q0, held)
+    d = c0 - t0                                              # item centre relative to the tips
+    half = ext / 2
+    bar_low = arm.fk(q0, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2 - t0[2]   # bar underside above the tips
+    tips_min = c['rim'] + st['bar_clearance_m'] - bar_low
+
+    def spots(lo, hi, h, n):
+        lo, hi = lo + h + st['wall_clearance_m'], hi - h - st['wall_clearance_m']
+        return [(lo + hi) / 2] if hi <= lo else list(np.linspace(lo, hi, n))
+    mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
+    cands = [(pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']),
+              float(np.hypot(x - mid[0], y - mid[1])), x, y)
+             for x in spots(*c['x'], half[0], st['slots_x']) for y in spots(*c['y'], half[1], st['slots_y'])]
+    for pile, _, x, y in sorted(cands):
+        if pile + ext[2] > c['rim'] - st['top_below_rim_m']:           # its top once it has landed
+            return False, 'compartment_full', {}, {'pile': pile}     # sorted: every other spot is higher
+        tips_z = max(pile + st['drop_gap_m'] + half[2] - d[2], tips_min)
+        target = np.array([x - d[0], y - d[1], tips_z])
+        q, seed = None, q0
+        for _ in range(2):                                   # the item's offset turns with the wrist: re-aim
+            ok, q, err, tilt = arm.ik(target, cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds)
+            q = align_item(arm, q, held) if ok else None
+            if q is None:
+                break
+            ci, _, _ = held_item(arm, q, held)
+            target[:2] += np.array([x, y]) - ci[:2]
+            seed = q
+        if q is None:
+            continue
+        ci, _, e = held_item(arm, q, held)
+        if (abs(ci[0] - x) > 0.015 or abs(ci[1] - y) > 0.015
+                or arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2 < c['rim'] + st['bar_clearance_m'] - 0.005):
+            continue
+        above = target + [0, 0, max(0.0, c['rim'] + cfg['unload']['rim_clearance_m'] - (ci[2] - e[2] / 2))]
+        ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds)
+        qa = align_item(arm, qa, held) if ok else None
+        if qa is None:
+            continue
+        return True, '', {'above': qa, 'release': q}, {'slot': (x, y), 'pile': pile,
+                                                       'drop': ci[2] - e[2] / 2 - pile}
+    return False, 'no_spot', {}, {}
 
 
 def graspable(size, finger_closed, finger_open, jaw_margin, max_height):

@@ -37,7 +37,8 @@ from tf2_ros import Buffer, TransformException, TransformListener
 from trajectory_msgs.msg import JointTrajectoryPoint
 from vision_msgs.msg import Detection3DArray
 
-from grasping.arm import ARM, TIPS, Arm, bin_release_target, near, plan_pick, plan_unload
+from grasping.arm import (ARM, TIPS, Arm, bin_release_target, in_basket, near, plan_pick, plan_store,
+                          plan_unload)
 from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, recovery_steps, store_steps
 
 LATCHED = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -46,6 +47,12 @@ FINGERS = ['arm_left_finger', 'arm_right_finger']
 
 def duration(secs):
     return Duration(sec=int(secs), nanosec=int((secs % 1) * 1e9))
+
+
+def quat_matrix(x, y, z, w):
+    return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
+                     [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
+                     [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
 
 
 class RosIo:
@@ -277,7 +284,15 @@ class GraspingNode(Node):
             if not obj:
                 return self.refuse(goal_handle, result, 'no_sim_object')
             if g.target == PlaceObject.Goal.COMPARTMENT:
-                steps = store_steps(self.arm.poses, g.bin_id, self.arm.finger_open, obj)
+                plan, why = None, 'no ground truth of the basket'
+                scene = self.basket_scene(obj)
+                if scene is not None:
+                    ok, why, plan, info = plan_store(self.arm, g.bin_id, scene[0], scene[1], self.cfg)
+                    if why == 'compartment_full':                 # still held: the task puts it back
+                        return self.refuse(goal_handle, result, f"compartment_full (pile {info['pile']:.3f})")
+                if not plan:
+                    self.get_logger().warn(f'store {obj}: {why}; release from the fixed pose')
+                steps = store_steps(self.arm.poses, g.bin_id, self.arm.finger_open, obj, plan)
             elif g.target == PlaceObject.Goal.GROUND:
                 if g.item_id not in self.picks:
                     return self.refuse(goal_handle, result, 'no_pick_plan')
@@ -287,6 +302,9 @@ class GraspingNode(Node):
                 if item is None:
                     return self.refuse(goal_handle, result, 'item_not_found')
                 centre, height = item
+                if not in_basket(self.arm, centre):
+                    return self.refuse(goal_handle, result, f'not_in_basket (item at x {centre[0]:.3f} '
+                                                            f'y {centre[1]:.3f} z {centre[2]:.3f})')
                 ok, why, plan = plan_unload(self.arm, g.bin_id, centre, height, self.cfg)
                 if not ok:
                     return self.refuse(goal_handle, result, f'unload {why} (item at x {centre[0]:.3f} '
@@ -301,6 +319,33 @@ class GraspingNode(Node):
             return self.run(goal_handle, steps, result)
         finally:
             self.busy.release()
+
+    def basket_scene(self, object_id):
+        """For plan_store, from ground truth: the held item in the jaw-tips frame ({'p', 'R', 'size'})
+        and the items lying in the basket ({'centre', 'half', 'top'} in base_link); None if unknown."""
+        if self.gt is None:
+            return None
+        try:
+            tips = self.tf_buffer.lookup_transform(self.base_frame, TIPS, Time())
+            tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
+        except TransformException:
+            return None
+        r = tips.transform.rotation
+        R_bt = quat_matrix(r.x, r.y, r.z, r.w)
+        t_bt = np.array([tips.transform.translation.x, tips.transform.translation.y, tips.transform.translation.z])
+        held, others = None, []
+        for d in self.gt.detections:
+            p = do_transform_pose(d.bbox.center, tf)
+            c = np.array([p.position.x, p.position.y, p.position.z])
+            o = p.orientation
+            R = quat_matrix(o.x, o.y, o.z, o.w)
+            size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
+            if d.id == object_id:
+                held = {'p': R_bt.T @ (c - t_bt), 'R': R_bt.T @ R, 'size': size}
+            elif in_basket(self.arm, c):
+                ext = np.abs(R) @ np.asarray(size)
+                others.append({'centre': c, 'half': ext[:2] / 2, 'top': c[2] + ext[2] / 2})
+        return None if held is None else (held, others)
 
     def gt_item(self, object_id):
         """(bbox centre, vertical extent) of a simulator object in base_link (attach mode: the

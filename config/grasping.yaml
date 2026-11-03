@@ -30,6 +30,15 @@ grasping:
     # IK stays within this of the over-compartment pose, per joint in arm_controller order
     # (waist and forearm roll; .inf = free): no flipped solutions, no half-turn swings
     joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, .inf]
+  # Storing in the basket (attach mode): the item's long side along the compartment, at the lowest of
+  # slots_x x slots_y spots (ground truth of the items already there, like the unload), released
+  # drop_gap_m above what lies there. One fixed release point stacked the items up to the rim and
+  # walking shook the top ones out (a2b_full1; store_drop_test.py). The jaws stay closed (the item
+  # hangs below them); the gripper bar stays bar_clearance_m above the rim. Footprints may overlap by
+  # overlap_tolerance_m (a bottle and a tin side by side fill a compartment); an item whose top would be
+  # less than top_below_rim_m below the rim is refused (compartment_full: the task puts it back).
+  store: {slots_x: 3, slots_y: 2, wall_clearance_m: 0.005, drop_gap_m: 0.01, bar_clearance_m: 0.01,
+          overlap_tolerance_m: 0.01, top_below_rim_m: 0.01}
   # Release over the bin: IK stays within this of `up` (waist, forearm roll, wrist rotate). Unbounded,
   # IK chose a flipped pose (waist 3.14); every move to it swung the arm half a turn with the item
   # attached and tipped the robot over (A2b a2b_bin4).

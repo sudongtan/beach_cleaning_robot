@@ -261,3 +261,77 @@ def test_failed_bin_place_releases_the_item(system):
     r = send(node, PlaceObject, '/grasp/place', bin_goal())
     assert not r.success and 'item released' in r.message
     assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]
+
+
+def test_bin_place_refused_when_the_item_is_not_in_the_basket(system):
+    """A2b a2b_full1: the tin had left the basket; the unload tried an item 20 m behind the robot.
+    A distinct reason lets the task free the compartment and look for the item again."""
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    grasping.gt = gt_objects(('trash_03', (-20.392, -2.813, -0.528)))
+    r = send(node, PlaceObject, '/grasp/place', bin_goal())
+    assert not r.success and r.message.startswith('not_in_basket')
+    assert fakes.sim_calls == [] and fakes.arm_goals == []
+
+
+def hold_at_show_pose(grasping, size, yaw=0.6):
+    """TF of the jaw tips at the show pose, and ground truth of an item hanging below them."""
+    import numpy as np
+    from geometry_msgs.msg import TransformStamped
+    t, R = grasping.arm.pose(grasping.cfg['show_pose'], TIPS)
+    tf = TransformStamped()
+    tf.header.frame_id, tf.child_frame_id = 'base_link', TIPS
+    tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z = map(float, t)
+    w = np.sqrt(max(1e-12, 1 + R[0, 0] + R[1, 1] + R[2, 2])) / 2
+    tf.transform.rotation.w = w
+    tf.transform.rotation.x = (R[2, 1] - R[1, 2]) / (4 * w)
+    tf.transform.rotation.y = (R[0, 2] - R[2, 0]) / (4 * w)
+    tf.transform.rotation.z = (R[1, 0] - R[0, 1]) / (4 * w)
+    grasping.tf_buffer.set_transform_static(tf, 'test')
+    c = t + R @ np.array([size[2] / 2 + grasping.cfg['hover_above_item_m'], 0.0, 0.0])   # tool x = down
+    grasping.gt = gt_objects(('trash_03', tuple(c)))
+    d = grasping.gt.detections[0]
+    d.bbox.size.x, d.bbox.size.y, d.bbox.size.z = size
+    d.bbox.center.orientation.z, d.bbox.center.orientation.w = np.sin(yaw / 2), np.cos(yaw / 2)
+    return c
+
+
+def store_goal():
+    return PlaceObject.Goal(target=PlaceObject.Goal.COMPARTMENT, item_id='wm_000', bin_id='recyclable')
+
+
+def test_store_lowers_the_item_to_a_spot_in_the_compartment(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    hold_at_show_pose(grasping, (0.21, 0.065, 0.065))                 # PET bottle
+    r = send(node, PlaceObject, '/grasp/place', store_goal())
+    assert r.success, r.message
+    over = grasping.arm.fk(grasping.arm.poses['over_recyclable']['arm'], TIPS)[0]
+    low = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]                 # up, over, above, lower
+    assert low[2] < over[2] - 0.05
+    assert fakes.sim_calls == [('detach', 'trash_03')]
+
+
+def test_store_refused_when_the_compartment_is_full(system):
+    """Still held, nothing moved: the task puts the item back and empties the basket first."""
+    from grasping.arm import compartment
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    hold_at_show_pose(grasping, (0.11, 0.075, 0.075))                 # tin
+    c = compartment(grasping.arm, 'recyclable')
+    pile = gt_objects(('trash_05', (sum(c['x']) / 2, sum(c['y']) / 2, c['rim'] - 0.06))).detections[0]
+    pile.bbox.size.x, pile.bbox.size.y, pile.bbox.size.z = 0.34, 0.15, 0.08
+    grasping.gt.detections.append(pile)
+    r = send(node, PlaceObject, '/grasp/place', store_goal())
+    assert not r.success and r.message.startswith('compartment_full')
+    assert fakes.sim_calls == [] and fakes.arm_goals == []
+
+
+def test_store_without_ground_truth_releases_from_the_fixed_pose(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    grasping.gt = gt_objects(('trash_03', (0.5, 0.0, 0.0)))           # no TF of the jaw tips
+    r = send(node, PlaceObject, '/grasp/place', store_goal())
+    assert r.success, r.message
+    assert fakes.arm_goals[1] == pytest.approx(grasping.arm.poses['over_recyclable']['arm'])
+    assert fakes.sim_calls == [('detach', 'trash_03')]

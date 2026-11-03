@@ -10,8 +10,8 @@ import yaml
 pytest.importorskip('pinocchio')
 pytest.importorskip('ament_index_python')
 
-from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, in_envelope,  # noqa: E402
-                          near, plan_pick, plan_unload)
+from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item,  # noqa: E402
+                          in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload)
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
@@ -167,3 +167,83 @@ def test_release_moves_with_the_item_clear_the_bin_wall(arm, body_height):
         points.update({f: arm.data.oMf[arm.model.getFrameId(f)].translation for f in frames})
         for name, p in points.items():
             assert not (abs(p[0] - wall) < clear and p[2] < rim + clear), f'{name} at {p.round(3)}, s={s:.2f}'
+
+
+def test_in_basket():
+    from grasping.arm import compartment, in_basket
+    arm = Arm('custom')
+    for b in ('recyclable', 'residual'):
+        c = compartment(arm, b)
+        x, y = (c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2
+        assert in_basket(arm, (x, y, c['floor'] + 0.03))
+        assert in_basket(arm, (x, y, c['rim'] + 0.05))                  # lying on other items
+        assert not in_basket(arm, (x, y, c['floor'] - 0.30))             # on the ground below
+        assert not in_basket(arm, (c['x'][1] + 0.10, y, c['floor'] + 0.03))
+    assert not in_basket(arm, (-20.392, -2.813, -0.528))
+
+
+def rz(a):
+    c, s = np.cos(a), np.sin(a)
+    return np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
+
+
+def picked(arm, spec, yaw):
+    """An item as held after an attach-mode pick from flat ground at yaw (the jaws don't turn to it)."""
+    size = box_size(spec)
+    centre = np.array([0.48, 0.0, -0.25 + size[2] / 2])
+    ok, why, plan = plan_pick(arm, centre, size[2], CFG)
+    assert ok, why
+    t, R = arm.pose(plan['hover'], TIPS)
+    return {'p': R.T @ (centre - t), 'R': R.T @ rz(yaw), 'size': size}
+
+
+def landed(arm, q, held, drop):
+    c, Rb, e = held_item(arm, q, held)
+    return {'centre': c - [0, 0, drop], 'half': e[:2] / 2, 'top': c[2] + e[2] / 2 - drop}, Rb, e
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_store_lays_every_item_along_the_compartment_on_its_floor(arm, comp):
+    """A2b a2b_full1 / store_drop_test: one fixed release point stacked the items to the rim; and a
+    held bottle can hang across the 14.4 cm compartment (the pick doesn't turn the jaws to the item)."""
+    c = compartment(arm, comp)
+    st = CFG['store']
+    for name, spec in OBJECTS['trash'].items():
+        for yaw in (0.0, 0.7, 1.571, 2.5):
+            held = picked(arm, spec, yaw)
+            ok, why, plan, info = plan_store(arm, comp, held, [], CFG)
+            assert ok, (name, yaw, why)
+            item, Rb, e = landed(arm, plan['release'], held, info['drop'])
+            # drop_gap_m, more only for items so flat that the gripper bar would reach the rim (cigarette pack)
+            assert st['drop_gap_m'] - 0.006 <= info['drop'] <= 0.03, (name, yaw, info['drop'])
+            assert item['centre'][2] - e[2] / 2 == pytest.approx(c['floor'], abs=0.006), (name, yaw)
+            if abs(held['size'][0] - held['size'][1]) > 0.01:                     # square: any yaw
+                assert abs(np.sin(item_yaw(Rb, held['size']))) < np.sin(np.radians(5)), (name, yaw)   # along x
+            x, y = item['centre'][:2]
+            assert c['x'][0] - 1e-3 <= x - e[0] / 2 and x + e[0] / 2 <= c['x'][1] + 1e-3, (name, yaw)
+            assert c['y'][0] - 1e-3 <= y - e[1] / 2 and y + e[1] / 2 <= c['y'][1] + 1e-3, (name, yaw)
+            for q in (plan['release'], plan['above']):
+                bar = arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2
+                assert bar >= c['rim'] + st['bar_clearance_m'] - 0.006, (name, yaw)
+
+
+FILL = {'recyclable': ['pet_bottle_500', 'food_tin', 'can_330', 'glass_bottle_330', 'glass_jar'],
+        'residual': ['food_container', 'poly_cup', 'cigarette_pack', 'food_container', 'poly_cup']}
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_a_full_compartment_stays_below_the_rim(arm, comp):
+    """Five items (the world model's limit) fit without anything sticking out above the rim; one
+    more that wouldn't fit is refused as compartment_full."""
+    c = compartment(arm, comp)
+    others, rng = [], np.random.default_rng(3)
+    for name in FILL[comp]:
+        held = picked(arm, OBJECTS['trash'][name], rng.uniform(-np.pi, np.pi))
+        ok, why, plan, info = plan_store(arm, comp, held, others, CFG)
+        assert ok, (name, why)
+        item, _, _ = landed(arm, plan['release'], held, info['drop'])
+        assert item['top'] <= c['rim'] - CFG['store']['top_below_rim_m'] + 1e-3, name
+        others.append(item)
+    tall = [{'centre': (np.mean(c['x']), np.mean(c['y']), c['rim'] - 0.03), 'half': (0.2, 0.1), 'top': c['rim'] - 0.02}]
+    ok, why, _, _ = plan_store(arm, comp, picked(arm, OBJECTS['trash']['food_tin'], 0.0), tall, CFG)
+    assert not ok and why == 'compartment_full'

@@ -4,7 +4,8 @@
 #   nav_walk_test.sh <seed> <label> [nav_walk_test.py args...]
 #   e.g. nav_walk_test.sh 3 base --minutes 60
 # Own GZ_PARTITION / ROS_DOMAIN_ID (navwalk / 71). Writes $OUT/navwalk_<seed>_<label>.{launch,test}.log;
-# env RECORD=1 also records the command chain to .cmd.jsonl (cmd_record.py).
+# env RECORD=1 also records the command chain to .cmd.jsonl (cmd_record.py); TOOL: another test
+# script on the same stack (e.g. store_drop_test.py).
 TOOLS=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$TOOLS/../../.." && pwd)
 OUT=${OUT:-$REPO/sim/gazebo/worlds/generated/tools}
@@ -27,7 +28,7 @@ done
 sleep 3
 ros2 service call /nav/goal/_action/cancel_goal action_msgs/srv/CancelGoal "{}" > /dev/null
 [ -n "$RECORD" ] && (python3 "$TOOLS/cmd_record.py" 20000 "$V.cmd.jsonl" > /dev/null 2>&1 &)
-python3 "$TOOLS/nav_walk_test.py" --seed "$SEED" "$@" > "$V.test.log" 2>&1
+python3 "$TOOLS/${TOOL:-nav_walk_test.py}" --seed "$SEED" "$@" > "$V.test.log" 2>&1
 ps -eo pid=,args= | awk -v f="$V.cmd.jsonl" '$3 ~ /cmd_record.py$/ && $5 == f {print $1}' | xargs -r kill
 grep -h "FALL:" "$V.launch.log" | head -1 | sed 's/^/   adapter: /'
 "$TOOLS/stop_sim.sh" > /dev/null

@@ -158,3 +158,12 @@ def test_runner_tracks_the_held_item():
     io = FakeIo()
     r = runner(io)
     assert r.run(bin_steps(POSES, 'recyclable', PLAN, ['bin'], 0.075, 0.01, 'b'))[0] and r.held is None
+
+
+def test_store_with_a_planned_spot_lowers_the_item_with_the_jaws_closed():
+    io = FakeIo()
+    plan = {'above': ['above'], 'release': ['low']}
+    assert runner(io).run(store_steps(POSES, 'recyclable', 0.075, 'a', plan))[0]
+    order = [e for e in io.log if e[0] in ('arm', 'detach', 'fingers')]
+    assert order == [('arm', 'up'), ('arm', 'over_rec'), ('arm', 'above'), ('arm', 'low'), ('detach', 'a'),
+                     ('arm', 'above'), ('arm', 'up'), ('arm', 'rest')]
