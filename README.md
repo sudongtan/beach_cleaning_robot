@@ -44,7 +44,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 
 | Component | Implemented now | Planned upgrade |
 |---|---|---|
-| Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Next: the pretrained HIMLoco policy (ICLR 2024) from the same repo, on the CPU. Later: own Isaac Lab RL policy (Part B) |
+| Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Tested: the pretrained HIMLoco policy (ICLR 2024) from the same repo, on the CPU (`locomotion:=legubiao_rl`): no falls in our tests, but it doesn't move at the slow speeds the approach needs (it was trained without commands below 0.2 m/s), so it isn't the default. Later: own Isaac Lab RL policy (Part B) |
 | Robot | Go2 + Interbotix WidowX 250 6DOF + custom wide jaws (2–15 cm) + 34 × 30 cm basket, own xacro | — |
 | World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), procedural meshes | Better-looking trash meshes before training the detector |
 | Localization | Ground-truth pose published as `/odom`, `/odom/global` and TFs | Dual EKF + `navsat_transform` over noisy GNSS, leg odometry and IMU |
