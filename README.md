@@ -33,7 +33,7 @@ A rule-based safety supervisor runs throughout. It slows the robot when a person
 | **A0** Setup | Go2 walks on `/cmd_vel` in Gazebo; WidowX 250 arm and two-compartment basket mounted | ✅ done |
 | **A1** Beach world | Seeded scene generator, dune terrain with dry and wet sand, trash, distractors, bins, a walking person, sensors bridged to ROS 2 | ✅ done |
 | **A2a** Components | Every pipeline component built as a ground-truth baseline, with unit and node tests | ✅ done |
-| **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | 🟡 in progress: search, pick, classify and store work; the bin phase only partly works |
+| **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | 🟡 in progress: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls |
 | **A3** Benchmark | `make bench` over 10 seeded scenes; baseline results row | ⬜ planned |
 | **A4** Upgrades | First an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics. Then detection, a material classifier and EKF localization (GNSS + leg odometry + IMU). Each is benchmarked against its baseline. | ⬜ planned |
 | **B0–B1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
@@ -44,7 +44,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 
 | Component | Implemented now | Planned upgrade |
 |---|---|---|
-| Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Isaac Lab RL policy (Part B) |
+| Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Next: the pretrained HIMLoco policy (ICLR 2024) from the same repo, on the CPU. Later: own Isaac Lab RL policy (Part B) |
 | Robot | Go2 + Interbotix WidowX 250 6DOF + custom wide jaws (2–15 cm) + 34 × 30 cm basket, own xacro | — |
 | World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), procedural meshes | Better-looking trash meshes before training the detector |
 | Localization | Ground-truth pose published as `/odom`, `/odom/global` and TFs | Dual EKF + `navsat_transform` over noisy GNSS, leg odometry and IMU |
@@ -80,16 +80,22 @@ Some results from building this, beyond the code itself:
   - the robot being unable to back away from a bin under Nav2.
 
   Each fix is backed by a regression test.
-- **297 unit and node tests** (`make test`) run against a fake simulator, without Gazebo.
+- **339 unit and node tests** (`make test`) run against a fake simulator, without Gazebo.
 
-### Integration runs (scene 3, Gazebo)
+### Integration runs (Gazebo)
 
 Taken from the task's event logs. These runs were for debugging and are not benchmark results.
 
-- `a2b_try6`: the robot searched the **whole area without a fall**, with 9 successful picks and 8 items stored. Some of the picks were repeats of the same item, caused by the phantom-item bug that has since been fixed. The robot tipped over at the first bin; the fix changed how far it stands from the bin.
-- `a2b_bin3`: **first successful bin placement** (glass jar into the recyclable bin). The robot then backed out and carried on searching, and later fell while walking on flat sand. The cause of that fall is still being investigated.
+- `a2b_dev1` (dev scene 101, 15 × 12 m): **first complete unattended run.** All 6 items were picked, sorted and ended up in the correct bins, with no fall. One glass bottle came out of the basket together with the item stored on top of it and landed in the right bin; the task now counts such an item as placed.
+- Scene 3 (25 × 20 m), four runs: each fell, for a different reason each time:
+  1. a held item swept into the basket wall during storing and the rigid simulated grasp pushed the robot;
+  2. it stepped on a 2 cm seaweed clump;
+  3. Nav2's turn on the spot at a goal reversed direction;
+  4. it tipped over while standing still at a bin, with no command at all.
+  
+  The first three were fixed: a new arm path, every distractor marked as a map obstacle, and smoothed commands. The fourth run got furthest: 8 items picked and stored and all 4 recyclable items placed, before the fall. The basket was also reworked: items go to the lowest free spot, and items that fall out are looked for again.
 
-**Open problems:** taking longer items out of the basket (a fix is in progress), and occasional falls while walking. Until both are solved, no complete unattended run exists.
+**Open problem:** falls on benchmark-size scenes. The walking controller is blind and doesn't correct its balance from what it senses. Weight is not the cause: it walked as steadily with 6 kg as without in A0. The next step is a pretrained learned policy, compared with the current controller on the same tests.
 
 ## Results
 
