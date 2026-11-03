@@ -33,8 +33,8 @@ A rule-based safety supervisor runs throughout. It slows the robot when a person
 | **A0** Setup | Go2 walks on `/cmd_vel` in Gazebo; WidowX 250 arm and two-compartment basket mounted | ✅ done |
 | **A1** Beach world | Seeded scene generator, dune terrain with dry and wet sand, trash, distractors, bins, a walking person, sensors bridged to ROS 2 | ✅ done |
 | **A2a** Components | Every pipeline component built as a ground-truth baseline, with unit and node tests | ✅ done |
-| **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | 🟡 nearly done: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls (a known limitation the benchmark measures). Open: a screen recording |
-| **A3** Benchmark | `make bench` over 10 seeded scenes; baseline results row | ⬜ planned |
+| **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | ✅ done: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls (a known limitation the benchmark measures) |
+| **A3** Benchmark | `make bench` over 10 seeded scenes, unattended overnight; baseline results row | 🟡 next |
 | **A4** Upgrades | First an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics. Then detection, a material classifier and EKF localization (GNSS + leg odometry + IMU). Each is benchmarked against its baseline. | ⬜ planned |
 | **B0–B1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
 
