@@ -11,7 +11,7 @@ pytest.importorskip('pinocchio')
 pytest.importorskip('ament_index_python')
 
 from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item,  # noqa: E402
-                          in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload)
+                          in_basket, in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload)
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
@@ -247,3 +247,27 @@ def test_a_full_compartment_stays_below_the_rim(arm, comp):
     tall = [{'centre': (np.mean(c['x']), np.mean(c['y']), c['rim'] - 0.03), 'half': (0.2, 0.1), 'top': c['rim'] - 0.02}]
     ok, why, _, _ = plan_store(arm, comp, picked(arm, OBJECTS['trash']['food_tin'], 0.0), tall, CFG)
     assert not ok and why == 'compartment_full'
+
+
+def lowest_over_basket(arm, qa, qb, held, rim, n=40):
+    """Lowest held-item bottom above the rim along a joint-space move, while over the basket."""
+    worst = np.inf
+    for f in np.linspace(0.0, 1.0, n):
+        c, _, e = held_item(arm, np.asarray(qa) + f * (np.asarray(qb) - np.asarray(qa)), held)
+        if in_basket(arm, c, 0.10):
+            worst = min(worst, c[2] - e[2] / 2 - rim)
+    return worst
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_store_move_keeps_the_held_item_above_the_rim(arm, comp):
+    """A2b a2b_s3full: up -> over_<comp> -> above let the item hang 3 cm below the rim while the wrist
+    turned; it hit the basket and the rigid attach pushed the robot over. up -> above stays clear."""
+    c = compartment(arm, comp)
+    up = arm.poses['up']['arm']
+    for name, spec in OBJECTS['trash'].items():
+        for yaw in (0.0, 0.7, 1.571, 2.5):
+            held = picked(arm, spec, yaw)
+            ok, why, plan, _ = plan_store(arm, comp, held, [], CFG)
+            assert ok, why
+            assert lowest_over_basket(arm, up, plan['above'], held, c['rim']) > 0.005, (name, yaw)

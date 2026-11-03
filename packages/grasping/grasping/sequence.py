@@ -38,10 +38,11 @@ def pick_steps(plan, poses, show_pose, finger_open, finger_closed, object_id):
 def store_steps(poses, bin_id, finger_open, object_id, plan=None):
     """Release the held item into compartment bin_id: lowered to a planned spot (plan from
     arm.plan_store; the jaws stay closed, the item hangs below them), or without a plan from the
-    fixed over-compartment pose."""
+    fixed over-compartment pose. With a plan the arm goes from `up` straight to the point above
+    the spot (item turned, 3 cm over the rim): via over_<bin> the item hung below the rim and the
+    wrist turn swept it into the basket wall; the rigid attach pushed the robot over (a2b_s3full)."""
     if plan:
         return [Step('arm', poses['up']['arm'], 'up'),
-                Step('arm', poses[f'over_{bin_id}']['arm'], f'over_{bin_id}'),
                 Step('arm', plan['above'], 'above_spot'),
                 Step('arm', plan['release'], 'lower'),
                 Step('detach', object_id, 'release'),

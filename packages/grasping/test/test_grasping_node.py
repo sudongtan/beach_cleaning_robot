@@ -307,7 +307,7 @@ def test_store_lowers_the_item_to_a_spot_in_the_compartment(system):
     r = send(node, PlaceObject, '/grasp/place', store_goal())
     assert r.success, r.message
     over = grasping.arm.fk(grasping.arm.poses['over_recyclable']['arm'], TIPS)[0]
-    low = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]                 # up, over, above, lower
+    low = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0]                 # up, above, lower
     assert low[2] < over[2] - 0.05
     assert fakes.sim_calls == [('detach', 'trash_03')]
 
