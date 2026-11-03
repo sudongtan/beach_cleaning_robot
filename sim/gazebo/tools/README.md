@@ -32,7 +32,7 @@ on their own Gazebo partition / ROS domain (`scene_env.sh`: `GZ_PARTITION=a1b`,
 | `zone_walk_test.sh <seed> <label> <x0> <x1> <ya> <yb> [lanes]` | lane walks in one terrain zone through the supervisor; env `ARM_POSE`, `SPEED`, `SMOOTH` |
 | `rtf_measure.sh` | real-time factor of a running scene |
 | `turn_walk_test.sh <seed> [args]` / `turn_walk_test.py` | turn-on-the-spot → walk-off cycles through the supervisor, max tilt; env `GOTO` (walk somewhere first), `LABEL`, `TOOL` (another test script, e.g. `cmd_replay.py`) |
-| `nav_walk_test.sh <seed> <label> --minutes N` / `nav_walk_test.py` | full skeleton without task / perception / grasping; Nav2 loops the search waypoints until N sim minutes or a fall (fall rate); env `RECORD=1` |
+| `nav_walk_test.sh <seed> <label> --minutes N` / `nav_walk_test.py` | full skeleton without task / perception / grasping; Nav2 loops the search waypoints until N sim minutes, a fall (fall rate) or stuck (within 0.5 m for `--stall-min` sim min, default 2: stops, `stuck=True`); env `RECORD=1` |
 | `cmd_record.py <wall_s> <out.jsonl>` | record `/cmd_vel_nav`, `/cmd_vel`, controller input as JSON lines |
 | `cmd_replay.py <rec.jsonl> --start --end [--repeat]` | replay recorded `/cmd_vel_nav` with the original timing, stop at a fall |
 

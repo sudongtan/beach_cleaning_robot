@@ -3,9 +3,13 @@
 scene to /nav/goal one after another, in a loop, until --minutes of sim time or a fall
 (tilt > 30 deg). Nav2's commands go through the safety supervisor as in a full run. Needs a
 running stack without the task (nav_walk_test.sh). Prints progress and one RESULT line with
-the sim minutes walked, distance and falls.
+the sim minutes walked, distance, falls and whether it got stuck.
 
-    nav_walk_test.py --seed 3 [--minutes 60] [--repo $BEACH_REPO]
+Stuck: the robot stays within STALL_M of one spot for --stall-min sim minutes (e.g. every goal
+aborted at the geofence edge, HIMLoco test 2026-11-03). The test then stops at once: standing
+still says nothing about the fall rate while walking.
+
+    nav_walk_test.py --seed 3 [--minutes 60] [--stall-min 2] [--repo $BEACH_REPO]
 """
 import argparse
 import math
@@ -36,10 +40,15 @@ def waypoints(repo, seed):
                 s['edge_margin_m'], s['waypoint_spacing_m'], lambda x, y: lethal_at(occ, res, x, y))
 
 
+STALL_M = 0.5
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--seed', type=int, default=3)
     ap.add_argument('--minutes', type=float, default=60.0)
+    ap.add_argument('--stall-min', type=float, default=2.0,
+                    help='sim minutes within STALL_M of one spot = stuck, stop (0: off)')
     ap.add_argument('--repo', default=os.environ.get('BEACH_REPO', ''))
     a = ap.parse_args()
     wps = waypoints(Path(a.repo), a.seed)
@@ -59,9 +68,10 @@ def main():
         q = p.orientation
         return p.position.x, p.position.y, math.degrees(math.acos(max(-1.0, min(1.0, 1 - 2 * (q.x * q.x + q.y * q.y)))))
 
-    t0, dist, fell, k, goals = sim_t(), 0.0, False, 0, 0
+    t0, dist, fell, stuck, k, goals = sim_t(), 0.0, False, False, 0, 0
     last = pose()[:2]
-    while sim_t() - t0 < a.minutes * 60 and not fell:
+    anchor, anchor_t = last, t0      # stuck check: last spot the robot moved STALL_M away from
+    while sim_t() - t0 < a.minutes * 60 and not fell and not stuck:
         x, y = wps[k % len(wps)]
         rx, ry, _ = pose()
         g = NavigateToPose.Goal()
@@ -86,15 +96,26 @@ def main():
                 handle.cancel_goal_async()
                 print(f'FALL at sim t {sim_t():.1f} ({px:.2f}, {py:.2f}), tilt {tilt:.0f} deg', flush=True)
                 break
+            if math.hypot(px - anchor[0], py - anchor[1]) > STALL_M:
+                anchor, anchor_t = (px, py), sim_t()
+            elif a.stall_min > 0 and sim_t() - anchor_t > a.stall_min * 60:
+                stuck = True
+                handle.cancel_goal_async()
+                print(f'STUCK at sim t {sim_t():.1f} ({px:.2f}, {py:.2f}): within {STALL_M} m for '
+                      f'{a.stall_min:g} sim min', flush=True)
+                break
             if sim_t() - start > 120.0:
                 handle.cancel_goal_async()
                 break
         goals += 1
         k += 1
+        if not stuck and a.stall_min > 0 and sim_t() - anchor_t > a.stall_min * 60:   # rejected goals
+            stuck = True
+            print(f'STUCK at sim t {sim_t():.1f}: within {STALL_M} m for {a.stall_min:g} sim min', flush=True)
         if goals % 10 == 0:
             print(f'{goals} goals, {(sim_t() - t0) / 60:.1f} sim min, {dist:.0f} m', flush=True)
     print(f'RESULT seed={a.seed} sim_minutes={(sim_t() - t0) / 60:.1f} distance_m={dist:.0f} '
-          f'goals={goals} fell={fell}', flush=True)
+          f'goals={goals} fell={fell} stuck={stuck}', flush=True)
 
 
 if __name__ == '__main__':

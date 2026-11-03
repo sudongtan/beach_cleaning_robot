@@ -31,5 +31,6 @@ ros2 service call /nav/goal/_action/cancel_goal action_msgs/srv/CancelGoal "{}" 
 python3 "$TOOLS/${TOOL:-nav_walk_test.py}" --seed "$SEED" "$@" > "$V.test.log" 2>&1
 ps -eo pid=,args= | awk -v f="$V.cmd.jsonl" '$3 ~ /cmd_record.py$/ && $5 == f {print $1}' | xargs -r kill
 grep -h "FALL:" "$V.launch.log" | head -1 | sed 's/^/   adapter: /'
+grep -h "STUCK" "$V.test.log" | head -1
 "$TOOLS/stop_sim.sh" > /dev/null
 grep RESULT "$V.test.log" | tail -1
