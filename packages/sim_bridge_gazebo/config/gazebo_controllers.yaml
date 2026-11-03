@@ -1,5 +1,6 @@
-# Gazebo controller manager: broadcasters + the Gazebo locomotion implementation
-# (legubiao basic_quadruped_controller). The arm controllers come from
+# Gazebo controller manager: broadcasters + the Gazebo locomotion implementations
+# (legubiao basic_quadruped_controller = locomotion:=legubiao, rl_quadruped_controller =
+# locomotion:=legubiao_rl; only the selected one is spawned). The arm controllers come from
 # beach_description/config/arm_controllers.yaml (second <parameters> file).
 # Leg controller values from quadruped_ros2_control (dev, 4dfc15e) go2_description/config/gazebo.yaml.
 controller_manager:
@@ -11,9 +12,14 @@ controller_manager:
       type: imu_sensor_broadcaster/IMUSensorBroadcaster
     basic_quadruped_controller:
       type: basic_quadruped_controller/BasicQuadrupedController
+    rl_quadruped_controller:
+      type: rl_quadruped_controller/LeggedGymController
 
 imu_sensor_broadcaster:
   ros__parameters:
+    # 100 Hz is enough for its only reader (the locomotion adapter's tilt with legubiao_rl);
+    # the leg controllers read the IMU state interfaces at their own rate
+    update_rate: 100  # Hz
     sensor_name: "imu_sensor"
     frame_id: "imu_link"
 
@@ -41,6 +47,55 @@ basic_quadruped_controller:
     state_interfaces: [effort, position, velocity]
     feet_names: [FR_foot, FL_foot, RR_foot, RL_foot]
     imu_name: "imu_sensor"
+    imu_interfaces:
+      - orientation.w
+      - orientation.x
+      - orientation.y
+      - orientation.z
+      - angular_velocity.x
+      - angular_velocity.y
+      - angular_velocity.z
+      - linear_acceleration.x
+      - linear_acceleration.y
+      - linear_acceleration.z
+
+# Learned policy (locomotion:=legubiao_rl). Values from go2_description/config/robot_control.yaml
+# (4dfc15e), except:
+# - joints in FL, FR, RL, RR order: the policy's order (Isaac Gym). Upstream lists FR, FL, RR, RL
+#   but its stand_pos/down_pos/feet/foot force are in FL, FR, RL, RR order (hips +0.1 left,
+#   -0.1 right as in unitree_rl_gym go2_config; down_pos = the basic controller's, reordered).
+#   The policy writes action i to joints[i], so the list must be in policy order.
+# - robot_pkg: our checkout is `go2_description` (upstream: unitree_go2_description).
+# - foot force interface names as in beach_robot_gazebo.urdf.xacro. They enable the
+#   controller's estimator; HIMLoco doesn't use its velocity, only its safety check
+#   (roll or pitch beyond 90 deg -> PASSIVE).
+rl_quadruped_controller:
+  ros__parameters:
+    update_rate: 200  # Hz; policy at 50 Hz (decimation 4)
+    robot_pkg: "go2_description"
+    model_folder: "himloco"   # himloco | legged_gym | robot_lab (go2_description/config/)
+    joints:
+      - FL_hip_joint
+      - FL_thigh_joint
+      - FL_calf_joint
+      - FR_hip_joint
+      - FR_thigh_joint
+      - FR_calf_joint
+      - RL_hip_joint
+      - RL_thigh_joint
+      - RL_calf_joint
+      - RR_hip_joint
+      - RR_thigh_joint
+      - RR_calf_joint
+    stand_pos: [0.1, 0.8, -1.5, -0.1, 0.8, -1.5, 0.1, 0.8, -1.5, -0.1, 0.8, -1.5]
+    down_pos: [0.01, 1.27, -2.8, -0.01, 1.27, -2.8, 0.3, 1.31, -2.8, -0.3, 1.31, -2.8]
+    command_interfaces: [effort, position, velocity, kp, kd]
+    state_interfaces: [effort, position, velocity]
+    feet_names: [FL_foot, FR_foot, RL_foot, RR_foot]
+    foot_force_name: "foot_force"
+    foot_force_interfaces: [FL_foot_force, FR_foot_force, RL_foot_force, RR_foot_force]
+    imu_name: "imu_sensor"
+    base_name: "base"
     imu_interfaces:
       - orientation.w
       - orientation.x

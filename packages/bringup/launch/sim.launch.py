@@ -19,7 +19,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 SIMS = ('gazebo',)
-LOCOMOTION = {'gazebo': ('legubiao',)}
+LOCOMOTION = {'gazebo': ('legubiao', 'legubiao_rl')}   # legubiao_rl: learned policy (HIMLoco)
 CLOCK = '/sim/clock_throttled'   # 100 Hz sim-time clock for our nodes (sim_bridge_gazebo clock_throttle)
 
 
@@ -34,17 +34,18 @@ def launch_setup(context):
     bridge = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('sim_bridge_gazebo'), 'launch', 'gazebo.launch.py')),
-        launch_arguments={k: cfg[k] for k in ('world', 'scene', 'headless', 'basket_load_kg', 'variant')}.items())
+        launch_arguments={k: cfg[k] for k in ('world', 'scene', 'headless', 'basket_load_kg', 'variant',
+                                              'locomotion')}.items())
 
     skeleton = cfg['skeleton'] == 'true'
     if skeleton and not cfg['scene']:
         raise RuntimeError('skeleton:=true needs scene:= (a scene manifest with its seed)')
     adapter = Node(
         package='locomotion', executable='legubiao_adapter', namespace='locomotion', output='screen',
-        parameters=[os.path.join(get_package_share_directory('locomotion'), 'config', 'legubiao_adapter.yaml'),
+        parameters=[os.path.join(get_package_share_directory('locomotion'), 'config', f'{loco}_adapter.yaml'),
                     # with the skeleton, localization owns odom -> base_link
                     {'use_sim_time': True, 'publish_tf': cfg['publish_odom_tf'] == 'true' and not skeleton}],
-        remappings=[('/clock', CLOCK)])
+        remappings=[('/clock', CLOCK), ('imu', '/imu_sensor_broadcaster/imu')])
     nodes = [bridge, adapter]
     if skeleton:
         with open(cfg['scene']) as f:
@@ -71,7 +72,8 @@ def generate_launch_description():
         DeclareLaunchArgument('basket_load_kg', default_value='0.0'),
         DeclareLaunchArgument('variant', default_value='',
                               description='custom | stock robot; empty = from the scene manifest, else custom'),
-        DeclareLaunchArgument('locomotion', default_value='legubiao'),
+        DeclareLaunchArgument('locomotion', default_value='legubiao',
+                              description='legubiao (basic controller) | legubiao_rl (HIMLoco policy)'),
         DeclareLaunchArgument('rviz', default_value='false', description='RViz with robot, TF, camera images'),
         DeclareLaunchArgument('skeleton', default_value='false',
                               description='true: also start the A2 skeleton (skeleton.launch.py) for the scene'),

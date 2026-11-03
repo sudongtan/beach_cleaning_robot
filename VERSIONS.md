@@ -39,6 +39,12 @@ Recorded 2026-10-12 on the dev machine (native, no container).
 | PyYAML | 6.0.1 | scenes, configs |
 | pytest | 7.4.4 | `make test` |
 
+## C++ libraries (manual install)
+
+| Library | Version | Why |
+|---|---|---|
+| libtorch (CPU, cxx11 ABI) | 2.5.0+cpu, `https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.0%2Bcpu.zip` (sha256 `848ae52a422bf0bf94fd2ba2b048bb6c3e416f385cef390640760bd0baf7a40e`), unzipped to `~/libtorch` | `rl_quadruped_controller` (`locomotion:=legubiao_rl`, HIMLoco policy, A2b). Build with `Torch_DIR=~/libtorch`; at run time `gazebo.launch.py` adds `$Torch_DIR/lib` (default `~/libtorch/lib`) to Gazebo's `LD_LIBRARY_PATH` |
+
 ## Runtime downloads
 
 | Asset | Source | Notes |
@@ -49,7 +55,7 @@ Recorded 2026-10-12 on the dev machine (native, no container).
 
 | Repo | Commit | Branch | Notes |
 |---|---|---|---|
-| [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) | `4dfc15ea73e7e453019a685d2199fd8406c93896` (2026-02-22) | dev | Apache-2.0. Patches in `patches/quadruped_ros2_control/`: `0001` link the Pinocchio 4 imported target, `0002` kp/kd `initial_value`s in `gz_quadruped_hardware`. Not built: rl/ocs2 controllers, unitree_sdk2 hardware, unitree_joystick_input (`patches/setup_deps.sh` adds COLCON_IGNORE). |
+| [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) | `4dfc15ea73e7e453019a685d2199fd8406c93896` (2026-02-22) | dev | Apache-2.0. Patches in `patches/quadruped_ros2_control/`: `0001` link the Pinocchio 4 imported target, `0002` kp/kd `initial_value`s in `gz_quadruped_hardware`. Not built: ocs2 controller, unitree_sdk2 hardware, unitree_joystick_input (`patches/setup_deps.sh` adds COLCON_IGNORE). `rl_quadruped_controller` is built since A2b (needs libtorch); its policies come from `go2_description/config/{himloco,legged_gym,robot_lab}`. |
 | [Interbotix/interbotix_ros_manipulators](https://github.com/Interbotix/interbotix_ros_manipulators) | `01c557d65f781697c3a05bffebafbd3404e03eab` (2025-01-02) | jazzy | BSD-3-Clause. Only `interbotix_xsarm_descriptions` is built (WidowX 250 6DOF meshes); everything else gets COLCON_IGNORE. |
 
 Evaluated but not used: [khaledgabr77/unitree_go2_ros2](https://github.com/khaledgabr77/unitree_go2_ros2) `55ff151632a0220bf3ae0c0772392615d86da7a8` (2026-09-08), kept in `~/ros2_ws/src` with a COLCON_IGNORE.

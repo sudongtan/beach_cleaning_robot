@@ -1,14 +1,20 @@
-"""Adapter between our locomotion interface and legubiao's basic_quadruped_controller.
+"""Adapter between our locomotion interface and legubiao's quadruped controllers
+(basic_quadruped_controller; rl_quadruped_controller with `state_source: imu`).
 
   /cmd_vel (geometry_msgs/Twist)  ->  control_input_msgs/Inputs on `control_input`
   controller odometry on `controller_odom`  ->  /leg_odom (nav_msgs/Odometry, odom -> base_link)
                                                  [+ TF odom -> base_link if publish_tf]
 
 At startup it waits for the controller's odometry (= controller active), then walks the
-controller's FSM from passive to trotting (commands 2, 2, 4). Trotting with zero velocity
-is "standing". Without /cmd_vel for `cmd_timeout` seconds it commands zero velocity.
+controller's FSM from passive to walking (`standup_sequence`; basic: 2, 2, 4 = trotting).
+Walking with zero velocity is "standing". Without /cmd_vel for `cmd_timeout` seconds it
+commands zero velocity.
 
-Fall: if the body tilt (from the controller's own orientation estimate) stays above
+`state_source: imu` is for a controller without odometry (rl_quadruped_controller): ready =
+IMU messages on `imu` and a subscriber on `control_input`; tilt from the IMU orientation;
+no /leg_odom.
+
+Fall: if the body tilt (from the controller's own orientation estimate or the IMU) stays above
 `fall_tilt_deg` for `fall_hold_s`, it sends PASSIVE (command 1: legs limp) and ignores
 /cmd_vel from then on. A fallen robot kept walking its legs and crawled out of the geofence
 (A2b run 5); there is no automatic stand-up.
@@ -24,6 +30,7 @@ from control_input_msgs.msg import Inputs
 from geometry_msgs.msg import TransformStamped, Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
+from sensor_msgs.msg import Imu
 from tf2_ros import TransformBroadcaster
 
 
@@ -65,6 +72,7 @@ class LegubiaoAdapter(Node):
         self.publish_tf = p('publish_tf', True).value
         self.fall_tilt = p('fall_tilt_deg', 30.0).value
         self.fall_hold = p('fall_hold_s', 0.3).value
+        self.state_source = p('state_source', 'controller_odom').value   # controller_odom | imu
         self.tilt = 0.0
         self.tilted_since = None
         self.fallen = False
@@ -73,7 +81,10 @@ class LegubiaoAdapter(Node):
         self.odom_pub = self.create_publisher(Odometry, '/leg_odom', 10)
         self.tf = TransformBroadcaster(self) if self.publish_tf else None
         self.create_subscription(Twist, '/cmd_vel', self.on_cmd_vel, 10)
-        self.create_subscription(Odometry, 'controller_odom', self.on_controller_odom, 10)
+        if self.state_source == 'imu':
+            self.create_subscription(Imu, 'imu', self.on_imu, 10)
+        else:
+            self.create_subscription(Odometry, 'controller_odom', self.on_controller_odom, 10)
 
         self.cmd = Twist()
         self.cmd_time = None
@@ -81,7 +92,7 @@ class LegubiaoAdapter(Node):
         self.step = -1          # index into the stand-up sequence; len(seq) = done
         self.step_time = None
         self.create_timer(1.0 / rate, self.tick)
-        self.get_logger().info('waiting for the controller (controller_odom) ...')
+        self.get_logger().info(f'waiting for the controller ({self.state_source}) ...')
 
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
@@ -89,6 +100,14 @@ class LegubiaoAdapter(Node):
     def on_cmd_vel(self, msg):
         self.cmd = msg
         self.cmd_time = self.now()
+
+    def on_imu(self, msg):
+        # ready once the controller listens too (it subscribes when configured, the IMU
+        # broadcaster runs before the leg controller is spawned)
+        if self.first_odom_time is None and self.inputs_pub.get_subscription_count() > 0:
+            self.first_odom_time = self.now()
+        q = msg.orientation
+        self.tilt = tilt_deg((q.x, q.y, q.z, q.w))
 
     def on_controller_odom(self, msg):
         if self.first_odom_time is None:
@@ -126,7 +145,7 @@ class LegubiaoAdapter(Node):
                 self.tilted_since = now if self.tilted_since is None else self.tilted_since
                 if now - self.tilted_since >= self.fall_hold:
                     self.fallen = True
-                    msg.command = 1                    # PASSIVE (StateTrotting::checkChange)
+                    msg.command = 1                    # PASSIVE (StateTrotting/StateRL::checkChange)
                     self.inputs_pub.publish(msg)
                     self.get_logger().error(f'FALL: tilt {self.tilt:.0f} deg; controller set to passive, '
                                             '/cmd_vel ignored from now on')
@@ -151,7 +170,8 @@ class LegubiaoAdapter(Node):
 
         if self.cmd_time is not None and now - self.cmd_time <= self.cmd_timeout:
             c = self.cmd
-            # controller: vx = max_vx*ly, vy = -max_vy*lx, wz = -max_wz*rx (StateTrotting.cpp)
+            # controller: vx = max_vx*ly, vy = -max_vy*lx, wz = -max_wz*rx (StateTrotting.cpp;
+            # StateRL.cpp: the same with max 1)
             msg.ly = clamp(c.linear.x / self.max_vx)
             msg.lx = clamp(-c.linear.y / self.max_vy)
             msg.rx = clamp(-c.angular.z / self.max_wz)

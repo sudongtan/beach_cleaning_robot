@@ -1,5 +1,5 @@
 # Adapter for legubiao basic_quadruped_controller (quadruped_ros2_control dev, 4dfc15e).
-legubiao_adapter:
+/**/legubiao_adapter:   # node runs in namespace /locomotion
   ros__parameters:
     # controller's hard-coded trotting limits (StateTrotting.cpp): stick value 1.0 maps to these
     max_vx: 0.4      # m/s

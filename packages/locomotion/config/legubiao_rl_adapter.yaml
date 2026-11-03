@@ -1,0 +1,23 @@
+# Adapter for legubiao rl_quadruped_controller (quadruped_ros2_control dev, 4dfc15e), HIMLoco
+# policy (locomotion:=legubiao_rl). Same node as legubiao_adapter.yaml.
+/**/legubiao_adapter:   # node runs in namespace /locomotion
+  ros__parameters:
+    # StateRL.cpp feeds the sticks to the policy as the command in m/s and rad/s
+    # (x = ly, y = -lx, yaw = -rx; commands_scale only scales the observation): stick 1.0 = 1 m/s.
+    # Our nodes stay far below that (Nav2 / task caps).
+    max_vx: 1.0      # m/s
+    max_vy: 1.0      # m/s
+    max_wz: 1.0      # rad/s
+    publish_rate: 50.0         # Hz, control_input stream
+    cmd_timeout: 0.5           # s without /cmd_vel -> zero velocity
+    # stand-up from passive: command 2 (fixed down, 1.8 s), 2 (fixed stand, 1.8 s), 3 (RL policy)
+    standup_sequence: [2, 2, 3]
+    standup_waits: [3.0, 4.0, 2.0]   # s after each command
+    standup_delay: 2.0               # s after the controller is ready
+    # the RL controller publishes no odometry: readiness and tilt from the IMU broadcaster
+    state_source: imu
+    odom_frame: odom
+    base_frame: base_link
+    publish_tf: true
+    fall_tilt_deg: 30.0      # body tilt beyond this for fall_hold_s = fallen -> controller passive
+    fall_hold_s: 0.3

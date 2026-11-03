@@ -22,8 +22,10 @@ for dir in "$REPO"/patches/*/; do
   done
 done
 
-# not built: need libtorch / OCS2 / unitree_sdk2 (real robot)
-for pkg in controllers/rl_quadruped_controller controllers/ocs2_quadruped_controller \
+# not built: need OCS2 / unitree_sdk2 (real robot). rl_quadruped_controller is built
+# (needs libtorch, see VERSIONS.md); drop a COLCON_IGNORE left by older versions of this script
+rm -f "$SRC/quadruped_ros2_control/controllers/rl_quadruped_controller/COLCON_IGNORE"
+for pkg in controllers/ocs2_quadruped_controller \
            hardwares/hardware_unitree_sdk2 commands/unitree_joystick_input; do
   touch "$SRC/quadruped_ros2_control/$pkg/COLCON_IGNORE"
 done

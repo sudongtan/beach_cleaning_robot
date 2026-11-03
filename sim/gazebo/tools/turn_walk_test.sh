@@ -5,7 +5,7 @@
 # Cycles start at the spawn point (seed 3: dry flat sand), or where env GOTO="x,y [x,y ...]" walks
 # the robot first (goto.py through the supervisor, smoothed), and stay within ~1 m of it.
 # env LABEL: log name suffix (default: the mode); TOOL: test script instead of turn_walk_test.py
-# (e.g. cmd_replay.py, then its arguments).
+# (e.g. cmd_replay.py, then its arguments); LOCO: locomotion:= (default legubiao).
 # Writes $OUT/turnwalk_<seed>_<mode>.{launch,test}.log.
 set -e
 TOOLS=$(cd "$(dirname "$0")" && pwd)
@@ -18,7 +18,7 @@ MANIFEST=$REPO/sim/gazebo/worlds/generated/scene_${SEED}.manifest.yaml
 "$TOOLS/stop_sim.sh" > /dev/null 2>&1 || true
 SAFETY=$(ros2 pkg prefix safety)/share/safety/config/safety.yaml
 setsid bash -c "
-  ros2 launch bringup sim.launch.py scene:=$MANIFEST headless:=true publish_odom_tf:=false &
+  ros2 launch bringup sim.launch.py scene:=$MANIFEST headless:=true publish_odom_tf:=false locomotion:=${LOCO:-legubiao} &
   ros2 run localization ground_truth --ros-args -p use_sim_time:=true &
   ros2 run mapping ground_truth --ros-args -p repo:=$REPO -p seed:=$SEED -p use_sim_time:=true &
   ros2 run safety supervisor --ros-args --params-file $SAFETY -p use_sim_time:=true &

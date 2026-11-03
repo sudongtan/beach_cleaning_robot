@@ -3,7 +3,7 @@ topic bridge (sensors, /clock, ground-truth pose), GNSS covariance relay and, fo
 beach scenes, ground truth + attach/detach.
 
   ros2 launch sim_bridge_gazebo gazebo.launch.py [world:=empty] [headless:=false] [basket_load_kg:=0.0]
-      [variant:=custom|stock]
+      [variant:=custom|stock] [locomotion:=legubiao|legubiao_rl]
   ros2 launch sim_bridge_gazebo gazebo.launch.py scene:=<scene_N.manifest.yaml>
 
 `variant` (robot, notes/decisions.md "Two robot variants"): default `custom`; with a scene, the
@@ -14,6 +14,10 @@ manifest's variant (load_scene.py --variant) is used, and an explicit different 
 world, the spawn pose and the attachable items, and overrides world/x/y/z/yaw. The world then
 starts paused: attach_server detaches the items (Gazebo attaches every DetachableJoint on
 startup) and unpauses it.
+
+`locomotion` picks the leg controller (LEG_CONTROLLERS). The RL controller runs a TorchScript
+policy through libtorch, which it loads from $Torch_DIR/lib (default ~/libtorch; VERSIONS.md):
+that directory is added to the Gazebo process's LD_LIBRARY_PATH.
 """
 import os
 
@@ -21,7 +25,8 @@ import xacro
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, RegisterEventHandler
+from launch.actions import (AppendEnvironmentVariable, DeclareLaunchArgument, IncludeLaunchDescription,
+                            OpaqueFunction, RegisterEventHandler)
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
@@ -46,6 +51,9 @@ def spawner(*controllers, ros_args=()):
 LEG_CONTROLLER_REMAPS = ('-r odom:=/locomotion/controller_odom',
                          '-r /control_input:=/locomotion/control_input',
                          '-r /tf:=/locomotion/controller_tf')
+# locomotion:= -> leg controller (config/gazebo_controllers.yaml)
+LEG_CONTROLLERS = {'legubiao': 'basic_quadruped_controller',     # model-based trot (default)
+                   'legubiao_rl': 'rl_quadruped_controller'}     # learned policy (HIMLoco)
 
 
 VARIANTS = ('custom', 'stock')
@@ -73,6 +81,15 @@ def launch_setup(context):
         world = cfg['world']
         world_path = world if world.endswith('.sdf') else os.path.join(SHARE, 'worlds', world + '.sdf')
     variant = variant or DEFAULT_VARIANT
+    if cfg['locomotion'] not in LEG_CONTROLLERS:
+        raise RuntimeError(f"locomotion:={cfg['locomotion']} unknown (available: {', '.join(LEG_CONTROLLERS)})")
+    leg_controller = LEG_CONTROLLERS[cfg['locomotion']]
+    env = []
+    if leg_controller == 'rl_quadruped_controller':
+        torch_lib = os.path.join(os.environ.get('Torch_DIR', os.path.expanduser('~/libtorch')), 'lib')
+        if not os.path.isfile(os.path.join(torch_lib, 'libtorch.so')):
+            raise RuntimeError(f'locomotion:=legubiao_rl needs libtorch in {torch_lib} (VERSIONS.md)')
+        env = [AppendEnvironmentVariable('LD_LIBRARY_PATH', torch_lib)]
     if variant not in VARIANTS:
         raise RuntimeError(f"variant:={variant} unknown (available: {', '.join(VARIANTS)})")
     if not os.path.isfile(world_path):
@@ -103,6 +120,7 @@ def launch_setup(context):
         ]
 
     return [
+        *env,
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')),
@@ -121,7 +139,7 @@ def launch_setup(context):
         RegisterEventHandler(OnProcessExit(target_action=spawn, on_exit=[broadcasters])),
         RegisterEventHandler(OnProcessExit(
             target_action=broadcasters,
-            on_exit=[spawner('basic_quadruped_controller', ros_args=LEG_CONTROLLER_REMAPS),
+            on_exit=[spawner(leg_controller, ros_args=LEG_CONTROLLER_REMAPS),
                      spawner('arm_controller', 'gripper_controller')])),
     ]
 
@@ -137,6 +155,8 @@ def generate_launch_description():
                               description='robot variant: custom (wide jaws, large basket; default) | '
                                           'stock (WidowX gripper, small basket). Empty = from the scene '
                                           'manifest, else custom'),
+        DeclareLaunchArgument('locomotion', default_value='legubiao',
+                              description='leg controller: legubiao (basic, default) | legubiao_rl (HIMLoco policy)'),
         DeclareLaunchArgument('x', default_value='0.0'),
         DeclareLaunchArgument('y', default_value='0.0'),
         DeclareLaunchArgument('z', default_value='0.45'),
