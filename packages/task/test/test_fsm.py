@@ -53,6 +53,7 @@ class FakeWorld:
         self.safe = lambda t: True
         self.log_records, self.calls_while_unsafe = [], 0
         self.cmd = (0.0, 0.0, 0.0)
+        self.cmds = []                                              # (t, command) of every cmd_vel call
         self.target_item = None
         self.nav_from_bin = 0                                       # Nav2 goals sent while facing a bin up close
 
@@ -133,6 +134,7 @@ class FakeWorld:
         if (vx, vy, wz) != (0.0, 0.0, 0.0) and not self.safe(self.t):
             self.calls_while_unsafe += 1
         self.cmd = (vx, vy, wz)
+        self.cmds.append((self.t, (vx, vy, wz)))
 
     def log(self, rec):
         self.log_records.append(rec)
@@ -466,3 +468,18 @@ def test_store_refused_as_full_puts_the_item_back_and_empties_the_basket_first()
     i = ev.index(('store', 'c'))
     states = [r['state'] for r in w.log_records[i:] if r['event'] == 'state']
     assert states[:2] == ['PUT_BACK', 'GO_TO_BIN']
+
+
+def test_own_commands_change_no_faster_than_the_smoother_limits():
+    """A2b falls: steps in the turn rate tip the robot; the task's final approaches and backing out
+    are rate-limited like Nav2's velocity smoother (immediate zero only to stop)."""
+    w = FakeWorld(ITEMS, MATS)
+    run(make(w, PATH), w)
+    lim = CFG['final_approach']['max_accel']
+    assert len(w.cmds) > 50
+    for (t0, a), (t1, b) in zip(w.cmds, w.cmds[1:]):
+        if b == (0.0, 0.0, 0.0):
+            continue
+        dt = max(t1 - t0, DT)
+        for k in range(3):
+            assert abs(b[k] - a[k]) <= lim[k] * min(dt, 0.5) + 1e-9, (t1, a, b)

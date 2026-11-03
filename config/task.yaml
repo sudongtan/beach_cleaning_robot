@@ -25,6 +25,9 @@ task:
       max_vx: 0.15
       max_vy: 0.10
       max_wz: 0.3
+      # the task's own commands change at most this fast (as Nav2's velocity smoother): a step in
+      # the turn rate tips the robot (A2b falls)
+      max_accel: [0.3, 0.3, 0.5]     # vx, vy (m/s^2), wz (rad/s^2)
       settle_s: 1.0              # stand still this long before the arm moves
       progress_timeout_s: 10.0   # give up (no_progress) if the distance to the item hasn't shrunk ...
       progress_min_m: 0.05       # ... by this much in progress_timeout_s

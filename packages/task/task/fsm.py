@@ -106,6 +106,8 @@ class Task:
     at_bin: str = ''                             # the bin GO_TO_BIN / PLACE is working at
     leave_since: float = 0.0
     stuck: set = field(default_factory=set)      # items that could not be placed: left in the basket
+    cmd: tuple = (0.0, 0.0, 0.0)                 # last own /cmd_vel_nav command (rate-limited) and its time
+    cmd_t: float = None
     best_dist: float = None                      # final approach: closest distance so far ...
     best_since: float = 0.0                      # ... and since when
 
@@ -124,6 +126,20 @@ class Task:
             self.item = item
         self.io.log({'t': round(snap.t, 2), 'event': 'state', 'state': state, 'item': self.item})
 
+    def stop(self):
+        """Zero command now (arrived, paused, fallen)."""
+        self.io.cmd_vel(0.0, 0.0, 0.0)
+        self.cmd, self.cmd_t = (0.0, 0.0, 0.0), None
+
+    def move(self, snap, vx, vy, wz):
+        """Command (vx, vy, wz), changed from the last own command by at most final_approach
+        max_accel per second (like Nav2's velocity smoother; Nav2's commands are already smoothed)."""
+        dt = 0.1 if self.cmd_t is None else min(max(snap.t - self.cmd_t, 0.0), 0.5)
+        lim = self.cfg['final_approach']['max_accel']
+        self.cmd = tuple(c + max(-a * dt, min(a * dt, w - c)) for c, w, a in zip(self.cmd, (vx, vy, wz), lim))
+        self.cmd_t = snap.t
+        self.io.cmd_vel(*self.cmd)
+
     def result(self):
         """Result of the pending action once done, else None."""
         if self.pending is None or not self.pending.done():
@@ -134,7 +150,7 @@ class Task:
     def skip(self, snap, reason):
         self.io.update(self.item, SKIPPED, skip_reason=reason)
         self.io.log({'t': round(snap.t, 2), 'event': 'skipped', 'item': self.item, 'reason': reason})
-        self.io.cmd_vel(0.0, 0.0, 0.0)
+        self.stop()
         self.item = ''
         self.best_dist = None
         self.go('SEARCH', snap)
@@ -163,13 +179,13 @@ class Task:
                 if hasattr(self.pending, 'cancel'):        # a grasp action: stop the arm too
                     self.pending.cancel()
                 self.pending = None
-            self.io.cmd_vel(0.0, 0.0, 0.0)
+            self.stop()
             self.io.log({'t': round(snap.t, 2), 'event': 'fell', 'tilt_deg': round(snap.tilt_deg, 1),
                          'robot': [round(v, 3) for v in snap.robot], 'state': self.state, 'item': self.item})
             return self.go('FELL', snap)
         if not snap.safety_ok and self.pending is None:
             if (self.state, self.sub) in (('APPROACH', 'final'), ('GO_TO_BIN', 'final'), ('PLACE', 'leave')):
-                self.io.cmd_vel(0.0, 0.0, 0.0)
+                self.stop()
                 self.best_since = snap.t                    # a safety pause is not "no progress"
 
             return                                      # pause: start nothing new
@@ -245,7 +261,7 @@ class Task:
             return self.skip(snap, 'no_progress')
         # stop near the middle of the envelope: grasping checks it in 3D (body pitch shifts x)
         if abs(x - fa['target_x_m']) <= fa['tolerance_m'] and abs(y) <= fa['tolerance_m']:
-            self.io.cmd_vel(0.0, 0.0, 0.0)
+            self.stop()
             if self.settle_since is None:
                 self.settle_since = snap.t
             if snap.t - self.settle_since >= fa['settle_s']:
@@ -256,9 +272,9 @@ class Task:
         self.settle_since = None
         clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
         bearing = math.atan2(y, x)
-        self.io.cmd_vel(clip(fa['gain'] * (x - fa['target_x_m']), fa['max_vx']),
-                        clip(fa['gain'] * y, fa['max_vy']),
-                        clip(fa['gain'] * bearing, fa['max_wz']) if x > 0.2 else 0.0)
+        self.move(snap, clip(fa['gain'] * (x - fa['target_x_m']), fa['max_vx']),
+                  clip(fa['gain'] * y, fa['max_vy']),
+                  clip(fa['gain'] * bearing, fa['max_wz']) if x > 0.2 else 0.0)
 
     def state_pick(self, snap):
         it = snap.items.get(self.item)
@@ -371,7 +387,7 @@ class Task:
         x, y = to_robot(snap.robot, bx, by)
         err = x - self.cfg['bin_place_distance_m']
         if abs(err) <= 0.03 and abs(y) <= 0.05:
-            self.io.cmd_vel(0.0, 0.0, 0.0)
+            self.stop()
             if self.settle_since is None:
                 self.settle_since = snap.t
             if snap.t - self.settle_since >= fa['settle_s']:
@@ -380,8 +396,8 @@ class Task:
             return
         self.settle_since = None
         clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
-        self.io.cmd_vel(clip(fa['gain'] * err, fa['max_vx']), clip(fa['gain'] * y, fa['max_vy']),
-                        clip(fa['gain'] * math.atan2(y, x), fa['max_wz']))
+        self.move(snap, clip(fa['gain'] * err, fa['max_vx']), clip(fa['gain'] * y, fa['max_vy']),
+                  clip(fa['gain'] * math.atan2(y, x), fa['max_wz']))
 
     def state_place(self, snap):
         if self.sub == 'leave':
@@ -432,6 +448,6 @@ class Task:
         x, _ = to_robot(snap.robot, bx, by)
         err = x - self.cfg['bin_standoff_m']            # negative while too close
         if err >= -fa['tolerance_m'] or snap.t - self.leave_since > self.cfg['bin_leave_timeout_s']:
-            self.io.cmd_vel(0.0, 0.0, 0.0)
+            self.stop()
             return self.go('GO_TO_BIN', snap)
-        self.io.cmd_vel(max(-fa['max_vx'], fa['gain'] * err), 0.0, 0.0)
+        self.move(snap, max(-fa['max_vx'], fa['gain'] * err), 0.0, 0.0)
