@@ -1,5 +1,5 @@
 # Beach Cleanup Robot Dog: top-level tasks. Run from the repo root.
-#   make generate                  bench/scenes.yaml for seeds 0-9
+#   make generate                  bench/scenes.yaml: benchmark seeds 0-9 + dev scene 101 (15 x 12 m)
 #   make test                      unit tests for sim/common
 #   make scene SIM=gazebo SEED=3   scene 3 with the robot, sensors, bridge, ground truth (A1b);
 #                                  VARIANT=custom (default) | stock robot
@@ -13,7 +13,7 @@
 
 SHELL := /bin/bash
 PYTHON ?= python3
-SEEDS ?= 0-9
+SEEDS ?= all
 SEED ?= 0
 SIM ?= gazebo
 HEADLESS ?= false

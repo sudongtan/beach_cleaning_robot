@@ -21,7 +21,7 @@ The benchmark scenes, described once and independently of any simulator. The fil
 
 | Field | Type | Meaning |
 |---|---|---|
-| `seed` | int | scene id; seeds 0–9 are the benchmark |
+| `seed` | int | scene id; seeds 0–9 are the benchmark; seeds ≥ 100 are small dev scenes (`dev_scenes` in `sim/common/scene_params.yaml`), never benchmarked |
 | `area.size` | `[w, h]` | scene area, x from 0 to w, y from 0 to h. The sea is at the south (low y). |
 | `geo` | map | `latitude_deg`, `longitude_deg`, `elevation_m` of the map origin (WGS84), for GNSS simulation |
 | `terrain` | map | see below |

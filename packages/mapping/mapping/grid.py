@@ -63,11 +63,14 @@ def build(scene, objects, terrain_occupancy, resolution, obstacle_models, margin
     """Occupancy (int8, row 0 south) for the scene."""
     occ = np.array(terrain_occupancy, dtype=np.int8)
     X, Y = cell_centres(occ.shape, resolution)
+    # grown by half a cell diagonal: every cell the footprint touches, so a thin rotated
+    # object (driftwood, 8 cm) can't fall between cell centres
+    grow = margin + resolution / math.sqrt(2)
     for model, spec, pose in static_objects(scene, objects):
         if model not in obstacle_models:
             continue
         for prim in spec['collision']:
-            occ[primitive_mask(X, Y, pose, prim, margin)] = LETHAL
+            occ[primitive_mask(X, Y, pose, prim, grow)] = LETHAL
     if lethal_outside_geofence:
         occ[~inside_polygon(X, Y, scene['geofence']['polygon'])] = LETHAL
     return occ

@@ -20,7 +20,10 @@ import export_terrain  # noqa: E402
 import load_scene  # noqa: E402
 import terrain as T  # noqa: E402
 
-GRID = [(x, y) for x in (2.0, 20.0, 38.0) for y in (-5.0, 2.0, 8.0, 14.0, 20.0, 26.0, 32.0, 38.0)]
+def grid(w, h):
+    """Probe points: west edge, middle, east edge; from the sea over the area to the back dunes."""
+    ys = [-5.0, 2.0] + [round(h * f, 1) for f in (0.27, 0.47, 0.67, 0.87)] + [h + 2.0, h + 8.0]
+    return [(x, y) for x in (2.0, w / 2, w - 2.0) for y in ys]
 
 
 def main():
@@ -45,7 +48,7 @@ def main():
         w.find('physics/dart/collision_detector').text = a.detector
 
     lines = []
-    for i, (x, y) in enumerate(GRID):
+    for i, (x, y) in enumerate(grid(*scene['area']['size'])):
         name = f'probe_{i:02d}'
         lines.append(f'{name} {x} {y} {float(T.height_at(scene["terrain"], x, y)):.3f}')
         m = ET.SubElement(w, 'model', name=name)

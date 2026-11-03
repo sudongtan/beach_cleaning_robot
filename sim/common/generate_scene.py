@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Seeded, simulator-independent beach scenes -> bench/scenes.yaml.
 
+    python3 sim/common/generate_scene.py            # benchmark seeds 0-9 + the dev scenes
     python3 sim/common/generate_scene.py --seeds 0-9
 
 Each scene uses only random.Random(seed), so a scene depends on its seed alone,
@@ -53,6 +54,20 @@ def uniform(rng, lo_hi):
     return rng.uniform(lo, hi)
 
 
+def merge(base, over):
+    """base with the keys of `over` replaced (nested mappings merged)."""
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = merge(base[k], v) if isinstance(v, dict) and isinstance(base.get(k), dict) else v
+    return out
+
+
+def params_for(seed, params):
+    """Scene parameters for a seed: the dev-scene overrides for dev seeds."""
+    dev = params.get('dev_scenes', {})
+    return merge(params, dev['overrides']) if seed in dev.get('seeds', []) else params
+
+
 def make_terrain(rng, p, area_w, area_h):
     tp = p['terrain']
     wl = uniform(rng, tp['waterline_y'])
@@ -76,7 +91,7 @@ def make_terrain(rng, p, area_w, area_h):
     back = tp['back_dunes']
     for _ in range(rng.randint(*back['count'])):
         dunes.append({'x': r3(rng.uniform(-8.0, area_w + 8.0)),
-                      'y': r3(uniform(rng, back['y'])),
+                      'y': r3(area_h + uniform(rng, back['y_behind_area'])),
                       'height': r3(uniform(rng, back['height'])),
                       'sigma_x': r3(uniform(rng, back['sigma']) * 2.0),
                       'sigma_y': r3(uniform(rng, back['sigma']))})
@@ -157,7 +172,7 @@ def limit_slopes(terrain, fence, max_deg):
 
 
 def make_scene(seed, inp):
-    p = inp['params']
+    p = params_for(seed, inp['params'])
     objs = inp['objects']
     gf = inp['geofence']
     rng = random.Random(seed)
@@ -182,7 +197,7 @@ def make_scene(seed, inp):
     # Bins on the west edge of the dry beach, the robot starts next to them.
     bins = []
     bin_x = fence['x_min'] + 1.0
-    bin_y0 = wet_top + 2.0 + rng.uniform(0.0, 4.0)
+    bin_y0 = wet_top + uniform(rng, pl['bin_offset_y'])
     for i, name in enumerate(('bin_recyclable', 'bin_residual')):
         x, y = bin_x, bin_y0 + 1.2 * i
         if not placer.gentle(x, y, objs['bins'][name]['footprint_radius']):
@@ -196,7 +211,8 @@ def make_scene(seed, inp):
     # Landmarks: lifeguard tower at the back, fence posts along the back edge.
     landmarks = []
     tr = objs['landmarks']['lifeguard_tower']['footprint_radius']
-    tx, ty = placer.sample((10.0, fence['y_max'] - 5.0, area_w - 10.0, fence['y_max']), tr)
+    tm = pl['tower_edge_margin_m']
+    tx, ty = placer.sample((tm, fence['y_max'] - 5.0, area_w - tm, fence['y_max']), tr)
     placer.placed[-1] = (tx, ty, tr + keepout)
     landmarks.append({'id': 'lifeguard_tower', 'model': 'lifeguard_tower',
                       'pose': [r3(tx), r3(ty), r4(rng.uniform(-0.3, 0.3) - math.pi / 2)]})
@@ -248,7 +264,7 @@ def make_scene(seed, inp):
         # (x, y, radius) of things the person must walk around
         obstacles = [(b['pose'][0], b['pose'][1], 0.4) for b in bins] + [(tx, ty, tr)]
         for _ in range(1000):
-            ys = [rng.uniform(fence['y_min'] + 1.0, fence['y_max'] - 1.0) for _ in range(4)]
+            ys = [rng.uniform(wl + pp['y_from_waterline_m'], fence['y_max'] - 1.0) for _ in range(4)]
             wps = [(-out, ys[0]), (area_w + out, ys[1]), (area_w + out, ys[2]), (-out, ys[3])]
             segs = list(zip(wps, wps[1:] + wps[:1]))
             if all(seg_point_dist(a, b, (ox, oy)) >= pp['clearance_m'] + orad
@@ -275,7 +291,10 @@ def make_scene(seed, inp):
     }
 
 
-def parse_seeds(text):
+def parse_seeds(text, params=None):
+    """'0-9' / '0,3,5' / 'all' (benchmark seeds 0-9 + the dev seeds)."""
+    if text == 'all':
+        return list(range(10)) + (params or load_inputs()['params'])['dev_scenes']['seeds']
     seeds = []
     for part in text.split(','):
         if '-' in part:
@@ -300,7 +319,7 @@ def dump(doc):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('--seeds', default='0-9', help='e.g. 0-9 or 0,3,5')
+    ap.add_argument('--seeds', default='all', help='e.g. 0-9 or 0,3,5; all = 0-9 + dev scenes')
     ap.add_argument('--out', default=str(REPO / 'bench' / 'scenes.yaml'))
     args = ap.parse_args()
     doc = generate(parse_seeds(args.seeds))

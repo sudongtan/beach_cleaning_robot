@@ -1,7 +1,7 @@
 # Ranges the scene generator samples from. Changing anything here changes
 # bench/scenes.yaml, i.e. the benchmark: regenerate and log it in decisions.md.
 
-area_size: [40.0, 30.0]          # x (east) by y (north), metres; sea to the south
+area_size: [25.0, 20.0]          # x (east) by y (north), metres; sea to the south (decisions 2026-11-02)
 
 geo:                             # world origin (south-west corner of the area)
   # Approximate point on Barceloneta beach, Barcelona (Mediterranean: small
@@ -37,7 +37,7 @@ terrain:
     count: [3, 5]
     height: [1.2, 2.2]
     sigma: [2.5, 3.0]            # across the beach; 2x along it
-    y: [35.0, 39.0]
+    y_behind_area: [5.0, 9.0]    # centre this far north of the area's back edge
   friction:                      # Coulomb mu per zone
     dry_sand: 0.6
     wet_sand: 0.8
@@ -50,6 +50,8 @@ counts:
 placement:
   clearance_m: 0.3               # extra gap between object footprints
   keepout_m: 2.0                 # free radius around bins, tower and robot start
+  bin_offset_y: [2.0, 6.0]       # first bin this far inland of the wet zone
+  tower_edge_margin_m: 6.0       # lifeguard tower at least this far from the east / west edges
   half_buried_probability: 0.25
   bury_fraction: [0.3, 0.5]      # share of the visual height below the surface
   seaweed_wet_zone_probability: 0.7
@@ -59,3 +61,18 @@ person:
   speed: [0.9, 1.3]              # m/s
   start_x_outside: 5.0           # path starts and turns this far outside the area
   clearance_m: 1.5               # min distance from bins and tower
+  y_from_waterline_m: 2.0        # path turning points from this far inland of the waterline to 1 m before the fence
+
+# Small scenes for quick integration checks (seeds >= 100). NOT benchmark scenes: the benchmark
+# is seeds 0-9 (notes/benchmark.md). Each key below replaces the same key above.
+dev_scenes:
+  seeds: [101]                   # odd: has the person
+  overrides:
+    area_size: [15.0, 12.0]
+    terrain:
+      waterline_y: [2.0, 3.0]
+      wet_zone_width: [2.5, 3.5]
+      inner_dunes: {count: [0, 0]}
+    counts: {trash: [4, 6], distractors: [3, 5]}
+    placement: {bin_offset_y: [1.5, 2.5], tower_edge_margin_m: 4.0}
+    person: {y_from_waterline_m: 0.5}   # on the wet sand: bins and tower fill the dry strip

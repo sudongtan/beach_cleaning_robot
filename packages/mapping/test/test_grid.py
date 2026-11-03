@@ -67,8 +67,9 @@ def test_outside_geofence_is_lethal(scene_grid):
     s, occ = scene_grid
     poly = s['geofence']['polygon']
     ys = [p[1] for p in poly]
-    assert lethal_at(occ, RES, 20.0, min(ys) - 0.3)        # water side
-    assert lethal_at(occ, RES, 0.1, 15.0)                  # west edge
+    w, h = s['area']['size']
+    assert lethal_at(occ, RES, w / 2, min(ys) - 0.3)       # water side
+    assert lethal_at(occ, RES, 0.1, h / 2)                 # west edge
 
 
 def test_most_of_the_geofence_is_free(scene_grid):
@@ -79,7 +80,8 @@ def test_most_of_the_geofence_is_free(scene_grid):
     ys = (np.arange(occ.shape[0]) + 0.5) * RES
     X, Y = np.meshgrid(xs, ys)
     inside = inside_polygon(X, Y, s['geofence']['polygon'])
-    assert (occ[inside] == FREE).mean() > 0.9
+    # the dev scenes (seeds >= 100) are small: tower and bins take ~10 % of them
+    assert (occ[inside] == FREE).mean() > (0.9 if s['seed'] < 100 else 0.85)
 
 
 def test_trash_is_on_free_cells(scene_grid):
@@ -94,6 +96,17 @@ def test_rotated_box_footprint():
     m = primitive_mask(X, Y, (0.0, 0.0, math.pi / 2), prim, 0.0)     # log turned north-south
     assert m[np.isclose(Y, 0.4) & np.isclose(X, 0.0)].all()
     assert not m[np.isclose(Y, 0.0) & np.isclose(X, 0.4)].any()
+
+
+@pytest.mark.parametrize('yaw', np.linspace(0.0, math.pi, 13))
+def test_thin_log_never_falls_between_cells(yaw):
+    """Every cell under a rotated driftwood log is lethal, wherever it lies on the grid."""
+    for ox, oy in [(5.0, 5.0), (5.11, 5.07), (5.2, 4.93)]:
+        scene = {'bins': [], 'landmarks': [], 'geofence': {'polygon': [[0, 0], [10, 0], [10, 10], [0, 10]]},
+                 'distractors': [{'model': 'driftwood', 'pose': [ox, oy, float(yaw)]}]}
+        occ = build(scene, OBJECTS, np.zeros((40, 40), dtype=np.int8), RES, ['driftwood'], 0.0, False)
+        for f in np.linspace(-0.45, 0.45, 19):
+            assert lethal_at(occ, RES, ox + f * math.cos(yaw), oy + f * math.sin(yaw)), (ox, oy, yaw, f)
 
 
 def test_polygon():

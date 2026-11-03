@@ -46,7 +46,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 |---|---|---|
 | Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Isaac Lab RL policy (Part B) |
 | Robot | Go2 + Interbotix WidowX 250 6DOF + custom wide jaws (2–15 cm) + 34 × 30 cm basket, own xacro | — |
-| World | 10 seeded scenes (40 × 30 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), procedural meshes | Better-looking trash meshes before training the detector |
+| World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), procedural meshes | Better-looking trash meshes before training the detector |
 | Localization | Ground-truth pose published as `/odom`, `/odom/global` and TFs | Dual EKF + `navsat_transform` over noisy GNSS, leg odometry and IMU |
 | Mapping | Static traversability grid from the terrain (steep slopes and water are blocked) | — |
 | Perception | Ground-truth detections from the simulator | A pretrained open-vocabulary model prompted with text (YOLOE), with no training, plus depth for 3D position. Compared with a classical segmentation of our own. |

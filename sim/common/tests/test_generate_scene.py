@@ -19,7 +19,9 @@ import generate_scene as gen  # noqa: E402
 import scene_schema  # noqa: E402
 import terrain as T  # noqa: E402
 
-SEEDS = list(range(10))
+BENCH = list(range(10))
+SEEDS = gen.parse_seeds('all')            # benchmark seeds + dev scenes
+DEV = SEEDS[10:]
 
 
 @pytest.fixture(scope='module')
@@ -76,9 +78,17 @@ def test_schema_catches_errors(doc, inp):
 
 # Content constraints ---------------------------------------------------------
 
-def test_counts_in_range(doc, inp):
-    p = inp['params']['counts']
+def test_dev_scenes_exist_and_are_small(doc, inp):
+    dev = inp['params']['dev_scenes']
+    assert DEV and all(s >= 100 for s in DEV)
     for s in doc['scenes']:
+        want = dev['overrides']['area_size'] if s['seed'] in DEV else inp['params']['area_size']
+        assert s['area']['size'] == want
+
+
+def test_counts_in_range(doc, inp):
+    for s in doc['scenes']:
+        p = gen.params_for(s['seed'], inp['params'])['counts']
         assert p['trash'][0] <= len(s['trash']) <= p['trash'][1]
         assert p['distractors'][0] <= len(s['distractors']) <= p['distractors'][1]
         assert len(s['bins']) == 2
@@ -90,7 +100,7 @@ def test_every_material_in_every_scene(doc):
 
 
 def test_person_in_half_the_scenes(doc):
-    assert [s['seed'] for s in doc['scenes'] if s['person']] == [1, 3, 5, 7, 9]
+    assert [s['seed'] for s in doc['scenes'] if s['person'] and s['seed'] in BENCH] == [1, 3, 5, 7, 9]
 
 
 def test_no_overlaps(doc, inp):
@@ -176,10 +186,12 @@ def test_heightmap_png(tmp_path, doc):
     assert np.allclose(np.flipud(back), h, atol=1e-3)           # row 0 of the image is north
 
 
-def test_traversability_marks_water_lethal(doc):
-    s = doc['scenes'][0]
+@pytest.mark.parametrize('i', [0, -1])        # a benchmark and a dev scene
+def test_traversability_marks_water_lethal(doc, i):
+    s = doc['scenes'][i]
     g = T.traversability(s, 10.0, 0.25)
-    assert g['occupancy'].shape == (120, 160)
+    w, h = s['area']['size']
+    assert g['occupancy'].shape == (round(h / 0.25), round(w / 0.25))
     assert (g['occupancy'][g['water']] == 100).all()
     assert (g['occupancy'] == 0).mean() > 0.6
 
@@ -187,7 +199,7 @@ def test_traversability_marks_water_lethal(doc):
 def test_wet_zone_is_flat(doc):
     t = doc['scenes'][0]['terrain']
     y = t['waterline_y'] + t['wet_zone_width'] / 2
-    hs = T.height_at(t, np.linspace(0, 40, 50), np.full(50, y))
+    hs = T.height_at(t, np.linspace(0, doc['scenes'][0]['area']['size'][0], 50), np.full(50, y))
     assert np.allclose(hs, t['wet_zone_height'])
 
 

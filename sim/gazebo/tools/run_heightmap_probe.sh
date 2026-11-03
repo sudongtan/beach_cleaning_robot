@@ -1,7 +1,7 @@
 #!/bin/bash
 # Drop probe boxes on a scene's heightmap and compare their resting height
 # with terrain.height_at. "rest" should match "terrain" within ~1 cm inside
-# the area (y 5-28); probes on the steep back dunes (y >= 32) slide down.
+# the area; probes on the steep back dunes (north of the area) slide down.
 #   run_heightmap_probe.sh [detector=ode] [seed=3]
 set -e
 source "$(dirname "$0")/common.sh"
