@@ -302,6 +302,13 @@ class GraspingNode(Node):
                 if item is None:
                     return self.refuse(goal_handle, result, 'item_not_found')
                 centre, height = item
+                if not in_basket(self.arm, centre) and self.in_bin(g.pose, centre):
+                    # carried along with the item below it (a2b_dev1: a bottle lying on the jar);
+                    # compartments hold one bin's items, so it is where it belongs
+                    self.get_logger().info(f'place {obj}: already_in_bin')
+                    result.success, result.message = True, 'already_in_bin'
+                    goal_handle.succeed()
+                    return result
                 if not in_basket(self.arm, centre):
                     return self.refuse(goal_handle, result, f'not_in_basket (item at x {centre[0]:.3f} '
                                                             f'y {centre[1]:.3f} z {centre[2]:.3f})')
@@ -364,6 +371,17 @@ class GraspingNode(Node):
         size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
         height = sum(abs(r) * s for r, s in zip(r2, size))
         return (p.position.x, p.position.y, p.position.z), height
+
+    def in_bin(self, pose_stamped, p):
+        """Is point p (base_link) inside the bin whose opening centre (at the rim) is pose_stamped?"""
+        pose = self.to_base(pose_stamped)
+        if pose is None:
+            return False
+        q = pose.orientation
+        yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+        dx, dy = p[0] - pose.position.x, p[1] - pose.position.y
+        u, v = math.cos(yaw) * dx + math.sin(yaw) * dy, -math.sin(yaw) * dx + math.cos(yaw) * dy
+        return abs(u) <= self.bin_half[0] and abs(v) <= self.bin_half[1] and p[2] < pose.position.z
 
     def bin_release(self, pose_stamped, hang=0.0):
         """Joint target with the jaw tips over the bin opening (pose: opening centre at the rim),

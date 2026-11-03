@@ -335,3 +335,13 @@ def test_store_without_ground_truth_releases_from_the_fixed_pose(system):
     assert r.success, r.message
     assert fakes.arm_goals[1] == pytest.approx(grasping.arm.poses['over_recyclable']['arm'])
     assert fakes.sim_calls == [('detach', 'trash_03')]
+
+
+def test_bin_place_of_an_item_already_in_the_bin_succeeds_without_moving(system):
+    """A2b a2b_dev1: a bottle lying on the jar came out with it and fell into the bin."""
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    grasping.gt = gt_objects(('trash_03', (0.811, 0.034, -0.250)))     # bin rim centre at x 0.87
+    r = send(node, PlaceObject, '/grasp/place', bin_goal())
+    assert r.success and r.message == 'already_in_bin'
+    assert fakes.sim_calls == [] and fakes.arm_goals == []
