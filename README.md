@@ -2,7 +2,7 @@
 
 **A simulated Unitree Go2 quadruped with an arm that is meant to search a beach, pick up litter, sort it by material and empty it into the right bin, with no human in the loop. Every part runs in ROS 2 and Gazebo Harmonic on a laptop CPU.**
 
-> 🚧 **Work in progress (as of 2026-11-02).** The robot can search a whole scene and pick, classify and store trash on its own. Emptying the basket into the bins works only some of the time, so no full run has finished yet. There are no benchmark numbers yet. The [progress table](#progress) shows what is built and what is still planned.
+> 🚧 **Work in progress (as of 2026-11-03).** The whole loop runs on its own: on the small dev scene the robot searched, picked, sorted and emptied every item into the correct bin, unattended. On the larger benchmark scenes the walking controller still falls now and then; a pretrained learned walking policy was tested and isn't better for this task (see below). There are no benchmark numbers yet. The [progress table](#progress) shows what is built and what is still planned.
 
 <p align="center">
   <img src="results/a1/checks/camera_rgb.png" width="45%" alt="Head-camera view of the generated beach: sand ripples, dunes and the lifeguard tower">
@@ -33,7 +33,7 @@ A rule-based safety supervisor runs throughout. It slows the robot when a person
 | **A0** Setup | Go2 walks on `/cmd_vel` in Gazebo; WidowX 250 arm and two-compartment basket mounted | ✅ done |
 | **A1** Beach world | Seeded scene generator, dune terrain with dry and wet sand, trash, distractors, bins, a walking person, sensors bridged to ROS 2 | ✅ done |
 | **A2a** Components | Every pipeline component built as a ground-truth baseline, with unit and node tests | ✅ done |
-| **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | 🟡 in progress: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls |
+| **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | 🟡 nearly done: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls (a known limitation the benchmark measures). Open: a screen recording |
 | **A3** Benchmark | `make bench` over 10 seeded scenes; baseline results row | ⬜ planned |
 | **A4** Upgrades | First an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics. Then detection, a material classifier and EKF localization (GNSS + leg odometry + IMU). Each is benchmarked against its baseline. | ⬜ planned |
 | **B0–B1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
@@ -95,7 +95,20 @@ Taken from the task's event logs. These runs were for debugging and are not benc
   
   The first three were fixed: a new arm path, every distractor marked as a map obstacle, and smoothed commands. The fourth run got furthest: 8 items picked and stored and all 4 recyclable items placed, before the fall. The basket was also reworked: items go to the lowest free spot, and items that fall out are looked for again.
 
-**Open problem:** falls on benchmark-size scenes. The walking controller is blind and doesn't correct its balance from what it senses. Weight is not the cause: it walked as steadily with 6 kg as without in A0. The next step is a pretrained learned policy, compared with the current controller on the same tests.
+**Open problem:** falls on benchmark-size scenes. The walking controller is blind and doesn't correct its balance from what it senses. Weight is not the cause: it walked as steadily with 6 kg as without in A0.
+
+### Learned walking policy tested (HIMLoco)
+
+The pretrained HIMLoco policy (Long et al., ICLR 2024) ships with the same controller repo and runs on the CPU through libtorch. It is wired in as a second implementation (`locomotion:=legubiao_rl`, `make run LOCO=legubiao_rl`) and was compared with the current controller on the same tests:
+
+| Test | HIMLoco | Current controller |
+|---|---|---|
+| Fill the basket, then walk 2 m out and back with 180° turns (4 walks) | no fall; 19 of 20 items stayed in the basket | 2 falls in 4 walks; 10 of 10 items stayed in the run without a fall |
+| Stand 5 min at the spot of the stand-still fall | no fall (max tilt 7°) | no fall (max tilt 1°) |
+| Slow commands: 0.05–0.10 m/s forward, slow right turns | **doesn't move** | follows them |
+| Full scene-3 run | no item picked: both approaches stalled at the slow final steps | (see the four runs above) |
+
+It never fell, but it can't walk slowly, and the approach to an item and the docking at a bin need slow steps. The cause is in its training code, which sets every command below 0.2 m/s to zero, so the policy never learned that range. It also stands 9 cm lower and about 6° tilted with the arm and basket, which it never saw in training. So the current controller stays the default, and an own policy trained with slow commands and the arm's mass is planned for Part B. One integration detail: upstream's config lists the leg joints in a different order from the policy's (front right first instead of front left), and with that order the robot fell as soon as the policy took over.
 
 ## Results
 
@@ -145,6 +158,7 @@ What this project does not show:
 - **Material classification** will only be shown on *simulated* textures. Real recycling plants use near-infrared sensors.
 - **The custom gripper and basket** are larger than off-the-shelf parts for a robot of this size, and the arm carries more than its rated payload.
 - **The walking person is scripted** and has no collision. Safety uses the person's ground-truth position.
+- **The walking controller is blind and falls now and then** on the benchmark-size scenes; a fall ends the run.
 
 Full list with reasons: [docs/limitations.md](docs/limitations.md).
 
@@ -167,6 +181,8 @@ make run SEED=3                # scene 3 + the full pipeline (A2 skeleton); HEAD
 ```
 
 The task writes one event log per run to `results/runs/<RUN_ID>.jsonl`. `make bench` comes in phase A3.
+
+Optional: `make run SEED=3 LOCO=legubiao_rl` uses the HIMLoco walking policy instead of the default controller. It needs CPU libtorch 2.5.0 in `~/libtorch` (download link and checksum in [VERSIONS.md](VERSIONS.md)); build the controller with `Torch_DIR=~/libtorch colcon build --packages-select rl_quadruped_controller`.
 
 ## Repository layout
 

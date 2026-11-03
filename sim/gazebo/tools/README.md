@@ -35,6 +35,10 @@ on their own Gazebo partition / ROS domain (`scene_env.sh`: `GZ_PARTITION=a1b`,
 | `nav_walk_test.sh <seed> <label> --minutes N` / `nav_walk_test.py` | full skeleton without task / perception / grasping; Nav2 loops the search waypoints until N sim minutes, a fall (fall rate) or stuck (within 0.5 m for `--stall-min` sim min, default 2: stops, `stuck=True`); env `RECORD=1` |
 | `cmd_record.py <wall_s> <out.jsonl>` | record `/cmd_vel_nav`, `/cmd_vel`, controller input as JSON lines |
 | `cmd_replay.py <rec.jsonl> --start --end [--repeat]` | replay recorded `/cmd_vel_nav` with the original timing, stop at a fall |
+| `velocity_track_test.py [--sweep] [--step-s 6]` | velocity tracking: holds command steps on `/cmd_vel_nav`, measures body velocity from ground truth (second half of each step); `--sweep`: slow commands (found HIMLoco's deadband). Run as `TOOL=` of `turn_walk_test.sh` |
+| `hold_test.py [--minutes 5]` | stand still with no command, log tilt / roll / pitch every 30 sim s, stop at a fall; with `GOTO=` of `turn_walk_test.sh` to stand at a given spot |
+
+`LOCO=legubiao_rl` (environment) selects the HIMLoco controller for `scene_up.sh`, `rtf_measure.sh`, `nav_walk_test.sh` and `turn_walk_test.sh` (default `legubiao`, the basic controller).
 
 Full-run recipe: `notes/logs/A2.md`, "A2b".
 
