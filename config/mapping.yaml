@@ -3,8 +3,10 @@
 mapping:
   # Static things the robot must walk around: lethal footprints (collision boxes from
   # sim/common/objects.yaml, rotated by the object's yaw) grown by obstacle_margin_m.
-  # Small distractors (shells, small rocks, seaweed) are walked over.
-  obstacle_models: [lifeguard_tower, fence_post, bin_recyclable, bin_residual, rock_medium, driftwood]
+  # Every distractor too: the blind gait trips on a 2 cm step (a2b_s3full2 fell walking onto seaweed;
+  # they are static models), so nothing is walked over (decisions 2026-11-03).
+  obstacle_models: [lifeguard_tower, fence_post, bin_recyclable, bin_residual, rock_medium, driftwood,
+                    rock_small, seaweed, shell]
   obstacle_margin_m: 0.10
   # Everything outside the scene's geofence polygon is lethal, so the planner never leaves it.
   lethal_outside_geofence: true
