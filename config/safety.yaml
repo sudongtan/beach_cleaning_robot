@@ -4,7 +4,17 @@
 safety_supervisor:
   ros__parameters:
     slow_distance_m: 3.0       # person closer -> slow (and the arm holds: arm rule = state != ok)
-    stop_distance_m: 1.5       # person closer -> stop
+    stop_distance_m: 1.5       # the robot is at rest before a person gets closer (benchmark rule)
+    # Speed-dependent stop threshold (ISO/TS 15066 speed and separation monitoring, K from
+    # ISO 13855): stop when the person is within stop_distance_m + separation_extra_m
+    # + K (reaction + stopping time) + the robot's own travel (decision 2026-11-04; at rest
+    # 1.86 m, at the slow speed 0.09 m/s 2.32 m, at 0.3 m/s 4.86 m).
+    approach_speed_mps: 1.6    # K: whole-body approach speed of a person (ISO 13855)
+    reaction_time_s: 0.1       # /people at 20 Hz + the 20 Hz tick
+    robot_decel_mps2: 0.15     # measured: 0.108 -> 0.052 m/s in 0.38 s after a stop (notes/logs/A3.md)
+    still_speed_mps: 0.05      # "at rest" (benchmark: ground-truth speed over 0.5 s)
+    separation_extra_m: 0.2    # C + uncertainty: the person's size, pose and measurement errors
+    speed_window_s: 0.5        # measured robot speed over this window (TF map -> base_link)
     slow_factor: 0.3           # velocity scale while slow (linear and angular)
     release_margin_m: 0.3      # leave slow/stop only beyond the threshold + this margin ...
     release_hold_s: 1.0        # ... for at least this long (no flicker)

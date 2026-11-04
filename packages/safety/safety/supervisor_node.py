@@ -98,7 +98,7 @@ class SupervisorNode(Node):
         return t.x, t.y, math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
 
     def tick(self):
-        self.sup.on_pose(self.robot_pose())
+        self.sup.on_pose(self.robot_pose(), self.now())
         state, (vx, vy, wz) = self.sup.step(self.now())
         cmd = Twist()
         cmd.linear.x, cmd.linear.y, cmd.angular.z = vx, vy, wz

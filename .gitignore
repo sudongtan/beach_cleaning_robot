@@ -21,3 +21,8 @@ sim/common/generated/
 
 # raw task event logs (A2 task node); per-run summaries for metrics are kept
 results/runs/*.jsonl
+
+# benchmark run logs (launch output, recorder snapshots); the run JSONs results/runs/*.json are kept
+results/bench/
+results/bench_*.log
+results/runs/*.tmp

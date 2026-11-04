@@ -5,6 +5,15 @@ State, in priority order:
   stop   person within stop_distance, or /people stale (fail-safe), or no /people yet
   slow   person within slow_distance
   ok     otherwise
+The stop threshold is speed-dependent (speed and separation monitoring, ISO/TS 15066 with
+the approach speed K of ISO 13855): stop when the person is within
+  stop_distance + extra + K * (reaction + T_stop(v)) + v * reaction + v^2 / (2 decel),
+T_stop(v) = max(0, v - still) / decel, so the robot is at rest (below `still`) before a person
+walking at K reaches stop_distance (decision 2026-11-04). v is the speed the robot would have
+at the level: the larger of the speed measured from the pose over speed_window_s and the
+/cmd_vel_nav speed (scaled by slow_factor for slow). So slow is allowed beyond the threshold
+at the slow speed, ok beyond slow_distance and the threshold at full speed; the levels don't
+depend on the supervisor's own output (no stop / slow oscillation).
 Leaving stop or slow needs the person beyond the threshold + release_margin for
 release_hold_s (hysteresis). Output velocity: zero in estop/stop or when /cmd_vel_nav is
 stale, scaled by slow_factor in slow, passed through in ok.
@@ -31,6 +40,13 @@ class Params:
     people_timeout_s: float = 0.5
     cmd_timeout_s: float = 0.5
     geofence_margin_m: float = 0.3
+    # speed-dependent stop threshold; all zero = the plain stop_distance_m
+    approach_speed_mps: float = 0.0
+    reaction_time_s: float = 0.0
+    robot_decel_mps2: float = 0.0
+    still_speed_mps: float = 0.0
+    separation_extra_m: float = 0.0
+    speed_window_s: float = 0.5
 
     @classmethod
     def from_dict(cls, d):
@@ -50,13 +66,45 @@ class Supervisor:
         self.clear_since = None    # since when the person has been far enough to step down
         self.fence = None          # [(x, y)] in map
         self.pose = None           # (x, y, yaw) of base_link in map, None = unknown
+        self.track = []            # [(t, x, y)] over speed_window_s, for the measured speed
 
     def on_geofence(self, polygon):
         self.fence = [tuple(p) for p in polygon] if len(polygon) >= 3 else None
 
-    def on_pose(self, pose):
-        """Current robot pose, or None when it isn't known (or too old)."""
+    def on_pose(self, pose, t=None):
+        """Current robot pose, or None when it isn't known (or too old); t: its time (for the speed)."""
         self.pose = pose
+        if pose is None or t is None:
+            return
+        self.track.append((t, pose[0], pose[1]))
+        while len(self.track) > 2 and t - self.track[1][0] >= self.p.speed_window_s:
+            self.track.pop(0)
+
+    def speed(self):
+        """Measured robot planar speed over the window (0 without a pose track)."""
+        if len(self.track) >= 2:
+            (t0, x0, y0), (t1, x1, y1) = self.track[0], self.track[-1]
+            if t1 - t0 > 1e-6:
+                return math.hypot(x1 - x0, y1 - y0) / (t1 - t0)
+        return 0.0
+
+    def limits(self, t):
+        """(stop below, ok from): person distances for the levels, at the speed each level allows."""
+        fresh = self.cmd_t is not None and t - self.cmd_t <= self.p.cmd_timeout_s
+        v_cmd = math.hypot(self.cmd[0], self.cmd[1]) if fresh else 0.0
+        v = self.speed()
+        stop = self.stop_threshold(max(v, v_cmd * self.p.slow_factor))
+        return stop, max(self.p.slow_distance_m, self.stop_threshold(max(v, v_cmd)))
+
+    def stop_threshold(self, v):
+        """Person distance below which a robot at speed v must stop (see the module doc)."""
+        p = self.p
+        d = p.stop_distance_m + p.separation_extra_m
+        if p.approach_speed_mps <= 0:
+            return d
+        t_stop = max(0.0, v - p.still_speed_mps) / p.robot_decel_mps2 if p.robot_decel_mps2 > 0 else 0.0
+        braking = v * v / (2 * p.robot_decel_mps2) if p.robot_decel_mps2 > 0 else 0.0
+        return d + p.approach_speed_mps * (p.reaction_time_s + t_stop) + v * p.reaction_time_s + braking
 
     def on_estop(self, active):
         self.estop = bool(active)
@@ -72,13 +120,14 @@ class Supervisor:
         """Level from the current inputs alone, without hysteresis."""
         if self.people_t is None or t - self.people_t > self.p.people_timeout_s:
             return STOP
-        if self.nearest is None or self.nearest >= self.p.slow_distance_m:
+        if self.nearest is None:
             return OK
-        return STOP if self.nearest < self.p.stop_distance_m else SLOW
+        stop, ok = self.limits(t)
+        return STOP if self.nearest < stop else SLOW if self.nearest < ok else OK
 
-    def _release_distance(self):
-        d = self.p.stop_distance_m if self.level == STOP else self.p.slow_distance_m
-        return d + self.p.release_margin_m
+    def _release_distance(self, t):
+        stop, ok = self.limits(t)
+        return (stop if self.level == STOP else ok) + self.p.release_margin_m
 
     def step(self, t):
         """Advance to time t; returns (state, (vx, vy, wz)) to publish."""
@@ -87,7 +136,7 @@ class Supervisor:
             self.level, self.clear_since = raw, None          # escalate at once
         else:
             stale = self.people_t is None or t - self.people_t > self.p.people_timeout_s
-            far = not stale and (self.nearest is None or self.nearest > self._release_distance())
+            far = not stale and (self.nearest is None or self.nearest > self._release_distance(t))
             if not far:
                 self.clear_since = None
             elif self.clear_since is None:

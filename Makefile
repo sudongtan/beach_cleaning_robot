@@ -12,6 +12,10 @@
 #   make world SEED=3              Gazebo GUI with scene 3, no robot
 #   make world-headless SEED=3     same, server only, headless rendering
 #   make assets                    regenerate meshes and textures in sim/common
+#   make bench SIM=gazebo          benchmark: seeds 0-9 headless, one after another (bench/runner.py);
+#                                  SEEDS=0-9 | 0,3 | 101 (101 = dev scene: no row), ROW=baseline;
+#                                  run JSONs in results/runs/, row in results/results.md
+#   make bench-detached            the same, detached and with sleep / lid blocked (bench/start_detached.sh)
 
 SHELL := /bin/bash
 PYTHON ?= python3
@@ -23,6 +27,7 @@ VARIANT ?= custom
 RVIZ ?= false
 RUN_ID ?=
 LOCO ?= legubiao
+ROW ?=
 # Optional own Gazebo transport partition (e.g. GZ_PARTITION=a1) to keep parallel
 # simulations apart; empty = the normal shared partition.
 GZ_PARTITION ?=
@@ -34,13 +39,13 @@ export BEACH_REPO := $(CURDIR)
 WORLD = sim/gazebo/worlds/generated/scene_$(SEED).sdf
 MANIFEST = $(CURDIR)/sim/gazebo/worlds/generated/scene_$(SEED).manifest.yaml
 
-.PHONY: generate test assets terrain scene run world world-headless clean
+.PHONY: generate test assets terrain scene run world world-headless clean bench bench-detached
 
 generate:
 	$(PYTHON) sim/common/generate_scene.py --seeds $(SEEDS)
 
 test:
-	source $(ROS_SETUP) && source $(WS_SETUP) && $(PYTHON) -m pytest sim/common packages -q
+	source $(ROS_SETUP) && source $(WS_SETUP) && $(PYTHON) -m pytest sim/common packages bench -q
 
 assets:
 	$(PYTHON) sim/common/make_assets.py
@@ -66,6 +71,12 @@ world: $(WORLD)
 
 world-headless: $(WORLD)
 	source $(ROS_SETUP) && $(GZ_ENV) gz sim -s -r --headless-rendering $(WORLD)
+
+bench:
+	$(PYTHON) bench/runner.py --sim $(SIM) --seeds $(SEEDS) $(if $(ROW),--row $(ROW))
+
+bench-detached:
+	bench/start_detached.sh SIM=$(SIM) SEEDS=$(SEEDS) $(if $(ROW),ROW=$(ROW))
 
 clean:
 	rm -rf sim/gazebo/worlds/generated sim/common/generated

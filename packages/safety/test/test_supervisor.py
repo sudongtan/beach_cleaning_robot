@@ -89,23 +89,27 @@ def test_stop_hysteresis_margin_and_hold():
     s, t = released()
     run(s, t, t + 0.1, people=[1.0])
     t += 0.2
+    stop, _ = s.limits(t)                  # threshold at the slow speed of CMD (robot standing)
     # just beyond the threshold but inside the margin: stays stopped however long
-    assert run(s, t, t + 3.0, people=[P.stop_distance_m + P.release_margin_m / 2])[0] == STOP
+    assert run(s, t, t + 3.0, people=[stop + P.release_margin_m / 2])[0] == STOP
     t += 3.05
     # beyond threshold + margin, but not for long enough yet
-    assert run(s, t, t + P.release_hold_s - 0.2, people=[2.0])[0] == STOP
+    d = stop + P.release_margin_m + 0.1
+    assert d < P.slow_distance_m
+    assert run(s, t, t + P.release_hold_s - 0.2, people=[d])[0] == STOP
     t += P.release_hold_s
-    # held long enough: steps down to slow (2 m is still inside the slow zone)
-    assert run(s, t, t + 0.3, people=[2.0])[0] == SLOW
+    # held long enough: steps down to slow (still inside the slow zone)
+    assert run(s, t, t + 0.3, people=[d])[0] == SLOW
 
 
 def test_slow_hysteresis():
     s, t = released()
     run(s, t, t + 0.1, people=[2.5])
     t += 0.2
-    assert run(s, t, t + 2.0, people=[P.slow_distance_m + P.release_margin_m / 2])[0] == SLOW
+    _, ok = s.limits(t)                    # ok from: slow distance or the threshold at full speed
+    assert run(s, t, t + 2.0, people=[ok + P.release_margin_m / 2])[0] == SLOW
     t += 2.05
-    assert run(s, t, t + P.release_hold_s + 0.2, people=[P.slow_distance_m + P.release_margin_m + 0.1])[0] == OK
+    assert run(s, t, t + P.release_hold_s + 0.2, people=[ok + P.release_margin_m + 0.1])[0] == OK
 
 
 def test_flicker_resets_the_hold_timer():
@@ -166,10 +170,42 @@ def test_estop_release_with_person_close_is_stop():
 
 def test_slow_never_exceeds_scaled_command():
     s, t = released()
-    for d in (2.9, 2.0, 1.6):
+    for d in (2.9, 2.6, 2.4):              # beyond the stop threshold at the slow speed (2.35 m)
         state, cmd = run(s, t, t + 0.05, people=[d])
         assert state == SLOW and all(abs(c) <= abs(v) * P.slow_factor + 1e-12 for c, v in zip(cmd, CMD))
         t += 0.1
+
+
+# --- speed-dependent stop threshold (decision 2026-11-04) ---------------------------------------
+def test_stop_threshold_grows_with_speed():
+    s = Supervisor(P)
+    at_rest = P.stop_distance_m + P.separation_extra_m + P.approach_speed_mps * P.reaction_time_s
+    assert s.stop_threshold(0.0) == pytest.approx(at_rest)
+    assert s.stop_threshold(0.3) > s.stop_threshold(0.1) > s.stop_threshold(0.0)
+
+
+def test_robot_at_rest_before_a_person_at_k_reaches_stop_distance():
+    """Worst case of the rule: a person walking straight at the robot at K; the robot moving at v
+    decelerates at robot_decel_mps2 once stopped. It must be below still_speed_mps before the
+    person is within stop_distance_m."""
+    for v in (0.0, 0.09, 0.2, 0.3):
+        s = Supervisor(P)
+        d = s.stop_threshold(v) - 1e-6                  # the moment the person crosses the threshold
+        t_rest = P.reaction_time_s + max(0.0, v - P.still_speed_mps) / P.robot_decel_mps2
+        closing = P.approach_speed_mps * t_rest + v * P.reaction_time_s + v * v / (2 * P.robot_decel_mps2)
+        assert d - closing >= P.stop_distance_m + P.separation_extra_m - 1e-5
+
+
+def test_moving_robot_stops_where_a_standing_one_slows():
+    s, t = released()
+    stop_slow, _ = s.limits(t)
+    d = stop_slow + 0.1                    # slow for a standing robot commanded CMD ...
+    assert run(s, t, t + 0.1, people=[d])[0] == SLOW
+    s2, t2 = released()
+    for k in range(12):                    # ... but stop for one measured walking at 0.3 m/s
+        s2.on_pose((20.0 + 0.3 * 0.05 * k, 15.0, 0.0), t2 + 0.05 * k)
+    assert s2.speed() == pytest.approx(0.3)
+    assert run(s2, t2 + 0.55, t2 + 0.6, people=[d])[0] == STOP
 
 
 # --- geofence ---------------------------------------------------------------------------------

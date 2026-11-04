@@ -1,0 +1,65 @@
+# Benchmark harness settings (bench/runner.py, bench/recorder.py, bench/metrics.py).
+# Run limits: notes/benchmark.md "Run limits" (decision 2026-11-03). Thresholds live here, not in code.
+bench:
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  row: baseline                 # run ids <row>_s<seed>
+  limits:
+    sim_s: 3600                 # sim-time cap per run
+    wall_min: 200               # wall-time backstop (3600 s sim at RTF 0.3)
+    stall_s: 600                # wall s without a /task/state change and without 0.5 m of movement
+    stall_move_m: 0.5
+    startup_s: 300              # wall s from launch to "stand-up done"
+    dead_after_s: 120           # wall s without a ground-truth pose (or recorder heartbeat) = dead stack
+  infra_retries: 1              # reruns of a seed after a startup failure / dead stack (never after a fall or stall)
+  poll_s: 5                     # runner check interval (wall)
+  min_free_gb: 2.0              # stop cleanly below this much free disk
+  ac_path: /sys/class/power_supply/AC/online
+  env:                          # own transport partition / domain, loopback only (notes/logs/A2.md)
+    GZ_PARTITION: bench
+    ROS_DOMAIN_ID: "71"
+    GZ_IP: 127.0.0.1
+    ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
+  # components of the stack the row was run with (launch defaults; reported in the row)
+  components:
+    locomotion: legubiao
+    localization: ground_truth
+    mapping: ground_truth
+    perception: ground_truth
+    classifier: ground_truth
+    navigation: nav2
+    grasp_mode: attach
+  # launch-log lines (after stand-up) that end a run
+  startup_ok: stand-up done
+  startup_fail: ['Error 1', 'Traceback', 'still attached']
+  dead_patterns: ['process has died']
+  fall_pattern: 'FALL:'
+
+recorder:
+  flush_s: 5                    # write the snapshot this often (wall), not only at exit
+  distance_step_m: 0.01         # distance walked: accumulate only steps longer than this (jitter)
+  speed_window_s: 0.5           # ground-truth planar speed over this sim window
+  moving_speed_mps: 0.05        # person rule: "moving" above this speed ...
+  cmd_eps: 0.001                # ... or any /cmd_vel component above this
+  people_max_age_s: 0.5         # /people older than this (sim) is ignored
+  arm_change_rad: 0.03          # arm rule (b2 reading): an arm joint changes by more than this ...
+  arm_window_s: 0.5             # ... within this window (sim) while /safety/state != ok
+  fall_tilt_deg: 30.0
+  episode_gap_s: 1.0            # violation samples closer than this (sim) form one episode
+  episode_samples: 60           # samples kept per violation episode (trace, for recounting under another rule)
+  drift_every_s: 1.0            # localization drift sample interval (sim)
+  joints_every: 10             # decode every 10th /joint_states message (~47 Hz of ~470)
+  arm_joints: [arm_waist, arm_shoulder, arm_elbow, arm_forearm_roll, arm_wrist_angle, arm_wrist_rotate]
+
+metrics:
+  # bin inner box (sim/common/objects.yaml: outer 0.60 x 0.45 x 0.50 m, 2 cm walls)
+  bin_inner_half: [0.28, 0.205]
+  bin_rim_m: 0.50               # above the bin's base
+  bin_ground_radius_m: 0.3      # the bin base sits at the lowest terrain point within this radius (sim/gazebo/load_scene.py ground_z)
+  # an item counts as in the basket when it is within this box around base_link (robot frame) and
+  # no more than basket_below_base_m below base_link
+  basket_half: [0.45, 0.25]
+  basket_below_base_m: 0.15
+  contamination_weight: 2.0     # weighted sorting errors = weight x contamination + other wrong bins
+  # safety events from this long before the first tilt > fall_tilt_deg on are fall effects; they are
+  # reported apart (safety.after_fall), not as violations
+  fall_lead_s: 2.0
