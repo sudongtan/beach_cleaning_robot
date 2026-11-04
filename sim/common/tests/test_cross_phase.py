@@ -232,3 +232,48 @@ def test_arm_moves_at_the_bin_clear_its_wall(body_height, rim):
                 p = data.oMf[model.getFrameId(f)].translation
                 assert not (abs(p[0] - wall) < clear and p[2] < rim + clear and abs(p[1]) < 0.3), \
                     f'{name}: {f} at {p.round(3)} hits the bin wall (x {wall:.3f}, rim {rim:.3f}) at s={s:.2f}'
+
+
+def footprint():
+    """Nav2's robot footprint polygon (base_link), from the local costmap parameters."""
+    p = yaml.safe_load(open(REPO / 'packages' / 'navigation' / 'config' / 'nav2_params.yaml'))
+    return yaml.safe_load(p['local_costmap']['local_costmap']['ros__parameters']['footprint'])
+
+
+def test_bin_step_corridor_is_clear():
+    """B2: the sideways step between the bins' place poses (bin_placement: step) keeps the footprint
+    clear of both bins' collision boxes by more than the map's obstacle margin, and crosses no other
+    lethal /map cell, on every benchmark scene."""
+    pytest.importorskip('mapping')
+    from mapping.ground_truth import load
+    from mapping.grid import lethal_at
+    margin = yaml.safe_load(open(REPO / 'config' / 'mapping.yaml'))['mapping']['obstacle_margin_m']
+    fp = footprint()
+    perim = []
+    for (a, b), (c, d) in zip(fp, fp[1:] + fp[:1]):
+        n = max(1, int(math.hypot(c - a, d - b) / 0.02))
+        perim += [(a + (c - a) * k / n, b + (d - b) * k / n) for k in range(n)]
+    dist = TASK['bin_place_distance_m']
+    for sc in yaml.safe_load(open(REPO / 'bench' / 'scenes.yaml'))['scenes']:
+        _, occ, res = load(str(REPO), sc['seed'])
+        bins = [(b['pose'], size(OBJECTS['bins'][b['model']])) for b in sc['bins']]
+        (x0, y0, yaw), _ = bins[0]
+        (x1, y1, _), _ = bins[1]
+        c, s = math.cos(yaw), math.sin(yaw)
+        ryaw = yaw + math.pi
+        rc, rs = math.cos(ryaw), math.sin(ryaw)
+        clear = 1e9
+        for f in np.linspace(0, 1, 61):
+            cx, cy = x0 + dist * c + f * (x1 - x0), y0 + dist * s + f * (y1 - y0)
+            for px, py in perim:
+                wx, wy = cx + rc * px - rs * py, cy + rs * px + rc * py
+                near_bin = False
+                for (bx, by, byaw), (sx, sy, _) in bins:
+                    u = math.cos(byaw) * (wx - bx) + math.sin(byaw) * (wy - by)
+                    v = -math.sin(byaw) * (wx - bx) + math.cos(byaw) * (wy - by)
+                    gap = math.hypot(max(abs(u) - sx / 2, 0.0), max(abs(v) - sy / 2, 0.0))
+                    clear = min(clear, gap)
+                    near_bin |= gap < margin + 1.5 * res          # the bin's own (coarse) lethal cells
+                assert near_bin or not lethal_at(occ, res, wx, wy), \
+                    f'seed {sc["seed"]}: lethal cell at ({wx:.2f}, {wy:.2f}) in the step corridor'
+        assert clear > margin, f'seed {sc["seed"]}: footprint {clear:.3f} m from a bin (margin {margin})'

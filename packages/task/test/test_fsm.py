@@ -483,3 +483,101 @@ def test_own_commands_change_no_faster_than_the_smoother_limits():
         dt = max(t1 - t0, DT)
         for k in range(3):
             assert abs(b[k] - a[k]) <= lim[k] * min(dt, 0.5) + 1e-9, (t1, a, b)
+
+
+# --- B2: from one bin to the other ----------------------------------------------------------
+TWO_BINS = {'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}, 'b': {'cls': 'trash', 'x': 9.0, 'y': 14.0}}
+TWO_MATS = {'a': 'pet', 'b': 'residual'}
+
+
+def phases(world):
+    """Event log as (state, sub) between the first and the last bin place."""
+    ev = [r for r in world.log_records if r['event'] in ('place', 'bin_step', 'bin_step_done', 'bin_step_failed')]
+    return [r['event'] for r in ev]
+
+
+def test_bins_side_by_side_are_reached_with_a_sideways_step():
+    """B2 (A3: 3 of 7 falls on the walk between the bins): no back-out, no turn, no Nav2 goal."""
+    assert CFG['bin_placement'] == 'step'
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    t = make(w, PATH)
+    navs, real_nav = [], w.nav_to
+
+    def nav_to(x, y, yaw):
+        navs.append((w.t, x, y))
+        return real_nav(x, y, yaw)
+    w.nav_to = nav_to
+    placed_from, real_place = {}, w.place
+
+    def place(target, iid, bin_id, pose):
+        if target == 'bin':
+            placed_from[iid] = (bin_id, w.bin_dist(bin_id), w.t)
+        return real_place(target, iid, bin_id, pose)
+    w.place = place
+    run(t, w)
+    assert t.state == 'DONE' and statuses(w)['a'] == (PLACED, 'recyclable') and statuses(w)['b'] == (PLACED, 'residual')
+    assert phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
+    for bin_id, dist, _ in placed_from.values():
+        assert dist == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
+    t0, t1 = sorted(v[2] for v in placed_from.values())
+    assert not [n for n in navs if t0 < n[0] < t1]                       # no Nav2 between the bins
+    step = [c for tc, c in w.cmds if t0 < tc < t1 and c != (0.0, 0.0, 0.0)]
+    assert step and max(abs(c[1]) for c in step) <= CFG['bin_step']['max_vy'] + 1e-9
+    assert max(abs(c[2]) for c in step) < 0.01 and min(c[0] for c in step) > -0.02   # no turn, no back-out
+
+
+def test_walk_between_the_bins_is_the_baseline():
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    t = run(make(w, PATH, cfg=dict(CFG, bin_placement='walk')), w)
+    assert t.state == 'DONE' and statuses(w)['b'] == (PLACED, 'residual')
+    assert phases(w) == ['place', 'place']
+    assert w.nav_from_bin == 0
+
+
+def test_step_without_progress_backs_out_and_walks():
+    """The robot doesn't move sideways (blocked, or the controller won't): after the final approach's
+    no-progress time the task backs out and Nav2 walks to the other bin."""
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    t = make(w, PATH)
+    real_step = w.step
+
+    def step():
+        if t.state == 'PLACE' and t.sub == 'step':
+            w.cmd = (w.cmd[0], 0.0, w.cmd[2])
+        real_step()
+    w.step = step
+    run(t, w)
+    assert t.state == 'DONE' and statuses(w)['b'] == (PLACED, 'residual')
+    assert phases(w) == ['place', 'bin_step', 'bin_step_failed', 'place']
+    assert w.nav_from_bin == 0
+
+
+def test_safety_pause_during_the_step_stops_the_robot_and_is_not_no_progress():
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    t = make(w, PATH)
+    while not (t.state == 'PLACE' and t.sub == 'step') and w.tick_no < 20000:
+        t.tick(w.snapshot())
+        w.step()
+    for _ in range(5):
+        t.tick(w.snapshot())
+        w.step()
+    assert abs(w.cmd[1]) > 0.0
+    w.safe = lambda now: now < w.t                         # unsafe from now on ...
+    for _ in range(int(2 * CFG['final_approach']['progress_timeout_s'] / DT)):
+        t.tick(w.snapshot())
+        w.step()
+    assert w.cmd == (0.0, 0.0, 0.0) and w.calls_while_unsafe == 0 and t.sub == 'step'
+    w.safe = lambda now: True                              # ... then ok again: the step goes on
+    run(t, w)
+    assert t.state == 'DONE' and phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
+
+
+def test_bins_apart_are_walked_to():
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    bins = dict(BINS, residual=(4.0, 18.0, 0.5, 0.0))
+    t = Task(w, CFG, GRASP, Capacity(5, 2.0, 0.2), PATH, bins)
+    real_place = w.place
+    w.place = lambda target, iid, bin_id, pose: (Handle(w, 3, (True, 'ok')) if target == 'bin'
+                                                 else real_place(target, iid, bin_id, pose))
+    run(t, w)
+    assert t.state == 'DONE' and phases(w) == ['place', 'place']
