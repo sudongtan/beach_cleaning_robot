@@ -56,6 +56,15 @@ def height_at(terrain, x, y):
     return np.clip(h, terrain['z_min'], terrain['z_max'])
 
 
+def ground_z(terrain, x, y, radius, mode):
+    """Terrain height under a footprint (centre + 8 points at `radius`): 'max' so nothing starts
+    inside the ground (dynamic items), 'min' so static structures (bins) reach the ground."""
+    pts = [(x, y)] + [(x + radius * math.cos(a), y + radius * math.sin(a))
+                      for a in [k * math.pi / 4 for k in range(8)]]
+    hs = [float(height_at(terrain, px, py)) for px, py in pts]
+    return max(hs) if mode == 'max' else min(hs)
+
+
 def slope_deg_at(terrain, x, y, eps=0.05):
     """Terrain slope (deg) by central differences of `height_at`."""
     dzdx = (height_at(terrain, np.add(x, eps), y) - height_at(terrain, np.subtract(x, eps), y)) / (2 * eps)

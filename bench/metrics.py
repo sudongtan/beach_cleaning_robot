@@ -28,12 +28,10 @@ def load_events(path):
 
 def bin_base_z(terrain, x, y, radius):
     """Lowest terrain point within `radius` (9 points), where the static bin stands
-    (the same footprint rule as ground_z(..., 'min') in sim/gazebo/load_scene.py)."""
+    (sim/common/terrain.py ground_z(..., 'min'), as sim/gazebo/load_scene.py spawns it)."""
     sys.path.insert(0, str(REPO / 'sim' / 'common'))
     import terrain as terrain_mod
-    pts = [(x, y)] + [(x + radius * math.cos(k * math.pi / 4), y + radius * math.sin(k * math.pi / 4))
-                      for k in range(8)]
-    return min(float(terrain_mod.height_at(terrain, px, py)) for px, py in pts)
+    return terrain_mod.ground_z(terrain, x, y, radius, 'min')
 
 
 def scene_bins(scene, cfg):

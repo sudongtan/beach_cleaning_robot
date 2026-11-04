@@ -135,12 +135,51 @@ def test_added_mass_within_budget():
 TASK = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']
 
 
-def bin_geometry(body_height):
-    """(rim height, near-wall x) in base_link with the robot at the task's place distance, facing the bin."""
+def bin_geometry(body_height, rim_dz=0.0):
+    """(rim height, near-wall x) in base_link with the robot at the task's place distance, facing the bin.
+    rim_dz: how much higher the rim stands than on flat ground (see scene_rim_offsets)."""
     boxes = [p for p in OBJECTS['bins']['bin_recyclable']['collision'] if p['type'] == 'box']
     rim = max(p['pose'][2] + p['size'][2] / 2 for p in boxes)
     half_depth = max(abs(p['pose'][0]) + p['size'][0] / 2 for p in boxes)
-    return rim - body_height, TASK['bin_place_distance_m'] - half_depth
+    return rim + rim_dz - body_height, TASK['bin_place_distance_m'] - half_depth
+
+
+# Go2 feet in base_link (x, y) standing: hips at x +-0.1934, feet ~0.142 m out in y (A0)
+FEET = [(sx * 0.1934, sy * 0.142) for sx in (-1, 1) for sy in (-1, 1)]
+
+
+@lru_cache(maxsize=None)
+def scene_rim_offsets():
+    """(lowest, highest) rim height above the sand under the robot at the place pose, minus the rim
+    on flat ground, over the benchmark scenes' bins. The bin stands on ground_z 'min' (as the
+    simulator spawns it and the task computes its rim, bin_rim: terrain); the robot on its feet."""
+    sys.path.insert(0, str(COMMON))
+    import terrain
+    d = TASK['bin_place_distance_m']
+    out = []
+    for sc in yaml.safe_load(open(REPO / 'bench' / 'scenes.yaml'))['scenes']:
+        for b in sc['bins']:
+            x, y, yaw = b['pose']
+            base = terrain.ground_z(sc['terrain'], x, y, TASK['bin_ground_radius_m'], 'min')
+            rx, ry, c, s_ = x + d * math.cos(yaw), y + d * math.sin(yaw), math.cos(yaw), math.sin(yaw)
+            # robot faces the bin (yaw + pi): base_link x points to -x of the bin frame
+            feet = [float(terrain.height_at(sc['terrain'], rx - c * fx + s_ * fy, ry - s_ * fx - c * fy)) for fx, fy in FEET]
+            out.append(base - sum(feet) / len(feet))
+    return min(out), max(out)
+
+
+RIM_CASES = [(h, k) for h in LIMITS['bin_drop']['body_heights_m'] for k in ('flat', 'lowest', 'highest')]
+
+
+def rim_dz(case):
+    return {'flat': 0.0, 'lowest': scene_rim_offsets()[0], 'highest': scene_rim_offsets()[1]}[case]
+
+
+def test_scene_rims_close_to_flat():
+    """Bins and the robot's place pose stand on nearly the same sand on every benchmark scene, so
+    the flat-ground reach checks below hold with the scene offsets (A3 found -3 .. +1 cm)."""
+    lo, hi = scene_rim_offsets()
+    assert -0.10 < lo <= hi < 0.10, (lo, hi)
 
 
 @lru_cache(maxsize=None)
@@ -152,36 +191,36 @@ def arm_model():
     return rc, model, model.createData(), rc.stand_config(model)
 
 
-def release_q(body_height):
+def release_q(body_height, dz=0.0):
     rc, model, data, q0 = arm_model()
     bd = LIMITS['bin_drop']
-    rim, wall = bin_geometry(body_height)
+    rim, wall = bin_geometry(body_height, dz)
     target = np.array([wall + bd['inside_wall_m'], 0.0, rim + bd['clearance_above_rim_m']])
     ok, q, err, tilt = rc.solve(model, data, q0, target, bd['max_tilt_deg'], np.random.default_rng(0),
                                 frame='arm_jaw_tips_link')
     return ok, q, target, err, tilt
 
 
-@pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
-def test_jaw_tips_reach_over_the_bin(body_height):
+@pytest.mark.parametrize('body_height,rim', RIM_CASES)
+def test_jaw_tips_reach_over_the_bin(body_height, rim):
     """From the task's place distance the jaw tips get over the rim and past the near wall."""
-    ok, _, target, err, tilt = release_q(body_height)
+    ok, _, target, err, tilt = release_q(body_height, rim_dz(rim))
     assert ok, (f'jaw tips cannot reach {target.round(3)} from {TASK["bin_place_distance_m"]} m '
-                f'(body height {body_height} m): error {err * 100:.1f} cm, tilt {tilt:.0f} deg')
+                f'(body height {body_height} m, rim {rim}): error {err * 100:.1f} cm, tilt {tilt:.0f} deg')
 
 
-@pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
-def test_arm_moves_at_the_bin_clear_its_wall(body_height):
+@pytest.mark.parametrize('body_height,rim', RIM_CASES)
+def test_arm_moves_at_the_bin_clear_its_wall(body_height, rim):
     """rest -> up -> over the bin -> up -> rest (joint-space moves, as the controller runs them) never
     passes the bin's near wall below the rim. At 0.7 m the arm hit the bin and tipped the robot (A2b)."""
     import pinocchio as pin
     rc, model, data, q0 = arm_model()
     poses = yaml.safe_load(open(DESC / 'config' / 'arm_poses_custom.yaml'))['poses']
-    ok, rel, *_ = release_q(body_height)
+    ok, rel, *_ = release_q(body_height, rim_dz(rim))
     assert ok
     idx = [model.joints[model.getJointId(n)].idx_q for n in rc.ARM]
     rest, up, rel = np.array(poses['rest']['arm']), np.array(poses['up']['arm']), rel[idx]
-    rim, wall = bin_geometry(body_height)
+    rim, wall = bin_geometry(body_height, rim_dz(rim))
     clear = LIMITS['bin_drop']['arm_wall_clearance_m']
     frames = [f.name for f in model.frames if f.name.startswith('arm_') and f.type == pin.FrameType.BODY]
     for name, a, b in (('rest->up', rest, up), ('up->bin', up, rel), ('bin->up', rel, up), ('up->rest', up, rest)):

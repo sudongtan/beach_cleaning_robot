@@ -29,6 +29,7 @@ COMMON = REPO / 'sim' / 'common'
 sys.path.insert(0, str(COMMON))
 import export_terrain  # noqa: E402
 import terrain as terrain_mod  # noqa: E402
+from terrain import ground_z  # noqa: E402
 
 OUT_DIR = HERE / 'worlds' / 'generated'
 WORLD_NAME = 'beach'      # constant, so bridge topics (/world/beach/...) don't depend on the seed
@@ -98,15 +99,6 @@ def inertial(link, mass, prims):
     sub(t, 'izz', f'{mass * (sx * sx + sy * sy) / 12.0:.3e}')
     for k in ('ixy', 'ixz', 'iyz'):
         sub(t, k, '0')
-
-
-def ground_z(terrain, x, y, radius, mode):
-    """Terrain height under a footprint: 'max' so nothing starts inside the
-    ground (dynamic items), 'min' so static structures reach the ground."""
-    pts = [(x, y)] + [(x + radius * math.cos(a), y + radius * math.sin(a))
-                      for a in [k * math.pi / 4 for k in range(8)]]
-    hs = [float(terrain_mod.height_at(terrain, px, py)) for px, py in pts]
-    return max(hs) if mode == 'max' else min(hs)
 
 
 def object_model(world, name, spec, pose, z, class_id, static, visual_dz=0.0):

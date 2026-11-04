@@ -54,7 +54,7 @@ metrics:
   # bin inner box (sim/common/objects.yaml: outer 0.60 x 0.45 x 0.50 m, 2 cm walls)
   bin_inner_half: [0.28, 0.205]
   bin_rim_m: 0.50               # above the bin's base
-  bin_ground_radius_m: 0.3      # the bin base sits at the lowest terrain point within this radius (sim/gazebo/load_scene.py ground_z)
+  bin_ground_radius_m: 0.3      # the bin base sits at the lowest terrain point within this radius (sim/common/terrain.py ground_z; task.yaml bin_ground_radius_m)
   # an item counts as in the basket when it is within this box around base_link (robot frame) and
   # no more than basket_below_base_m below base_link
   basket_half: [0.45, 0.25]

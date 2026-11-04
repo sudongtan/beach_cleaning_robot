@@ -345,3 +345,52 @@ def test_bin_place_of_an_item_already_in_the_bin_succeeds_without_moving(system)
     r = send(node, PlaceObject, '/grasp/place', bin_goal())
     assert r.success and r.message == 'already_in_bin'
     assert fakes.sim_calls == [] and fakes.arm_goals == []
+
+
+SAND = 0.20            # B1: robot and bin both stand on sand this far above map z 0
+BODY = 0.285           # base_link above the sand (loaded walking height)
+
+
+def map_bin_goal(grasping, rim_map):
+    """Bin goal in the map frame (as the task sends it), base_link on SAND + BODY, bin centre 0.87 ahead."""
+    from geometry_msgs.msg import TransformStamped
+    tf = TransformStamped()
+    tf.header.frame_id, tf.child_frame_id = 'map', 'base_link'
+    tf.transform.translation.z = SAND + BODY
+    tf.transform.rotation.w = 1.0
+    grasping.tf_buffer.set_transform_static(tf, 'test')
+    g = bin_goal()
+    g.pose.header.frame_id = 'map'
+    g.pose.pose.position.z = rim_map
+    return g
+
+
+def test_bin_place_on_raised_sand_releases_over_the_real_rim(system):
+    """B1: with the task's rim from the terrain (0.50 + SAND in map) the item is released
+    clearance_above_rim_m above the real rim; the old fixed 0.50 put it SAND lower."""
+    from grasping.arm import compartment
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    c = compartment(grasping.arm, 'recyclable')
+    item = ((c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2, c['floor'] + 0.011)   # cigarette pack
+    grasping.gt = gt_objects(('trash_03', item))
+    grasping.gt.detections[0].bbox.size.z = 0.022
+    r = send(node, PlaceObject, '/grasp/place', map_bin_goal(grasping, 0.50 + SAND))
+    assert r.success, r.message
+    tips = grasping.arm.fk(fakes.arm_goals[-3], TIPS)[0]
+    rim_base = 0.50 - BODY
+    hang = 0.022 + grasping.cfg['hover_above_item_m']
+    assert tips[2] == pytest.approx(rim_base + grasping.limits['bin_drop']['clearance_above_rim_m'] + hang,
+                                    abs=0.006)
+
+
+def test_already_in_bin_uses_the_raised_rim(system):
+    """B1: an item lying in a bin on raised sand, above map z 0.50 but below the real rim."""
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    grasping.gt = gt_objects(('trash_03', (0.811, 0.034, 0.60 - SAND - BODY)))     # map z 0.60
+    r = send(node, PlaceObject, '/grasp/place', map_bin_goal(grasping, 0.50 + SAND))
+    assert r.success and r.message == 'already_in_bin'
+    assert fakes.sim_calls == [] and fakes.arm_goals == []
+    r = send(node, PlaceObject, '/grasp/place', map_bin_goal(grasping, 0.50))           # bin_rim: fixed
+    assert not r.success and r.message.startswith('not_in_basket')

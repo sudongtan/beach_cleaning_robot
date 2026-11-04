@@ -12,6 +12,7 @@ static map features, like the obstacles in /map). Parameters: repo, seed, run_id
 
 import json
 import math
+import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -54,6 +55,23 @@ def pose_stamped(frame, x, y, z=0.0, yaw=0.0):
     p.pose.position.x, p.pose.position.y, p.pose.position.z = float(x), float(y), float(z)
     p.pose.orientation.z, p.pose.orientation.w = math.sin(yaw / 2), math.cos(yaw / 2)
     return p
+
+
+def bin_rims(repo, scene, objects, fsm):
+    """{bin id: (x, y, rim_z, yaw)} in the map frame. b['pose'] is [x, y, yaw]; the rim is the top
+    of the model's collision boxes, raised by the ground under the bin unless bin_rim is `fixed`."""
+    sys.path.insert(0, str(Path(repo) / 'sim' / 'common'))
+    from terrain import ground_z
+    bins = {}
+    for b in scene['bins']:
+        x, y, yaw = b['pose']
+        rim = max(p['pose'][2] + p['size'][2] / 2 for p in objects['bins'][b['model']]['collision'])
+        if fsm['bin_rim'] == 'terrain':
+            rim += ground_z(scene['terrain'], x, y, fsm['bin_ground_radius_m'], 'min')
+        elif fsm['bin_rim'] != 'fixed':
+            raise ValueError(f"task.yaml bin_rim: {fsm['bin_rim']!r} (terrain | fixed)")
+        bins[b['bin_id']] = (x, y, rim, yaw)
+    return bins
 
 
 class ActionHandle:
@@ -135,10 +153,7 @@ class TaskNode(Node):
         spacing = lane_spacing(camera['horizontal_fov_rad'], s['view_distance_m'], s['overlap'])
         waypoints = plan(scene['geofence']['polygon'], scene['robot_start']['pose'][:2], spacing,
                          s['edge_margin_m'], s['waypoint_spacing_m'], lambda x, y: lethal_at(occ, res, x, y))
-        bins = {}
-        for b in scene['bins']:
-            rim = max(p['pose'][2] + p['size'][2] / 2 for p in objects['bins'][b['model']]['collision'])
-            bins[b['bin_id']] = (b['pose'][0], b['pose'][1], rim, b['pose'][2])
+        bins = bin_rims(repo, scene, objects, cfg['fsm'])
         self.task = Task(self, cfg['fsm'], grasp,
                          Capacity(wmc['max_items_per_compartment'], limits['basket_load_max_kg'],
                                   wmc['default_item_mass_kg']),

@@ -10,6 +10,12 @@ task:
   fsm:
     rate_hz: 10.0
     standoff_m: 0.7              # APPROACH step 1: navigation goal this far from the item, facing it
+    # Rim height of each bin (map z): `terrain` = the bin's ground height under a bin_ground_radius_m
+    # footprint (sim/common/terrain.py ground_z 'min', as the simulator spawns it) + the model's rim;
+    # `fixed` = the model's rim above map z 0, ignoring the sand under the bin (baseline A3: up to
+    # 0.24 m too low on the benchmark scenes).
+    bin_rim: terrain
+    bin_ground_radius_m: 0.3
     bin_standoff_m: 1.2          # navigation goal this far in front of a bin centre (clear of its lethal cells)
     # then straight in until base_link is this far from the bin centre. Set by the arm, not the head:
     # in `rest` the wrist is 0.43 m ahead of base_link and the rest -> up move sweeps it to 0.52 m,

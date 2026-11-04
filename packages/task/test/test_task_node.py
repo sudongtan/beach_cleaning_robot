@@ -90,3 +90,29 @@ def test_task_node_searches_and_logs():
     finally:
         log.unlink(missing_ok=True)
         rclpy.try_shutdown()
+
+
+def test_bin_rim_from_the_ground_under_the_bin():
+    """B1: a bin on flat sand 0.20 m above map z 0 has its rim at 0.70; `fixed` (baseline A3) keeps 0.50."""
+    import copy
+
+    import yaml
+
+    from task.node import bin_rims
+    scene = copy.deepcopy(next(s for s in yaml.safe_load(open(REPO / 'bench' / 'scenes.yaml'))['scenes']
+                               if s['seed'] == 3))
+    t = scene['terrain']
+    y = scene['bins'][0]['pose'][1]
+    # the whole bin footprint in the flat wet zone, no roughness or dunes
+    t.update(waterline_y=y - 1.0, wet_zone_width=2.0, wet_zone_height=0.20, roughness=[], dunes=[],
+             z_min=-1.0, z_max=5.0)
+    objects = yaml.safe_load(open(REPO / 'sim' / 'common' / 'objects.yaml'))
+    fsm = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']
+    assert fsm['bin_rim'] == 'terrain'
+    b = scene['bins'][0]
+    x, by, rim, yaw = bin_rims(REPO, scene, objects, fsm)[b['bin_id']]
+    assert (x, by, yaw) == tuple(b['pose'])
+    assert rim == pytest.approx(0.70, abs=1e-6)
+    assert bin_rims(REPO, scene, objects, dict(fsm, bin_rim='fixed'))[b['bin_id']][2] == pytest.approx(0.50)
+    with pytest.raises(ValueError):
+        bin_rims(REPO, scene, objects, dict(fsm, bin_rim='flat'))
