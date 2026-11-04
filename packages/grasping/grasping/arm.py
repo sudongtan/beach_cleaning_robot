@@ -332,9 +332,19 @@ def plan_pick(arm, centre, height, cfg):
     return True, '', plan
 
 
-def bin_release_target(bin_rim_centre, near_wall_x, bin_drop, hang=0.0):
-    """Jaw-tip point over a bin (base_link): clearance above the rim, inside_wall past the near
-    wall (the bin is ahead of the robot along x), as checked by the cross-phase tests. `hang`:
-    how far the held item reaches below the jaw tips (raised by that, so the item clears the rim)."""
+def bin_release_target(bin_rim_centre, near_wall_x, bin_drop, hang=0.0, clearance=None):
+    """Jaw-tip point over a bin (base_link): `clearance` (default clearance_above_rim_m) above the rim,
+    inside_wall past the near wall (the bin is ahead of the robot along x), as checked by the
+    cross-phase tests. `hang`: how far the held item reaches below the jaw tips (raised by that, so
+    the item clears the rim)."""
+    if clearance is None:
+        clearance = bin_drop['clearance_above_rim_m']
     return np.array([near_wall_x + bin_drop['inside_wall_m'], bin_rim_centre[1],
-                     bin_rim_centre[2] + bin_drop['clearance_above_rim_m'] + hang])
+                     bin_rim_centre[2] + clearance + hang])
+
+
+def release_clearances(bin_drop):
+    """Clearances above the rim to try for the release, highest first, 1 cm apart."""
+    hi, lo = bin_drop['clearance_above_rim_m'], bin_drop['min_clearance_above_rim_m']
+    n = int(round((hi - lo) / 0.01))
+    return [hi - k * (hi - lo) / max(n, 1) for k in range(n + 1)]

@@ -38,7 +38,7 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from vision_msgs.msg import Detection3DArray
 
 from grasping.arm import (ARM, TIPS, Arm, bin_release_target, in_basket, near, plan_pick, plan_store,
-                          plan_unload)
+                          plan_unload, release_clearances)
 from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, recovery_steps, store_steps
 
 LATCHED = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -385,7 +385,8 @@ class GraspingNode(Node):
 
     def bin_release(self, pose_stamped, hang=0.0):
         """Joint target with the jaw tips over the bin opening (pose: opening centre at the rim),
-        raised by `hang` (how far the held item reaches below the tips), on the front side of `up`."""
+        raised by `hang` (how far the held item reaches below the tips), on the front side of `up`;
+        clearance_above_rim_m above the rim, or lower down to min_clearance_above_rim_m if out of reach."""
         pose = self.to_base(pose_stamped)
         if pose is None:
             return None
@@ -393,11 +394,17 @@ class GraspingNode(Node):
         rel_yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
         depth = abs(math.cos(rel_yaw)) * self.bin_half[0] + abs(math.sin(rel_yaw)) * self.bin_half[1]
         c = (pose.position.x, pose.position.y, pose.position.z)
-        target = bin_release_target(c, c[0] - depth, self.limits['bin_drop'], hang)
         up = self.arm.poses['up']['arm']
-        ok, arm_q, err, tilt = self.arm.ik(target, self.limits['bin_drop']['max_tilt_deg'], seed_q=up,
-                                           bounds=near(up, self.cfg['release_joint_spread_rad']))
-        return np.asarray(arm_q) if ok else None
+        bd = self.limits['bin_drop']
+        for clearance in release_clearances(bd):
+            target = bin_release_target(c, c[0] - depth, bd, hang, clearance)
+            ok, arm_q, err, tilt = self.arm.ik(target, bd['max_tilt_deg'], seed_q=up,
+                                               bounds=near(up, self.cfg['release_joint_spread_rad']))
+            if ok:
+                if clearance < bd['clearance_above_rim_m']:
+                    self.get_logger().info(f'release {clearance:.2f} m above the rim (hang {hang:.3f})')
+                return np.asarray(arm_q)
+        return None
 
 
 def main():

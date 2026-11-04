@@ -394,3 +394,30 @@ def test_already_in_bin_uses_the_raised_rim(system):
     assert fakes.sim_calls == [] and fakes.arm_goals == []
     r = send(node, PlaceObject, '/grasp/place', map_bin_goal(grasping, 0.50))           # bin_rim: fixed
     assert not r.success and r.message.startswith('not_in_basket')
+
+
+def test_tall_hang_out_of_reach_is_released_lower_over_the_rim(system):
+    """b1_rim seed 4: bin_unreachable 3x once the rim was right. A hang the arm can't lift
+    clearance_above_rim_m over the rim is released lower, but at least min_clearance_above_rim_m."""
+    from grasping.arm import bin_release_target, compartment, near
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    bd = grasping.limits['bin_drop']
+    c = compartment(grasping.arm, 'recyclable')
+    size_z = 0.10                                     # hangs lower than any item lying flat (a tilted can)
+    item = ((c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2, c['floor'] + size_z / 2)
+    grasping.gt = gt_objects(('trash_03', item))
+    d = grasping.gt.detections[0]
+    d.bbox.size.x, d.bbox.size.y, d.bbox.size.z = 0.066, 0.066, size_z
+    hang = size_z + grasping.cfg['hover_above_item_m']
+    goal = bin_goal()
+    rim = goal.pose.pose.position.z
+    up = grasping.arm.poses['up']['arm']
+    full = grasping.arm.ik(bin_release_target((0.87, 0.0, rim), 0.87 - 0.30, bd, hang), bd['max_tilt_deg'],
+                           seed_q=up, bounds=near(up, grasping.cfg['release_joint_spread_rad']))[0]
+    assert not full                                   # the case under test: out of reach at full clearance
+    r = send(node, PlaceObject, '/grasp/place', goal)
+    assert r.success, r.message
+    tips = grasping.arm.fk(fakes.arm_goals[-3], TIPS)[0]
+    clearance = tips[2] - hang - rim
+    assert bd['min_clearance_above_rim_m'] - 0.006 <= clearance < bd['clearance_above_rim_m'] - 0.005

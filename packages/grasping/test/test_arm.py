@@ -11,7 +11,8 @@ pytest.importorskip('pinocchio')
 pytest.importorskip('ament_index_python')
 
 from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item,  # noqa: E402
-                          in_basket, in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload)
+                          in_basket, in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload,
+                          release_clearances)
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
@@ -143,8 +144,16 @@ def test_unload_moves_stay_on_one_side(arm, comp):
         assert abs(q[0] - over[0]) <= 1.0 + 1e-6 and abs(q[3] - over[3]) <= 1.0 + 1e-6
 
 
+def test_release_clearances_step_down_to_the_minimum():
+    bd = LIMITS['bin_drop']
+    c = release_clearances(bd)
+    assert c[0] == bd['clearance_above_rim_m'] and c[-1] == pytest.approx(bd['min_clearance_above_rim_m'])
+    assert all(0.0 < a - b <= 0.01 + 1e-9 for a, b in zip(c, c[1:]))
+
+
 @pytest.mark.parametrize('body_height', LIMITS['bin_drop']['body_heights_m'])
-def test_release_moves_with_the_item_clear_the_bin_wall(arm, body_height):
+@pytest.mark.parametrize('lowest', [False, True])
+def test_release_moves_with_the_item_clear_the_bin_wall(arm, body_height, lowest):
     """up -> release -> up (joint space, as the controller runs it) with the tallest item hanging
     below the tips: neither the arm frames nor the item's lowest point pass the near wall below the rim."""
     import pinocchio as pin
@@ -154,8 +163,9 @@ def test_release_moves_with_the_item_clear_the_bin_wall(arm, body_height):
     wall = place - 0.3
     hang = MAX_H + CFG['hover_above_item_m']
     up = np.array(arm.poses['up']['arm'])
-    ok, rel, *_ = arm.ik(bin_release_target((place, 0.0, rim), wall, bd, hang), bd['max_tilt_deg'], seed_q=up,
-                         bounds=near(up, CFG['release_joint_spread_rad']))
+    clearance = bd['min_clearance_above_rim_m'] if lowest else None        # the lowest fallback release too
+    ok, rel, *_ = arm.ik(bin_release_target((place, 0.0, rim), wall, bd, hang, clearance), bd['max_tilt_deg'],
+                         seed_q=up, bounds=near(up, CFG['release_joint_spread_rad']))
     assert ok
     clear = bd['arm_wall_clearance_m']
     frames = [f.name for f in arm.model.frames if f.name.startswith('arm_') and f.type == pin.FrameType.BODY]

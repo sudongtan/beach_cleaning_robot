@@ -11,6 +11,9 @@ robot_limits:
   bar_clearance_m: 0.015       # an item's top must stay this far below the gripper bar at grasp height
   bin_drop:                    # the jaw tips must get over the bin opening to drop an item
     clearance_above_rim_m: 0.05
+    # out of reach with that (a tall or tilted item hanging low, the robot a bit low or far; B1 b1_rim
+    # seed 4: bin_unreachable 3x once the rim was right): release lower, 1 cm at a time, down to this
+    min_clearance_above_rim_m: 0.02
     inside_wall_m: 0.08        # tips this far past the near wall, into the opening
     arm_wall_clearance_m: 0.02 # every arm move at the bin keeps this far from the bin's near wall below the rim
     body_heights_m: [0.285, 0.361]   # loaded walking height, full stand height (A0)
