@@ -26,3 +26,8 @@ results/runs/*.jsonl
 results/bench/
 results/bench_*.log
 results/runs/*.tmp
+
+# videos (hundreds of MB; record_video.py)
+results/videos/
+# record_video.py temp file in the Gazebo server working directory while recording
+/[0-9]*.mp4
