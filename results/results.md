@@ -28,6 +28,7 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | Row | Date | Commit | Sim | Components | Caps | Ends | Collected | Sorting acc. | Contam. | False pickups | Grasp | Items/min | Falls / stuck / timeouts | Distance (m) | Dup. | Coverage | Safety viol. | Min person d. (m) | Class. acc. | Drift (m) | Detection |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `baseline` | 2026-11-04 | 318758e | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | fell 7, stall 3 | 17/110 | 1.00 (17/17) | 0 | 0 | 0.92 (69/75) simulated attach | 0.12 (0.00–0.40) | 7 / 3 / 0 | 48 (8–92) | 10 | 0.84 (0.50–1.00) | 0 | 0.22 | 1.00 (69/69) | 0.002 (0.029) | n/a (ground truth) |
+| `b1_rim` | 2026-11-04 | f63ed1a | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | fell 10 | 12/110 | 1.00 (12/12) | 0 | 0 | 1.00 (50/50) simulated attach | 0.12 (0.00–0.53) | 10 / 0 / 0 | 43 (2–145) | 8 | 0.73 (0.22–1.00) | 0 | 0.09 | 1.00 (50/50) | 0.003 (0.036) | n/a (ground truth) |
 <!-- summary rows above this line -->
 
 ### Row `baseline`: per seed
@@ -44,3 +45,18 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | 7 | fell | 411 | 19 | 0/13 | – | 0 | 0 | 7/7 | 410 s, 61° | 0 | 25 | 0 | 0.76 | 0 (0 / 0 / 0) | 0.28 | 0.016 | 0 |
 | 8 | fell | 756 | 32 | 5/11 | 1.00 | 0 | 0 | 9/9 | 755 s, 104° | 0 | 79 | 2 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
 | 9 | fell | 833 | 34 | 2/8 | 1.00 | 0 | 0 | 7/7 | 833 s, 103° | 0 | 92 | 1 | 1.00 | 0 (0 / 0 / 0) | 0.22 | 0.063 | 0 |
+
+### Row `b1_rim`: per seed
+
+| Seed | End | Sim s | Wall min | Collected | Sorting acc. | Contam. | False pickups | Grasp | Fall (t, tilt) | Stuck | Distance (m) | Dup. | Coverage | Safety viol. (person / arm / geofence) | Min person d. (m) | Arm change since not ok (rad) | Infra retries |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | fell | 653 | 28 | 4/12 | 1.00 | 0 | 0 | 9/9 | 651 s, 52° | 0 | 54 | 3 | 0.98 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 1 | fell | 25 | 1 | 0/13 | – | 0 | 0 | 0/0 | 24 s, 34° | 0 | 2 | 0 | 0.22 | 0 (0 / 0 / 0) | 7.27 | 0.000 | 0 |
+| 2 | fell | 87 | 4 | 0/15 | – | 0 | 0 | 1/1 | 86 s, 39° | 0 | 12 | 0 | 0.46 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 3 | fell | 545 | 26 | 0/9 | – | 0 | 0 | 7/7 | 544 s, 104° | 0 | 51 | 0 | 0.99 | 0 (0 / 0 / 0) | 0.96 | 0.028 | 0 |
+| 4 | fell | 462 | 21 | 2/13 | 1.00 | 0 | 0 | 7/7 | 461 s, 67° | 0 | 36 | 1 | 0.78 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 5 | fell | 1088 | 50 | 1/8 | 1.00 | 0 | 0 | 10/10 | 1086 s, 100° | 0 | 145 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.09 | 0.067 | 0 |
+| 6 | fell | 159 | 6 | 0/8 | – | 0 | 0 | 1/1 | 157 s, 103° | 0 | 12 | 0 | 0.44 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 7 | fell | 105 | 4 | 0/13 | – | 0 | 0 | 1/1 | 105 s, 61° | 0 | 8 | 0 | 0.47 | 0 (0 / 0 / 0) | 0.28 | 0.017 | 0 |
+| 8 | fell | 582 | 26 | 5/11 | 1.00 | 0 | 0 | 8/8 | 581 s, 33° | 0 | 62 | 2 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 9 | fell | 426 | 18 | 0/8 | – | 0 | 0 | 6/6 | 425 s, 104° | 0 | 45 | 0 | 1.00 | 0 (0 / 0 / 0) | 0.37 | 0.052 | 0 |
