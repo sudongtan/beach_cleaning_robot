@@ -24,7 +24,7 @@ The robot carries a two-compartment basket on its back and runs this loop:
 4. **Store.** Drop it into the matching compartment, **recyclable** or **residual**.
 5. **Unload.** When the basket is full or the area is done, walk to the two bins and empty each compartment into its bin.
 
-A rule-based safety supervisor runs throughout. It slows the robot when a person comes within 3 m, stops it within 1.5 m, keeps it inside the geofence, and freezes the arm unless nobody is nearby.
+A rule-based safety supervisor runs throughout. It slows the robot when a person comes within 3 m and stops it early enough that it is at rest before the person is within 1.5 m (the stop distance grows with the robot's speed, as in speed and separation monitoring), keeps it inside the geofence, and freezes the arm unless nobody is nearby.
 
 ## Progress
 
@@ -34,7 +34,7 @@ A rule-based safety supervisor runs throughout. It slows the robot when a person
 | **A1** Beach world | Seeded scene generator, dune terrain with dry and wet sand, trash, distractors, bins, a walking person, sensors bridged to ROS 2 | ✅ done |
 | **A2a** Components | Every pipeline component built as a ground-truth baseline, with unit and node tests | ✅ done |
 | **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | ✅ done: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls (a known limitation the benchmark measures) |
-| **A3** Benchmark | `make bench` over 10 seeded scenes, unattended overnight; baseline results row | 🟡 next |
+| **A3** Benchmark | `make bench` over 10 seeded scenes, unattended overnight; baseline results row | ✅ done: baseline row with zero safety violations; most runs end in a fall or a navigation stall (see Results) |
 | **A4** Upgrades | First an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics. Then detection, a material classifier and EKF localization (GNSS + leg odometry + IMU). Each is benchmarked against its baseline. | ⬜ planned |
 | **B0–B1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
 
@@ -56,7 +56,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 | Grasping | Own IK and reach-envelope module, scripted top-down pick, "attach on contact" in simulation | **First upgrade.** Picks by contact physics (a feasibility study is done, see below). Stages: segment the item, estimate its geometry, generate grasp candidates (`simple_grasping` and our own), plan the motion (MoveIt 2 / MTC and our own planner), then a guarded descent and a check that the grasp worked. |
 | Safety | Rule-based supervisor, the only publisher of `/cmd_vel`: person slow/stop, e-stop, geofence, arm interlock | — |
 | Task | State machine with retries, skips, pause on a safety state and fall handling; one event log per run | — |
-| Benchmark | Run event logs only | `make bench`, metrics, results table |
+| Benchmark | `make bench`: 10 seeded scenes headless, one JSON per run, metrics from the final ground truth, one row per configuration in `results/results.md` | A row per upgrade |
 
 ## Design choices
 
@@ -114,11 +114,13 @@ It never fell, but it can't walk slowly, and the approach to an item and the doc
 
 <!-- Filled only from results/results.md, never by hand. -->
 
-No benchmark numbers yet. Phase A3 will add the baseline row, measured on the same 10 seeded scenes. Each later upgrade adds one row, including any that make things worse.
+Baseline row (2026-11-04, commit `318758e`): 10 seeded scenes, one run each, every component reading ground truth, grasps by simulated attach. Full row, column definitions and per-seed numbers: [`results/results.md`](results/results.md).
 
-| Configuration | Items collected | Sorting accuracy | Contamination | False pickups | Min. distance to person | Localization drift |
-|---|---|---|---|---|---|---|
-| Baseline (ground truth) | – | – | – | – | – | – |
+| Configuration | Items collected | Sorting accuracy | Contamination | False pickups | Grasp success | Falls / stuck | Safety violations | Min. distance to person | Localization drift |
+|---|---|---|---|---|---|---|---|---|---|
+| Baseline (ground truth) | 17/110 | 1.00 (17/17) | 0 | 0 | 0.92 (69/75), simulated attach | 7 / 3 of 10 runs | 0 | 0.22 m (robot at rest) | 0.002 m (ground truth) |
+
+Every item that reached a bin was in the right one, and no run had a safety violation. Few items reach a bin, though: 7 of the 10 runs ended with the walking controller falling (three of them on the short walk between the two bins) and 3 with the robot stuck in navigation. These two failures are where A4 starts. Each later upgrade adds one row, including any that make things worse.
 
 ## Architecture
 
