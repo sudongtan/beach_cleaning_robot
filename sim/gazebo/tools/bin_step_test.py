@@ -79,7 +79,9 @@ def main():
             max_tilt = max(max_tilt, tilt)
             if tilt > 30.0:
                 send(0, 0, 0)
-                print(f'FELL at sim t {now():.1f} stepping to {name}, tilt {tilt:.0f} deg', flush=True)
+                print(f'FELL at sim t {now():.1f} stepping to {name} after {now() - t0:.1f} s, tilt {tilt:.0f} deg, '
+                      f'at ({x:.3f}, {y:.3f}) yaw {math.degrees(yaw):+.1f} deg, target ({tx:.3f}, {ty:.3f}), '
+                      f'last command ({cmd[0]:+.3f}, {cmd[1]:+.3f}, {cmd[2]:+.3f})', flush=True)
                 print(f'RESULT fell=True max_tilt={max(max_tilt_all, max_tilt):.1f}', flush=True)
                 sys.exit(1)
             dx, dy = tx - x, ty - y
