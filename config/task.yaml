@@ -47,6 +47,28 @@ task:
       settle_s: 1.0              # stand still this long before the arm moves
       progress_timeout_s: 10.0   # give up (no_progress) if the distance to the item hasn't shrunk ...
       progress_min_m: 0.05       # ... by this much in progress_timeout_s
+    # B3: Nav2's controller refuses every command while the footprint's outline touches a lethal cell, at the
+    # current pose or projected 1 s ahead, rotations included (RPP isCollisionImminent; costmap footprintCost =
+    # outline only; A3 stalls: seeds 0, 4, 6, dev 101). RPP turns on the spot towards its path first, so the
+    # robot must be able to turn freely. The task's own moves (final approaches, bin step, back-out) don't use
+    # the map and can end where it can't. `escape` = before a Nav2 goal, if the outline (+ margin) isn't clear
+    # at every heading ("turn-free"), get to a turn-free pose first; `none` = baseline A3 (send the goal anyway).
+    nav_start: escape
+    escape:
+      trail_step_m: 0.05         # the own moves are recorded as poses this far apart
+      max_m: 2.0                 # move at most this far in all (then Nav2 tries anyway)
+      # 1. retrace the own moves (newest first, each pose's heading); 2. else straight along the current heading,
+      # forward or back, to the nearest turn-free pose within straight_max_m with the outline clear all the way;
+      # 3. else (e.g. b2_bins seed 8, Nav2 itself stopped in a corridor) turn on the spot to the nearest heading
+      # with a clear outline (turn_step_deg steps, up to max_turn_deg each way), then back straight out back_m
+      straight_max_m: 1.5
+      turn_step_deg: 15          # also the heading step of the turn-free check
+      max_turn_deg: 90
+      back_m: 0.3
+      heading_tol_rad: 0.05      # a target pose counts as reached within tolerance_m and this heading error
+      outline_step_m: 0.05       # footprint outline sampled this finely (the local costmap's cells)
+      outline_margin_m: 0.05     # outline checked this much larger than Nav2's footprint: the local costmap (0.05 m,
+                                 # resampled from the 0.25 m /map) saw a lethal cell where the exact outline didn't (B3 probe)
     grasp_retries: 3             # failed picks per item before it is skipped
     nav_retries: 2               # failed navigation goals per target before it is skipped
     item_timeout_s: 180.0        # no progress on one item for this long -> skipped (no_progress)

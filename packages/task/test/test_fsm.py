@@ -581,3 +581,152 @@ def test_bins_apart_are_walked_to():
                                                  else real_place(target, iid, bin_id, pose))
     run(t, w)
     assert t.state == 'DONE' and phases(w) == ['place', 'place']
+
+
+# --- B3: no Nav2 goal from a footprint on a lethal cell -------------------------------------
+FOOTPRINT = [(0.38, 0.20), (0.38, -0.20), (-0.30, -0.20), (-0.30, -0.17), (-0.42, -0.17), (-0.42, 0.17),
+             (-0.30, 0.17), (-0.30, 0.20)]
+BLOB = (8.05, 14.85, 0.30)          # a distractor's lethal cells next to item 'a' (8.0, 14.5)
+
+
+def free(x, y):
+    return math.hypot(x - BLOB[0], y - BLOB[1]) > BLOB[2]
+
+
+def escape_run(cfg=None, safe=None):
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    t = Task(w, cfg or CFG, GRASP, Capacity(5, 2.0, 0.2), PATH, BINS, allowed=free, footprint=FOOTPRINT)
+    starts, real_nav = [], w.nav_to
+
+    def nav_to(x, y, yaw):
+        starts.append((w.t, t.outline_clear(tuple(w.robot))))
+        return real_nav(x, y, yaw)
+    w.nav_to = nav_to
+    if safe:
+        w.safe = safe
+    return w, t, starts
+
+
+def test_outline_check_is_nav2s():
+    """Nav2 footprintCost: the polygon's edges only; an obstacle wholly inside doesn't count."""
+    t = Task(None, CFG, GRASP, Capacity(5, 2.0, 0.2), [], BINS, footprint=FOOTPRINT,
+             allowed=lambda x, y: math.hypot(x - 1.0, y) > 0.05)
+    m = CFG['escape']['outline_margin_m']
+    assert t.outline_clear((1.0, 0.0, 0.0))                        # inside, clear of the edges
+    assert not t.outline_clear((1.0 - 0.38 - m, 0.0, 0.0))         # on the front edge (+ margin)
+    assert not t.outline_clear((1.0, 0.20 + m, 0.0))               # on a side edge (+ margin)
+    assert not t.outline_clear((1.0 - 0.38 - 0.09, 0.0, 0.0))      # exact edge 9 cm off: clear for Nav2, not with the margin
+    assert t.outline_clear((0.0, 0.0, 0.0))
+
+
+def test_final_approach_into_a_lethal_blob_is_retraced_before_nav2():
+    """A3 seeds 4, 6, dev 101: the item's final approach ended with the footprint on a distractor's
+    lethal cells; Nav2 then refused every goal. Now the next goal starts from a clear outline."""
+    assert CFG['nav_start'] == 'escape'
+    w, t, starts = escape_run()
+    run(t, w)
+    assert t.state == 'DONE' and statuses(w)['a'] == (PLACED, 'recyclable')
+    ev = [r for r in w.log_records if r['event'] in ('escape', 'escape_done')]
+    assert ev and ev[0]['event'] == 'escape' and ev[1]['event'] == 'escape_done' and ev[1]['turn_free']
+    assert all(ok for _, ok in starts)                             # every Nav2 goal from a clear outline
+    t_esc = ev[0]['t']
+    back = [c for tc, c in w.cmds if ev[0]['t'] <= tc <= ev[1]['t'] and c != (0.0, 0.0, 0.0)]
+    assert back and min(c[0] for c in back) < 0.0                  # backed out the way it came
+    assert t_esc > [r['t'] for r in w.log_records if r['event'] == 'store'][0]
+
+
+def test_without_escape_nav2_starts_on_the_blob():
+    w, t, starts = escape_run(cfg=dict(CFG, nav_start='none'))
+    run(t, w)
+    assert not any(r['event'] == 'escape' for r in w.log_records)
+    assert not all(ok for _, ok in starts)                         # baseline A3: a goal from a lethal outline
+
+
+def test_safety_pause_during_the_escape_stops_the_robot():
+    w, t, starts = escape_run()
+    while not any(r['event'] == 'escape' for r in w.log_records) and w.tick_no < 20000:
+        t.tick(w.snapshot())
+        w.step()
+    for _ in range(3):
+        t.tick(w.snapshot())
+        w.step()
+    w.safe = lambda now: False
+    for _ in range(50):
+        t.tick(w.snapshot())
+        w.step()
+    assert w.cmd == (0.0, 0.0, 0.0) and w.calls_while_unsafe == 0
+    w.safe = lambda now: True
+    run(t, w)
+    assert t.state == 'DONE' and all(ok for _, ok in starts)
+
+
+def test_fall_during_the_escape_stops_and_ends_the_run():
+    w, t, _ = escape_run()
+    while not any(r['event'] == 'escape' for r in w.log_records) and w.tick_no < 20000:
+        t.tick(w.snapshot())
+        w.step()
+    snap = w.snapshot()
+    snap.tilt_deg = 40.0
+    t.tick(snap)
+    assert t.state == 'FELL' and w.cmd == (0.0, 0.0, 0.0)
+
+
+def test_escape_without_a_trail_goes_straight_to_a_turn_free_pose():
+    """On a lethal cell without own moves to retrace (e.g. pushed there): straight back until it can turn."""
+    w = FakeWorld({}, {})
+    w.robot = [7.55, 14.85, 0.0]                                   # front edge (+ margin) in the blob
+    t = Task(w, CFG, GRASP, Capacity(5, 2.0, 0.2), [(12.0, 14.85)], BINS, allowed=free, footprint=FOOTPRINT)
+    assert not t.outline_clear(tuple(w.robot))
+    starts, real_nav = [], w.nav_to
+    w.nav_to = lambda x, y, yaw: (starts.append(t.outline_clear(tuple(w.robot))), real_nav(x, y, yaw))[1]
+    run(t, w, max_ticks=600)
+    done = [r for r in w.log_records if r['event'] == 'escape_done']
+    assert done and done[0]['turn_free'] and done[0]['stage'] == 1
+    assert done[0]['moved_m'] <= CFG['escape']['straight_max_m'] + 0.05 and done[0]['robot'][0] < 7.55   # went back
+    assert starts and starts[0]
+
+
+def test_trail_has_no_loops():
+    """In to the bin and back out: the trail shrinks back to the start, so an escape never retraces
+    towards the bin."""
+    t = Task(FakeWorld({}, {}), CFG, GRASP, Capacity(5, 2.0, 0.2), [], BINS)
+    for k in range(8):
+        t.record((2.7 - 0.06 * k, 14.0, math.pi))                 # in: 2.70 -> 2.28
+    assert len(t.trail) == 8
+    for k in range(8):
+        t.record((2.28 + 0.06 * k, 14.0, math.pi))                # back out the same way
+    assert len(t.trail) == 1 and t.trail[0][0] == pytest.approx(2.7)
+
+
+def test_escape_turns_on_the_spot_when_a_heading_is_clear():
+    """b2_bins seed 8: Nav2 stopped in a corridor between the lifeguard tower's lethal cells and the
+    geofence edge, outline on lethal cells at its heading, clear when facing along the corridor."""
+    w = FakeWorld({}, {})
+    w.robot = [15.17, 18.02, 0.6]
+    corridor = lambda x, y: 17.70 < y < 18.35                      # noqa: E731
+    t = Task(w, CFG, GRASP, Capacity(5, 2.0, 0.2), [(20.0, 18.0)], BINS, allowed=corridor, footprint=FOOTPRINT)
+    assert not t.outline_clear(tuple(w.robot)) and t.outline_clear((15.17, 18.02, 0.0))
+    run(t, w, max_ticks=600)
+    done = [r for r in w.log_records if r['event'] == 'escape_done']
+    # a corridor too narrow to turn in anywhere: best effort, turn to a clear heading (stage 2)
+    assert done and done[0]['clear'] and not done[0]['turn_free'] and done[0]['stage'] == 2
+    assert done[0]['moved_m'] < 0.05
+
+
+def test_escape_leaves_a_pocket_too_narrow_to_turn_in():
+    """devb3 seed 6: between a seaweed's and a rock's lethal cells (free strip ~0.75 m) the outline was
+    clear at the robot's heading, but RPP's turn towards its path collided (it projects rotations too):
+    every goal failed. Now the robot drives along the strip until it can turn."""
+    w = FakeWorld({}, {})
+    w.robot = [22.56, 8.64, 0.25]
+    lethal = [((21.56, 22.31), (7.20, 8.20)), ((22.06, 22.81), (8.96, 9.70))]     # the two blobs (x, y ranges)
+    free = lambda x, y: not any(a <= x <= b and c <= y <= d for (a, b), (c, d) in lethal)   # noqa: E731
+    t = Task(w, CFG, GRASP, Capacity(5, 2.0, 0.2), [(12.0, 8.6)], BINS, allowed=free, footprint=FOOTPRINT)
+    assert t.outline_clear(tuple(w.robot)) and not t.turn_free(tuple(w.robot))
+    starts, real_nav = [], w.nav_to
+    w.nav_to = lambda x, y, yaw: (starts.append(t.turn_free(tuple(w.robot))), real_nav(x, y, yaw))[1]
+    run(t, w, max_ticks=600)
+    done = [r for r in w.log_records if r['event'] == 'escape_done']
+    assert done and done[0]['turn_free'] and done[0]['stage'] == 1 and starts and starts[0]
+    esc = done[0]['robot']
+    assert abs(esc[1] - 8.64) < 0.2 and abs(esc[0] - 22.56) > 0.2                  # moved along the strip

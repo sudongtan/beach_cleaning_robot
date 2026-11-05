@@ -2,7 +2,7 @@
 
 **A simulated Unitree Go2 quadruped with an arm that is meant to search a beach, pick up litter, sort it by material and empty it into the right bin, with no human in the loop. Every part runs in ROS 2 and Gazebo Harmonic on a laptop CPU.**
 
-> 🚧 **Work in progress (as of 2026-11-03).** The whole loop runs on its own: on the small dev scene the robot searched, picked, sorted and emptied every item into the correct bin, unattended. On the larger benchmark scenes the walking controller still falls now and then; a pretrained learned walking policy was tested and isn't better for this task (see below). There are no benchmark numbers yet. The [progress table](#progress) shows what is built and what is still planned.
+> 🚧 **Work in progress (as of 2026-11-05).** The whole loop runs on its own, unattended. Every component still reads the simulator's ground truth (perception, localization, classification), and grasps use a simulated attach; the real implementations are the upgrades now under way. On the 10-scene benchmark, the best configuration so far (`b2_bins`) collected 39 of 110 items, all of them in the correct bin, and finished two scenes completely; the other runs still end in a fall of the walking controller (5) or a navigation stall (3), and one run had the project's first safety violation (see [Results](#results)). The [progress table](#progress) shows what is built and what is still planned.
 
 <p align="center">
   <img src="results/a1/checks/camera_rgb.png" width="45%" alt="Head-camera view of the generated beach: sand ripples, dunes and the lifeguard tower">
@@ -67,6 +67,8 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 - **No SLAM.** An open beach has too few features for it. Localization will fuse plain GPS (2–3 m noise), leg odometry and IMU.
 - **Thresholds live in config.** Safety distances, the geofence, sorting rules and grasp settings are all in `config/`, not in code.
 
+The main trade-offs, with the evidence and the alternatives that were rejected: [docs/design-decisions.md](docs/design-decisions.md).
+
 ## Engineering so far
 
 Some results from building this, beyond the code itself:
@@ -122,7 +124,7 @@ Baseline row (2026-11-04, commit `318758e`): 10 seeded scenes, one run each, eve
 | B1: bin rim height from the terrain | 12/110 | 1.00 (12/12) | 0 | 0 | 1.00 (50/50), simulated attach | 10 / 0 of 10 runs | 0 | 0.09 m (robot at rest) | 0.003 m (ground truth) |
 | B2: sideways step between the bins | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (85/91), simulated attach | 5 / 3 of 10 runs | 1 | 0.04 m (robot at rest) | 0.002 m (ground truth) |
 
-Every item that reached a bin was in the right one, and no run had a safety violation. Few items reach a bin, though: 7 of the 10 runs ended with the walking controller falling (three of them on the short walk between the two bins) and 3 with the robot stuck in navigation. These two failures are where the upgrades start (B1–B3). Each later upgrade adds one row, including any that make things worse.
+In the baseline, every item that reached a bin was in the right one, and no run had a safety violation. Few items reach a bin, though: 7 of the 10 runs ended with the walking controller falling (three of them on the short walk between the two bins) and 3 with the robot stuck in navigation. These two failures are where the upgrades start (B1–B3). Each later upgrade adds one row, including any that make things worse.
 
 B1 (commit `f63ed1a`) puts each bin's rim at its real height: the bins stand on sand 5–23 cm above the level the task assumed, so the arm released items lower than intended. With the right rim, 12 items reached a bin: 10 placed and 2 correctly recognised as already inside (carried along with another item). One item could no longer be placed (out of the arm's reach at the correct height); B2 adds a lower release for that case. The row also shows how noisy the walking controller is: all 10 runs ended in a fall, 4 of them in the first 160 s and 7 of them away from the bins, before or without any placement. B1 can't change those runs, so this row's totals are lower than the baseline's from the falls alone.
 
@@ -186,9 +188,10 @@ make generate                  # bench/scenes.yaml for seeds 0-9 (deterministic)
 make test                      # unit + node tests, no simulator needed
 make scene SEED=3 RVIZ=true    # scene 3 with the robot and sensors, camera in RViz
 make run SEED=3                # scene 3 + the full pipeline (A2 skeleton); HEADLESS=true for server only
+make bench ROW=my_row          # all 10 benchmark scenes headless, one results row (10–16 h on a laptop)
 ```
 
-The task writes one event log per run to `results/runs/<RUN_ID>.jsonl`. `make bench` comes in phase A3.
+The task writes one event log per run to `results/runs/<RUN_ID>.jsonl`; `make bench` turns the runs into a row in `results/results.md`.
 
 Optional: `make run SEED=3 LOCO=legubiao_rl` uses the HIMLoco walking policy instead of the default controller. It needs CPU libtorch 2.5.0 in `~/libtorch` (download link and checksum in [VERSIONS.md](VERSIONS.md)); build the controller with `Torch_DIR=~/libtorch colcon build --packages-select rl_quadruped_controller`.
 
@@ -201,7 +204,7 @@ sim/        common/ (scene generator, terrain, procedural meshes), gazebo/ (worl
 config/     safety, geofence, sorting rules, grasping, task, ... (all thresholds)
 bench/      seeded benchmark scenes
 results/    run logs, archived evaluation data (A1 checks, physics-grasp study)
-docs/       limitations
+docs/       limitations, design decisions
 patches/    patches for the pinned third-party repos
 ```
 

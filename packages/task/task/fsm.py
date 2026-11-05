@@ -7,6 +7,8 @@ SEARCH -> APPROACH -> PICK -> CLASSIFY -> STORE (or PUT_BACK) -> SEARCH ...
           bin_standoff_m, since Nav2 won't start facing the bin) -> GO_TO_BIN (next bin) -> SEARCH
        -> DONE when the search is finished, no trash is left and the basket is empty.
        -> FELL (terminal) as soon as the body tilt exceeds fall_tilt_deg.
+Before any Nav2 goal (nav_start: escape): unless the robot can turn on the spot without its footprint's
+outline touching a lethal map cell, the task first gets to such a pose (Escape), then sends the goal.
 
 io interface (actions return handles with done() and result()):
   nav_to(x, y, yaw), cancel_nav()          result: bool
@@ -79,6 +81,29 @@ def to_robot(robot, x, y):
     return c * dx + s * dy, -s * dx + c * dy
 
 
+class Escape:
+    """Pending Nav2 goal behind an escape (Task.escape_tick drives it): not done while escaping,
+    then done / result / cancel of the Nav2 goal itself."""
+
+    def __init__(self, task, goal, start):
+        self.task, self.goal, self.inner = task, goal, None
+        self.last, self.travelled, self.stage = tuple(start), 0.0, 0     # 0 trail, 1 straight, 2 turn, 3 back
+
+    def track(self, robot):
+        self.travelled += math.dist(self.last[:2], robot[:2])
+        self.last = tuple(robot)
+
+    def done(self):
+        return self.inner is not None and self.inner.done()
+
+    def result(self):
+        return self.inner.result()
+
+    def cancel(self):
+        if self.inner is None:
+            self.task.stop()
+
+
 @dataclass
 class Task:
     io: object
@@ -91,6 +116,7 @@ class Task:
     confidence_threshold: float = 0.6
     allowed: object = None          # allowed(x, y): may the robot go for an item there (free map cell
                                     # inside the geofence)? None = everywhere
+    footprint: list = None          # Nav2's footprint polygon [(x, y)] in the robot frame; None = no escape
     state: str = 'SEARCH'
     wp: int = 0
     item: str = ''
@@ -112,6 +138,7 @@ class Task:
     cmd_t: float = None
     best_dist: float = None                      # final approach: closest distance so far ...
     best_since: float = 0.0                      # ... and since when
+    trail: list = field(default_factory=list)    # own moves since the last Nav2 goal: robot poses
 
     # --- helpers ------------------------------------------------------------------------
     def go(self, state, snap, item=None, sub=''):
@@ -141,6 +168,18 @@ class Task:
         self.cmd = tuple(c + max(-a * dt, min(a * dt, w - c)) for c, w, a in zip(self.cmd, (vx, vy, wz), lim))
         self.cmd_t = snap.t
         self.io.cmd_vel(*self.cmd)
+        if not isinstance(self.pending, Escape):
+            self.record(snap.robot)
+
+    def record(self, pose):
+        """Add an own-move pose to the trail. Back near an older pose (a back-out after going in), the
+        trail is cut back to it, so retracing never goes forward again (towards a bin or item)."""
+        step = self.cfg['escape']['trail_step_m']
+        for i, p in enumerate(self.trail):
+            if math.dist(p[:2], pose[:2]) < step:
+                del self.trail[i + 1:]
+                return
+        self.trail.append(tuple(pose))
 
     def result(self):
         """Result of the pending action once done, else None."""
@@ -158,8 +197,120 @@ class Task:
         self.go('SEARCH', snap)
 
     def nav(self, snap, x, y, yaw):
-        self.pending = self.io.nav_to(x, y, yaw)
         self.nav_since = snap.t
+        if self.cfg['nav_start'] == 'escape' and self.footprint and not self.turn_free(snap.robot):
+            self.io.log({'t': round(snap.t, 2), 'event': 'escape', 'robot': [round(v, 3) for v in snap.robot],
+                         'trail': len(self.trail)})
+            self.pending = Escape(self, (x, y, yaw), snap.robot)
+            return
+        self.trail = []
+        self.pending = self.io.nav_to(x, y, yaw)
+
+    def outline_clear(self, pose):
+        """Is the footprint's outline at pose (x, y, yaw), grown by outline_margin_m, on free map cells
+        only (as Nav2's footprintCost: the polygon's edges, a cell off the map counts as lethal)?"""
+        if self.allowed is None:
+            return True
+        x, y, yaw = pose
+        c, s = math.cos(yaw), math.sin(yaw)
+        step, m = self.cfg['escape']['outline_step_m'], self.cfg['escape']['outline_margin_m']
+        pts = [(px + math.copysign(m, px), py + math.copysign(m, py)) for px, py in self.footprint]
+        for (ax, ay), (bx, by) in zip(pts, pts[1:] + pts[:1]):
+            n = max(1, math.ceil(math.hypot(bx - ax, by - ay) / step))
+            for k in range(n):
+                px, py = ax + (bx - ax) * k / n, ay + (by - ay) * k / n
+                if not self.allowed(x + c * px - s * py, y + s * px + c * py):
+                    return False
+        return True
+
+    def turn_free(self, pose):
+        """Can the robot turn on the spot at pose: outline clear at every heading (turn_step_deg apart)?"""
+        step = math.radians(self.cfg['escape']['turn_step_deg'])
+        return all(self.outline_clear((pose[0], pose[1], k * step)) for k in range(int(round(2 * math.pi / step))))
+
+    def straight_to_turn_free(self, robot):
+        """Nearest turn-free pose straight ahead or behind, or None. On the way the outline may only touch
+        lethal cells where it touches them now (getting out of them), never again once clear."""
+        x, y, yaw = robot
+        c, s = math.cos(yaw), math.sin(yaw)
+        ec = self.cfg['escape']
+        n = int(ec['straight_max_m'] / ec['trail_step_m'])
+        start_clear = self.outline_clear(robot)
+        blocked, was_clear = {1: False, -1: False}, {1: start_clear, -1: start_clear}
+        for k in range(1, n + 1):
+            for sign in (1, -1):
+                if blocked[sign]:
+                    continue
+                d = sign * k * ec['trail_step_m']
+                p = (x + c * d, y + s * d, yaw)
+                if not self.outline_clear(p):
+                    blocked[sign] = was_clear[sign]
+                    continue
+                was_clear[sign] = True
+                if self.turn_free(p):
+                    return p
+        return None
+
+    def escape_tick(self, snap):
+        """Drive the pending Escape until the robot is turn-free: back along the trail (newest pose first,
+        its heading); then straight to the nearest turn-free pose; then (best effort) turn to the nearest
+        clear heading and back straight out back_m; at most max_m in all. Then send the Nav2 goal."""
+        e, fa, ec = self.pending, self.cfg['final_approach'], self.cfg['escape']
+        if not snap.safety_ok:
+            self.stop()
+            self.best_since = snap.t
+            return
+        e.track(snap.robot)
+        free = self.turn_free(snap.robot)
+        while self.trail and self.reached(snap.robot, self.trail[-1]):
+            self.trail.pop()
+        if not free and not self.trail:
+            x, y, yaw = snap.robot
+            if e.stage == 0:
+                e.stage = 1
+                p = self.straight_to_turn_free(snap.robot)
+                if p is not None:
+                    self.trail.append(p)
+            if not self.trail and e.stage == 1 and not self.outline_clear(snap.robot):
+                e.stage = 2
+                turn = self.clear_heading(snap.robot)
+                if turn is not None:
+                    self.trail.append((x, y, turn))
+            if not self.trail and e.stage == 2 and not self.outline_clear(snap.robot):
+                e.stage = 3
+                self.trail.append((x - ec['back_m'] * math.cos(yaw), y - ec['back_m'] * math.sin(yaw), yaw))
+        if free or not self.trail or e.travelled > ec['max_m']:
+            self.stop()
+            self.io.log({'t': round(snap.t, 2), 'event': 'escape_done', 'turn_free': free,
+                         'clear': self.outline_clear(snap.robot), 'moved_m': round(e.travelled, 3),
+                         'stage': e.stage, 'robot': [round(v, 3) for v in snap.robot]})
+            self.trail = []
+            e.inner = self.io.nav_to(*e.goal)
+            self.nav_since = snap.t
+            return
+        tx, ty, tyaw = self.trail[-1]
+        x, y = to_robot(snap.robot, tx, ty)
+        clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
+        self.move(snap, clip(fa['gain'] * x, fa['max_vx']), clip(fa['gain'] * y, fa['max_vy']),
+                  clip(fa['gain'] * wrap(tyaw - snap.robot[2]), fa['max_wz']))
+
+    def reached(self, robot, pose):
+        return (math.dist(pose[:2], robot[:2]) <= self.cfg['final_approach']['tolerance_m']
+                and abs(wrap(pose[2] - robot[2])) <= self.cfg['escape']['heading_tol_rad'])
+
+    def clear_heading(self, robot):
+        """The heading nearest the robot's with a clear outline at its position (turn_step_deg steps,
+        up to max_turn_deg each way; one step further when that is clear too, as a margin), or None."""
+        ec = self.cfg['escape']
+        x, y, yaw = robot
+        step = math.radians(ec['turn_step_deg'])
+        for k in range(1, int(ec['max_turn_deg'] // ec['turn_step_deg']) + 1):
+            for sign in (1, -1):
+                h = wrap(yaw + sign * k * step)
+                if self.outline_clear((x, y, h)):
+                    further = wrap(h + sign * step)
+                    return further if self.outline_clear((x, y, further)) else h
+        return None
 
     def nearest_trash(self, snap):
         rx, ry, _ = snap.robot
@@ -186,6 +337,8 @@ class Task:
                          'robot': [round(v, 3) for v in snap.robot], 'state': self.state, 'sub': self.sub,
                          'item': self.item})
             return self.go('FELL', snap)
+        if isinstance(self.pending, Escape) and self.pending.inner is None:
+            return self.escape_tick(snap)
         if not snap.safety_ok and self.pending is None:
             if (self.state, self.sub) in (('APPROACH', 'final'), ('GO_TO_BIN', 'final'), ('PLACE', 'leave'),
                                           ('PLACE', 'step')):

@@ -74,6 +74,12 @@ def bin_rims(repo, scene, objects, fsm):
     return bins
 
 
+def nav_footprint(repo):
+    """Nav2's robot footprint [(x, y)] (base_link), from the local costmap's parameters."""
+    p = yaml.safe_load(open(Path(repo) / 'packages' / 'navigation' / 'config' / 'nav2_params.yaml'))
+    return [tuple(v) for v in yaml.safe_load(p['local_costmap']['local_costmap']['ros__parameters']['footprint'])]
+
+
 class ActionHandle:
     """A goal sent to an action server; done() once its result is in, result() mapped by `convert`."""
 
@@ -158,7 +164,7 @@ class TaskNode(Node):
                          Capacity(wmc['max_items_per_compartment'], limits['basket_load_max_kg'],
                                   wmc['default_item_mass_kg']),
                          waypoints, bins, sorting['fallback_bin'], sorting['confidence_threshold'],
-                         allowed=lambda x, y: self.free_cell(occ, res, x, y))
+                         allowed=lambda x, y: self.free_cell(occ, res, x, y), footprint=nav_footprint(repo))
 
         self.robot = None
         self.tilt = 0.0
