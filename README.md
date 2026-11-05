@@ -26,6 +26,12 @@ The robot carries a two-compartment basket on its back and runs this loop:
 
 A rule-based safety supervisor runs throughout. It slows the robot when a person comes within 3 m and stops it early enough that it is at rest before the person is within 1.5 m (the stop distance grows with the robot's speed, as in speed and separation monitoring), keeps it inside the geofence, and freezes the arm unless nobody is nearby.
 
+## Why this project
+
+In Hong Kong I took part in a lot of beach clean-ups. Most of the litter we picked up wasn't left by people on the beach: it washed in from the sea. Hong Kong's own Marine Refuse Study links the refuse on its shores to the seasonal winds and the Pearl River outflow ([LegCo reply, 2016](https://www.info.gov.hk/gia/general/201612/14/P2016121400394p.htm)), and a survey of one west-coast beach found that local sources made up only a small share of the stranded debris ([EdUHK](https://repository.eduhk.hk/en/publications/the-origin-of-stranded-shoreline-macroplastic-debris-in-hong-kong/)). And none of what we collected was recycled: bottles and cans went into general waste with everything else. Picking litter up by hand only to throw it all away seemed like a waste, and not how it should be done today.
+
+So this robot does both jobs: it collects the litter and sorts it on the spot. That is also why the benchmark weights its mistakes: a residual item in the recycling bin spoils the recycling, so it counts double.
+
 ## Progress
 
 | Phase | What | Status |
