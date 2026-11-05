@@ -20,6 +20,7 @@ from launch_ros.actions import Node
 
 SIMS = ('gazebo',)
 LOCOMOTION = {'gazebo': ('legubiao', 'legubiao_rl', 'legubiao_robot_lab', 'legubiao_tuned')}   # *_rl / *_robot_lab: learned policies
+SKELETON_COMPONENTS = ('localization', 'perception', 'classifier')   # passed on to skeleton.launch.py (C1)
 CLOCK = '/sim/clock_throttled'   # 100 Hz sim-time clock for our nodes (sim_bridge_gazebo clock_throttle)
 
 
@@ -54,7 +55,8 @@ def launch_setup(context):
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('bringup'), 'launch', 'skeleton.launch.py')),
             launch_arguments={'seed': str(seed), 'run_id': cfg['run_id'], 'clock_topic': CLOCK,
-                              'locomotion': loco}.items()))
+                              'locomotion': loco,
+                              **{c: cfg[c] for c in SKELETON_COMPONENTS}}.items()))
     if cfg['rviz'] == 'true':
         nodes.append(Node(package='rviz2', executable='rviz2', output='log',
                           arguments=['-d', os.path.join(get_package_share_directory('sim_bridge_gazebo'),
@@ -77,6 +79,8 @@ def generate_launch_description():
                               description='legubiao (basic controller) | legubiao_rl (HIMLoco policy) | legubiao_robot_lab (robot_lab policy, default) | '
                                           'legubiao_tuned (basic, tuned gains)'),
         DeclareLaunchArgument('rviz', default_value='false', description='RViz with robot, TF, camera images'),
+        *[DeclareLaunchArgument(c, default_value='ground_truth', description=f'{c} implementation (skeleton)')
+          for c in SKELETON_COMPONENTS],
         DeclareLaunchArgument('skeleton', default_value='false',
                               description='true: also start the A2 skeleton (skeleton.launch.py) for the scene'),
         DeclareLaunchArgument('run_id', default_value='', description='task event log name (skeleton only)'),

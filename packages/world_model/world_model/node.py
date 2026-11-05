@@ -2,6 +2,7 @@
 
   /detections (camera frame) --TF--> map; de-duplicated into items (world_model.model)
   camera pose (TF map -> camera_link) -> coverage grid of the geofence
+  (detections of other classes than item_classes, e.g. the bins, are not items)
   /world_model (beach_interfaces/WorldModel, 2 Hz), /world_model/update_item (UpdateItem)
 
 Detections within ignore_near_gripper_m of the gripper TCP are dropped: that is the item
@@ -40,6 +41,12 @@ def rotation(q):
                      [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
 
 
+def planar(tf):
+    """Is this map -> base_link from a planar (2D) localization: z, roll and pitch exactly zero?"""
+    q = tf.rotation
+    return tf.translation.z == 0.0 and q.x == 0.0 and q.y == 0.0
+
+
 class WorldModelNode(Node):
 
     def __init__(self, **kwargs):
@@ -51,6 +58,7 @@ class WorldModelNode(Node):
         seed = self.declare_parameter('seed', 0).value
         self.map_frame = self.declare_parameter('map_frame', 'map').value
         self.camera_frame = self.declare_parameter('camera_frame', 'camera_link').value
+        self.base_frame = self.declare_parameter('base_frame', 'base_link').value
         self.tcp_frame = self.declare_parameter('tcp_frame', 'arm_ee_gripper_link').value
         cfg = yaml.safe_load(open(repo / 'config' / 'world_model.yaml'))['world_model']
         limits = yaml.safe_load(open(repo / 'config' / 'robot_limits.yaml'))['robot_limits']
@@ -71,6 +79,9 @@ class WorldModelNode(Node):
         X, Y = np.meshgrid(xs, ys)
         poly = scene['geofence']['polygon']
         self.coverage = Coverage(w, h, res, inside_polygon(X, Y, poly), terrain_mod.height_at(scene['terrain'], X, Y))
+        self.terrain_z = lambda x, y: float(terrain_mod.height_at(scene['terrain'], x, y))
+        self.planar_base_height = cfg['planar_base_height_m']
+        self.classes = set(cfg['item_classes'])
         self.fence = None
         if cfg['ignore_outside_geofence']:
             self.fence = lambda x, y: bool(inside_polygon(np.array([[x]]), np.array([[y]]), poly)[0, 0])
@@ -119,6 +130,8 @@ class WorldModelNode(Node):
             if self.fence is not None and not self.fence(p.x, p.y):
                 continue                                  # outside the geofence: not ours to collect
             hyp = d.results[0].hypothesis
+            if hyp.class_id not in self.classes:
+                continue                                  # bins (B4): the task uses them directly
             yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
             size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
             self.wm.add_detection(self.now(), hyp.class_id, p.x, p.y, p.z, hyp.score, d.id, yaw, size)
@@ -132,9 +145,15 @@ class WorldModelNode(Node):
 
     def tick(self):
         cam = self.lookup(self.map_frame, self.camera_frame)
+        base = self.lookup(self.map_frame, self.base_frame, warn=False)
         if cam is not None:
             t = cam.translation
-            self.coverage.mark(rotation(cam.rotation), (t.x, t.y, t.z), self.fov)
+            z = t.z
+            if base is not None and planar(base):
+                # a planar localization (robot_localization two_d_mode, B4) puts base_link at z 0;
+                # the coverage test needs the camera's real height over the terrain
+                z += self.terrain_z(base.translation.x, base.translation.y) + self.planar_base_height
+            self.coverage.mark(rotation(cam.rotation), (t.x, t.y, z), self.fov)
         self.publish()
 
     def publish(self):

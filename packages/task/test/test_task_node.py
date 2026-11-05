@@ -116,3 +116,18 @@ def test_bin_rim_from_the_ground_under_the_bin():
     assert bin_rims(REPO, scene, objects, dict(fsm, bin_rim='fixed'))[b['bin_id']][2] == pytest.approx(0.50)
     with pytest.raises(ValueError):
         bin_rims(REPO, scene, objects, dict(fsm, bin_rim='flat'))
+
+
+def test_detection_matched_to_world_model_item():
+    """Close range (B4): a detection belongs to the item with its scene id, else to the nearest SEEN item
+    of its class within the radius."""
+    from task.fsm import ItemView
+    from task.node import match_item
+    items = {'wm_000': ItemView('wm_000', 'trash', 1.0, 1.0, 0.0),
+             'wm_001': ItemView('wm_001', 'trash', 1.2, 1.0, 0.0),
+             'wm_002': ItemView('wm_002', 'distractor', 1.05, 1.0, 0.0),
+             'wm_003': ItemView('wm_003', 'trash', 1.04, 1.0, 0.0, status=1)}     # collected
+    assert match_item(items, {'wm_001': 'trash_07'}, 'trash', 1.0, 1.0, 'trash_07', 0.3) == 'wm_001'
+    assert match_item(items, {}, 'trash', 1.03, 1.0, '', 0.3) == 'wm_000'
+    assert match_item(items, {}, 'distractor', 1.0, 1.0, '', 0.3) == 'wm_002'
+    assert match_item(items, {}, 'trash', 3.0, 3.0, '', 0.3) is None

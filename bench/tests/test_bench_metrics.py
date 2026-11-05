@@ -11,7 +11,7 @@ BENCH = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BENCH))
 import metrics  # noqa: E402
 from recording import Recording, coverage_share, duplicates, inside_polygon, tilt_deg  # noqa: E402
-from runner import decide_end, parse_seeds  # noqa: E402
+from runner import decide_end, make_vars, parse_components, parse_seeds  # noqa: E402
 
 CFG = yaml.safe_load(open(BENCH / 'bench.yaml'))
 MCFG, RCFG = CFG['metrics'], dict(CFG['recorder'], stall_move_m=0.5)
@@ -263,3 +263,22 @@ def test_parse_seeds():
     assert parse_seeds('0-3', []) == [0, 1, 2, 3]
     assert parse_seeds('101', []) == [101]
     assert parse_seeds('2,5-6', []) == [2, 5, 6]
+
+
+def test_components_reach_make_run():
+    """B4: the launched implementations are bench.yaml's components (or --components overrides)."""
+    comps = {'locomotion': 'legubiao', 'localization': 'ground_truth', 'perception': 'ground_truth',
+             'classifier': 'ground_truth', 'navigation': 'nav2', 'grasp_mode': 'attach'}
+    assert make_vars(comps) == ['LOCO=legubiao', 'LOC=ground_truth', 'PERC=ground_truth', 'CLS=ground_truth']
+    over = parse_components('localization=ekf, perception=yoloe', comps)
+    assert over['localization'] == 'ekf' and over['perception'] == 'yoloe' and comps['localization'] == 'ground_truth'
+    assert parse_components('', comps) == comps
+    with pytest.raises(SystemExit):
+        parse_components('lidar=on', comps)
+
+
+def test_drift_percentile():
+    from recording import percentile
+    assert percentile([], 95) is None
+    assert percentile([0.1] * 19 + [5.0], 95) == 0.1
+    assert percentile(list(range(1, 101)), 95) == 95

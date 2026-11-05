@@ -82,7 +82,7 @@ class FakeWorld:
     def cancel_nav(self):
         pass
 
-    def pick(self, iid, pose, size):
+    def pick(self, iid, pose, size, frame='map'):
         self._call()
         if self.pick_fail.get(iid, 0) > 0:
             self.pick_fail[iid] -= 1
@@ -98,7 +98,7 @@ class FakeWorld:
         conf = self.confidence.get(self.held, 1.0)
         return Handle(self, 2, (m, 'residual' if m == 'residual' else 'recyclable', conf))
 
-    def place(self, target, iid, bin_id, pose):
+    def place(self, target, iid, bin_id, pose, frame='map'):
         self._call()
         if target == 'compartment' and iid in self.store_full:
             self.store_full.discard(iid)
@@ -485,7 +485,7 @@ def test_first_bin_fails_then_the_robot_walks_to_the_second():
     placed_from = {}
     real_place = w.place
 
-    def place(target, iid, bin_id, pose):
+    def place(target, iid, bin_id, pose, frame='map'):
         if target == 'bin':
             placed_from[iid] = (bin_id, w.bin_dist(bin_id))
         return real_place(target, iid, bin_id, pose)
@@ -584,7 +584,7 @@ def test_bins_side_by_side_are_reached_with_a_sideways_step():
     w.nav_to = nav_to
     placed_from, real_place = {}, w.place
 
-    def place(target, iid, bin_id, pose):
+    def place(target, iid, bin_id, pose, frame='map'):
         if target == 'bin':
             placed_from[iid] = (bin_id, w.bin_dist(bin_id), w.t)
         return real_place(target, iid, bin_id, pose)
@@ -652,7 +652,7 @@ def test_bins_apart_are_walked_to():
     bins = dict(BINS, residual=(4.0, 18.0, 0.5, 0.0))
     t = Task(w, CFG, GRASP, Capacity(5, 2.0, 0.2), PATH, bins)
     real_place = w.place
-    w.place = lambda target, iid, bin_id, pose: (Handle(w, 3, (True, 'ok')) if target == 'bin'
+    w.place = lambda target, iid, bin_id, pose, frame='map': (Handle(w, 3, (True, 'ok')) if target == 'bin'
                                                  else real_place(target, iid, bin_id, pose))
     run(t, w)
     assert t.state == 'DONE' and phases(w) == ['place', 'place']
@@ -858,3 +858,83 @@ def test_bin_approach_without_progress_renavigates_then_leaves_the_items():
     assert len(fails) == CFG['nav_retries'] + 1
     assert any(r['event'] == 'left_in_basket' and r['items'] == ['a'] for r in w.log_records)
     assert t.state == 'DONE'
+
+
+class EstimateWorld(FakeWorld):
+    """The map pose is an estimate: true pose + an offset that jumps by `jump` (m, in x) once the item
+    is known (GNSS fusion moving map -> odom); odom = the true pose, items and bins detected there."""
+
+    def __init__(self, *a, jump=0.4, **k):
+        super().__init__(*a, **k)
+        self.jump, self.offset = jump, 0.0
+
+    def snapshot(self):
+        snap = super().snapshot()
+        if self.known:
+            self.offset = self.jump
+        x, y, yaw = self.robot
+        snap.robot = (x + self.offset, y, yaw)
+        # the world model holds positions seen before the jump: the true ones
+        snap.local_robot = (x, y, yaw)
+        snap.local_items = {i: (v.x, v.y, v.z, 0.0) for i, v in self.known.items()}
+        snap.local_bins = {b: BINS[b] for b in BINS}
+        return snap
+
+
+def in_reach(world, ix, iy):
+    x, y, yaw = world.robot
+    c, s = math.cos(yaw), math.sin(yaw)
+    rx, ry = c * (ix - x) + s * (iy - y), -s * (ix - x) + c * (iy - y)
+    return GRASP['reach_x_m'][0] <= rx <= GRASP['reach_x_m'][1] and abs(ry) <= GRASP['reach_y_max_m']
+
+
+@pytest.mark.parametrize('mode, reach', [('odom', True), ('map', False)])
+def test_close_range_in_odom_survives_a_map_jump(mode, reach):
+    """B4: the item was seen before the map estimate moved by 0.4 m. In odom the final approach still
+    ends with the item in reach and the pick goal is in odom; on the map it ends 0.4 m off."""
+    w = EstimateWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    picks = []
+    pick = w.pick
+    w.pick = lambda iid, pose, size, frame='map': picks.append((pose, frame)) or pick(iid, pose, size, frame)
+    t = make(w, PATH, cfg=dict(CFG, close_range=mode))
+    while t.state != 'PICK' and w.tick_no < 5000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.state == 'PICK'
+    assert in_reach(w, 8.0, 14.5) == reach
+    t.tick(w.snapshot())
+    assert picks[-1][1] == mode
+
+
+def test_close_range_without_a_fresh_detection_uses_the_map():
+    w = EstimateWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'}, jump=0.0)
+    t = make(w, PATH)
+    snap = w.snapshot()
+    snap.local_items = {}
+    it = ItemView('a', 'trash', 8.0, 14.5, 0.03)
+    robot, pose, frame = t.item_target(snap, it)
+    assert (robot, frame) == (snap.robot, 'map') and pose[:2] == (8.0, 14.5)
+
+
+def test_bin_seen_gives_the_other_bin_by_the_layout():
+    """Only the recyclable bin seen (in a frame rotated by 90 degrees): the residual bin follows from
+    the known layout (1.2 m beside it in the map)."""
+    w = FakeWorld({}, {})
+    t = make(w, PATH)
+    snap = w.snapshot()
+    snap.local_robot = (0.0, 0.0, 0.0)
+    rx, ry, rz, ryaw = BINS['recyclable']
+    snap.local_bins = {'recyclable': (10.0, 20.0, 0.3, ryaw + math.pi / 2)}
+    _, (x, y, z, yaw), frame = t.bin_target(snap, 'residual')
+    dx, dy = BINS['residual'][0] - rx, BINS['residual'][1] - ry
+    assert frame == 'odom'
+    assert math.isclose(x, 10.0 - dy, abs_tol=1e-9) and math.isclose(y, 20.0 + dx, abs_tol=1e-9)
+    assert math.isclose(z, 0.3 + BINS['residual'][2] - rz) and math.isclose(yaw, ryaw + math.pi / 2)
+
+
+def test_full_run_with_a_moving_map_estimate():
+    """The whole cycle with the map estimate off by 0.4 m: everything collected and placed."""
+    w = EstimateWorld(ITEMS, MATS)
+    run(make(w, PATH), w)
+    trash = [i for i, m in MATS.items() if m != 'distractor']
+    assert all(w.known[i].status == PLACED for i in trash)

@@ -91,3 +91,14 @@ task:
     item_timeout_s: 180.0        # no progress on one item for this long -> skipped (no_progress)
     nav_timeout_s: 120.0         # one navigation goal
     fall_tilt_deg: 30.0          # body tilt beyond this = fallen: stop everything, end the run (FELL)
+    # body tilt for the fall check: `imu` (/imu orientation; B4: a planar EKF publishes roll = pitch = 0
+    # on /odom/global) | `odom` (/odom/global orientation, baseline A3-B3; the true tilt with ground truth)
+    tilt_source: imu
+    # B4, "map gets you near, camera finishes the job": final approaches, picks and placements on the
+    # latest detection of the item / bin in the smooth odom frame (`odom`), or on the world model's
+    # averaged map positions and the scene's bin poses (`map`, baseline A3-B3). With ground-truth
+    # localization map = odom, so both give the same targets.
+    close_range: odom
+    close_range_max_age_s:       # older detections aren't used (odom drifts with the distance walked)
+      item: 60.0                 # the item leaves the camera's view in the last ~0.3 m of the final approach
+      bin: 600.0                 # the robot stands at the bins while placing (a few minutes)

@@ -39,7 +39,7 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 - **Safety viol.:** person rule (robot moves while a person is within the stop distance), arm rule (an arm joint changes > 0.03 rad within 0.5 s while `/safety/state` ≠ ok; the per-seed table also gives the largest change since the state left ok, slow creep included), geofence rule (`base_link` outside). Sum over all runs; must be 0. Events from 2 s before a fall on are listed apart in the run JSON (`safety.after_fall`).
 - **Min person d.:** closest robot–person distance over all runs with a person (m).
 - **Class. acc.:** classifier accuracy on the held items (`classify` events vs the true material).
-- **Drift:** localization error `/odom/global` vs ground truth, mean of the runs' means (max) in m.
+- **Drift:** localization error `/odom/global` vs ground truth, mean of the runs' means (max) in m; p95 = the largest of the runs' 95th percentiles (B4).
 - **Detection:** P / R / mAP; `n/a` while the detector reads ground truth.
 
 | Row | Date | Commit | Sim | Components | Caps | Ends | Collected | Sorting acc. | Contam. | False pickups | Grasp | Items/min | Falls / stuck / timeouts | Distance (m) | Dup. | Coverage | Safety viol. | Min person d. (m) | Class. acc. | Drift (m) | Detection |
@@ -96,6 +96,7 @@ def build(row, runs):
     drift = [x['components']['localization_drift_m'] or {} for x in m]
     drift_mean = [d.get('mean_m') for d in drift if d.get('mean_m') is not None]
     drift_max = [d.get('max_m') for d in drift if d.get('max_m') is not None]
+    drift_p95 = [d.get('p95_m') for d in drift if d.get('p95_m') is not None]
     commit = runs[0]['commit'] + ('*' if any(r['dirty'] for r in runs) else '')
     if len({r['commit'] for r in runs}) > 1:
         commit = '/'.join(sorted({r['commit'] for r in runs})) + ('*' if any(r['dirty'] for r in runs) else '')
@@ -110,7 +111,8 @@ def build(row, runs):
         spread([x['distance_m'] for x in m], 0), str(sum(x['duplicates'] or 0 for x in m)),
         spread([x['coverage'] for x in m]), str(viol),
         fmt(min(persons)) if persons else '–', ratio(cls_ok, cls_n),
-        f'{sum(drift_mean) / len(drift_mean):.3f} ({max(drift_max):.3f})' if drift_mean else '–',
+        (f'{sum(drift_mean) / len(drift_mean):.3f} ({max(drift_max):.3f})'
+         + (f', p95 {max(drift_p95):.3f}' if drift_p95 else '')) if drift_mean else '–',
         'n/a (ground truth)',
     ]) + ' |'
     per_seed = [f'### Row `{row}`: per seed', '',

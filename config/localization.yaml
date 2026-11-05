@@ -1,0 +1,16 @@
+# Localization (packages/localization). B4: localization:=ekf (robot_localization dual EKF + navsat_transform,
+# parameters in packages/localization/config/ekf.yaml) and localization:=own_ekf.
+localization:
+  imu_relay:
+    # /imu -> /localization/imu with this orientation covariance (Gazebo publishes zero). Gazebo's IMU
+    # orientation is world-referenced ENU and noiseless (measured 2026-11-05: yaw = ground truth); the
+    # stddev only weights it in the EKF. 0.035 rad ~ 2 deg, a typical AHRS heading accuracy.
+    orientation_stddev_rad: [0.01, 0.01, 0.035]
+  own_ekf:                       # localization:=own_ekf (localization/own_ekf.py, ekf_core.py)
+    # process noise spectral densities (per s) for x, y, yaw, vx, vy, wz; start values from the
+    # robot_localization tutorial's diagonal (x, y 1e-3 local; yaw 0.01; vx, vy 0.5; wz 0.3), tuned offline
+    process_noise: [1.0e-3, 1.0e-3, 1.0e-2, 0.5, 0.5, 0.3]
+    initial_stddev_local: [0.01, 0.01, 0.01]     # odom starts at its origin
+    initial_stddev_global: [0.5, 0.5, 0.05]      # the scene's robot_start (known docking pose)
+    gnss_gate_chi2: 9.21                         # 2 dof, 99 %
+    publish_hz: 30.0

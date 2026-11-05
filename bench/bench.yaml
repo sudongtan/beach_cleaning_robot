@@ -2,7 +2,7 @@
 # Run limits: notes/benchmark.md "Run limits" (decision 2026-11-03). Thresholds live here, not in code.
 bench:
   seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  row: baseline                 # run ids <row>_s<seed>
+  row: b4_ekf                   # run ids <row>_s<seed>
   limits:
     sim_s: 3600                 # sim-time cap per run
     wall_min: 200               # wall-time backstop (3600 s sim at RTF 0.3)
@@ -22,7 +22,7 @@ bench:
   # components of the stack the row was run with (launch defaults; reported in the row)
   components:
     locomotion: legubiao_robot_lab
-    localization: ground_truth
+    localization: ekf               # B4 (robot_localization dual EKF); baseline rows: ground_truth
     mapping: ground_truth
     perception: ground_truth
     classifier: ground_truth

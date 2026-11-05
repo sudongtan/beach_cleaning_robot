@@ -6,3 +6,7 @@ world_model:
   coverage_resolution_m: 0.5
   max_items_per_compartment: 5   # 33 x 14.5 cm compartments; bottles (21-23 cm) lie two or three side by side
   default_item_mass_kg: 0.2      # mass when the item isn't known (heaviest item: the 330 ml glass bottle)
+  item_classes: [trash, distractor]   # /detections classes that become items (the bins don't, B4)
+  # coverage with a planar localization (robot_localization two_d_mode: base_link at z 0, B4): the camera's
+  # height is taken as the terrain under the robot + this (robot_limits.yaml body_heights_m: 0.285 loaded)
+  planar_base_height_m: 0.30

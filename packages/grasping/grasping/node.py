@@ -13,7 +13,8 @@ gives way by that lag (B4 question 9, b4_robot_lab s5 arm violation).
 
 Attach mode needs the simulator's object id: the world model's scene_id for the item,
 else the /sim/ground_truth/objects entry nearest the jaw tips (attach mode is itself a
-simulation shortcut). Physics mode is not implemented yet (A2 runs in attach mode).
+simulation shortcut), placed relative to the robot with the true robot pose
+(perception.true_pose), never the estimated TF map -> base_link. Physics mode is not implemented yet (A2 runs in attach mode).
 Parameters: repo, grasp_mode. Settings: config/grasping.yaml, config/robot_limits.yaml.
 """
 
@@ -44,6 +45,7 @@ from tf2_ros import Buffer, TransformException, TransformListener
 from trajectory_msgs.msg import JointTrajectoryPoint
 from vision_msgs.msg import Detection3DArray
 
+from perception.true_pose import TruePose
 from grasping.arm import (ARM, TIPS, Arm, bin_release_target, in_basket, near, plan_pick, plan_store,
                           plan_unload, release_clearances)
 from grasping.sequence import Runner, bin_steps, ground_steps, pick_steps, recovery_steps, store_steps
@@ -182,6 +184,8 @@ class GraspingNode(Node):
         cb = ReentrantCallbackGroup()
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
+        # ground-truth objects relative to the robot: the true robot pose, not the estimated TF (B4)
+        self.truth = TruePose(self, self.tf_buffer)
         self.arm_client = ActionClient(self, FollowJointTrajectory, '/arm_controller/follow_joint_trajectory',
                                        callback_group=cb)
         self.gripper_client = ActionClient(self, FollowJointTrajectory,
@@ -230,7 +234,7 @@ class GraspingNode(Node):
         if self.gt is None:
             return scene_id
         try:
-            tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
+            tf = self.truth.lookup(self.base_frame, source=self.gt.header.frame_id)
         except TransformException:
             return scene_id
         best, best_d = '', 0.15
@@ -364,7 +368,7 @@ class GraspingNode(Node):
             return None
         try:
             tips = self.tf_buffer.lookup_transform(self.base_frame, TIPS, Time())
-            tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
+            tf = self.truth.lookup(self.base_frame, source=self.gt.header.frame_id)
         except TransformException:
             return None
         r = tips.transform.rotation
@@ -391,7 +395,7 @@ class GraspingNode(Node):
         if d is None:
             return None
         try:
-            tf = self.tf_buffer.lookup_transform(self.base_frame, self.gt.header.frame_id, Time())
+            tf = self.truth.lookup(self.base_frame, source=self.gt.header.frame_id)
         except TransformException:
             return None
         p = do_transform_pose(d.bbox.center, tf)

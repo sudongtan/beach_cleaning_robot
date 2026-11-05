@@ -13,6 +13,7 @@ os.environ.setdefault('ROS_DOMAIN_ID', '63')
 os.environ['ROS_AUTOMATIC_DISCOVERY_RANGE'] = 'LOCALHOST'
 
 from geometry_msgs.msg import TransformStamped  # noqa: E402
+from nav_msgs.msg import Odometry  # noqa: E402
 from rclpy.executors import SingleThreadedExecutor  # noqa: E402
 from rclpy.parameter import Parameter  # noqa: E402
 from tf2_ros import StaticTransformBroadcaster  # noqa: E402
@@ -40,13 +41,22 @@ def gt(objs):
     return arr
 
 
-def static_tf(node, child, xyz):
+def static_tf(node, child, xyz, parent='base_link'):
     tf = TransformStamped()
-    tf.header.frame_id, tf.child_frame_id = 'map', child
+    tf.header.frame_id, tf.child_frame_id = parent, child
     tf.header.stamp = node.get_clock().now().to_msg()
     tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z = xyz
     tf.transform.rotation.w = 1.0
     return tf
+
+
+def true_pose(xyz=(0.0, 0.0, 0.0)):
+    """/sim/ground_truth/pose: the true base_link in the map (stamp 0, like the objects)."""
+    o = Odometry()
+    o.header.frame_id, o.child_frame_id = 'map', 'base_link'
+    o.pose.pose.position.x, o.pose.pose.position.y, o.pose.pose.position.z = xyz
+    o.pose.pose.orientation.w = 1.0
+    return o
 
 
 @pytest.fixture
@@ -66,7 +76,11 @@ def spin_until(ex, cond, seconds=3.0):
 def test_detector_reports_only_what_the_camera_sees(ros):
     det = GroundTruthDetector(parameter_overrides=[Parameter('repo', value=REPO)])
     fake = rclpy.create_node('fake')
-    StaticTransformBroadcaster(fake).sendTransform(static_tf(fake, 'camera_link', (1.0, 0.0, 0.5)))
+    # the robot's own TF (base_link -> camera_link) and a WRONG localization estimate (map -> base_link
+    # 2 m off): B4, the detector must place objects relative to the true pose (/sim/ground_truth/pose)
+    StaticTransformBroadcaster(fake).sendTransform([static_tf(fake, 'camera_link', (1.0, 0.0, 0.5)),
+                                                    static_tf(fake, 'base_link', (2.0, -2.0, 0.0), parent='map')])
+    pose_pub = fake.create_publisher(Odometry, '/sim/ground_truth/pose', 10)
     pub = fake.create_publisher(Detection3DArray, '/sim/ground_truth/objects', 10)
     got = []
     fake.create_subscription(Detection3DArray, '/detections', got.append, 10)
@@ -78,7 +92,8 @@ def test_detector_reports_only_what_the_camera_sees(ros):
                ('trash_01', 'metal', (-2.0, 0.0, 0.0)),      # behind: not seen
                ('trash_02', 'glass', (20.0, 0.0, 0.0)),      # beyond depth_max: not seen
                ('trash_03', 'residual', (2.0, 5.0, 0.0))])   # far outside the horizontal FOV
-    assert spin_until(ex, lambda: (pub.publish(objs), bool(got) and got[-1].detections)[1])
+    assert spin_until(ex, lambda: (pose_pub.publish(true_pose()), pub.publish(objs),
+                                   bool(got) and got[-1].detections)[2])
     last = got[-1]
     assert last.header.frame_id == 'camera_link'
     found = {d.id: d for d in last.detections}
@@ -92,7 +107,9 @@ def test_detector_reports_only_what_the_camera_sees(ros):
 def test_classifier_uses_the_object_at_the_gripper(ros):
     cls = GroundTruthClassifier(parameter_overrides=[Parameter('repo', value=REPO)])
     fake = rclpy.create_node('fake')
-    StaticTransformBroadcaster(fake).sendTransform(static_tf(fake, 'arm_ee_gripper_link', (1.0, 1.0, 0.3)))
+    StaticTransformBroadcaster(fake).sendTransform([static_tf(fake, 'arm_ee_gripper_link', (1.0, 1.0, 0.3)),
+                                                    static_tf(fake, 'base_link', (5.0, 0.0, 0.0), parent='map')])
+    pose_pub = fake.create_publisher(Odometry, '/sim/ground_truth/pose', 10)
     pub = fake.create_publisher(Detection3DArray, '/sim/ground_truth/objects', 10)
     client = fake.create_client(ClassifyItem, '/classify')
     ex = SingleThreadedExecutor()
@@ -104,6 +121,7 @@ def test_classifier_uses_the_object_at_the_gripper(ros):
         want = [d.id for d in objs.detections]
 
         def delivered():
+            pose_pub.publish(true_pose())
             pub.publish(objs)
             return cls.objects is not None and [d.id for d in cls.objects.detections] == want
         assert spin_until(ex, delivered)

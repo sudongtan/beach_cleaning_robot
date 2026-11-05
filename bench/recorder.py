@@ -53,7 +53,7 @@ class Recorder(Node):
         sub(Odometry, '/sim/ground_truth/pose', self.on_pose, 50)
         sub(Odometry, '/odom/global', self.on_odom_global, 10)
         sub(Twist, '/cmd_vel', lambda m: self.rec.on_cmd(m.linear.x, m.linear.y, m.angular.z), 10)
-        sub(Detection3DArray, '/people', self.on_people, 10)
+        sub(Detection3DArray, '/sim/ground_truth/people', self.on_people, 10)   # map frame (B4)
         sub(String, '/safety/state', lambda m: self.rec.on_safety(m.data), LATCHED)
         sub(String, '/task/state', lambda m: self.rec.on_task(m.data, time.time()), LATCHED)
         # /joint_states comes at the controller rate (~470 Hz wall): take it raw and decode every

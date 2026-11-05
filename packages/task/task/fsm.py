@@ -53,6 +53,11 @@ class Snapshot:
     load_kg: float = 0.0
     safety_ok: bool = True
     tilt_deg: float = 0.0           # body tilt from vertical
+    # close range (B4): the robot in the smooth odom frame and the latest detections of items and bins
+    # there (only fresh ones); None / empty = use the map
+    local_robot: tuple = None       # (x, y, yaw) in odom
+    local_items: dict = field(default_factory=dict)   # item id -> (x, y, z, yaw) in odom
+    local_bins: dict = field(default_factory=dict)    # bin id -> (x, y, rim_z, yaw) in odom
 
 
 @dataclass
@@ -80,6 +85,18 @@ def min_planar(vx, vy, vmin):
     if v == 0.0 or v >= vmin:
         return vx, vy
     return vx * vmin / v, vy * vmin / v
+
+
+def relative_bin(ref_map, ref_local, other_map):
+    """other_map's pose in the local frame, from a bin ref seen there (bins don't move, so their
+    layout in the map holds in any frame): (x, y, rim, yaw) tuples."""
+    rx, ry, rz, ryaw = ref_map
+    lx, ly, lz, lyaw = ref_local
+    dyaw = wrap(lyaw - ryaw)
+    c, s = math.cos(dyaw), math.sin(dyaw)
+    ox, oy, oz, oyaw = other_map
+    dx, dy = ox - rx, oy - ry
+    return lx + c * dx - s * dy, ly + s * dx + c * dy, lz + oz - rz, wrap(oyaw + dyaw)
 
 
 def to_robot(robot, x, y):
@@ -341,6 +358,26 @@ class Task:
                     return further if self.outline_clear((x, y, further)) else h
         return None
 
+    def item_target(self, snap, it):
+        """(robot pose, (x, y, z, yaw), frame) for the close-range work on item it: its latest
+        detection in odom when close_range is `odom` and a fresh one exists (the map estimate may
+        have moved since it was seen: B4), else the world model's map position (`map`, baseline)."""
+        if self.cfg['close_range'] == 'odom' and snap.local_robot is not None and it.id in snap.local_items:
+            return snap.local_robot, snap.local_items[it.id], 'odom'
+        return snap.robot, (it.x, it.y, it.z, it.yaw), 'map'
+
+    def bin_target(self, snap, bin_id):
+        """(robot pose, (x, y, rim, yaw), frame) of a bin for its final approach, PLACE, the step and
+        leaving: its latest detection in odom, else derived from another bin's (the layout is known),
+        else the scene's map pose."""
+        if self.cfg['close_range'] == 'odom' and snap.local_robot is not None:
+            if bin_id in snap.local_bins:
+                return snap.local_robot, snap.local_bins[bin_id], 'odom'
+            for b, local in snap.local_bins.items():
+                if b in self.bins:
+                    return snap.local_robot, relative_bin(self.bins[b], local, self.bins[bin_id]), 'odom'
+        return snap.robot, self.bins[bin_id], 'map'
+
     def nearest_trash(self, snap):
         rx, ry, _ = snap.robot
         todo = [it for it in snap.items.values() if it.status == SEEN and it.object_class == 'trash'
@@ -438,7 +475,8 @@ class Task:
             return
         # final approach on the item position relative to the robot
         fa = self.cfg['final_approach']
-        x, y = to_robot(snap.robot, it.x, it.y)
+        robot, (ix, iy, _, _), _ = self.item_target(snap, it)
+        x, y = to_robot(robot, ix, iy)
         dist = math.hypot(x - fa['target_x_m'], y)
         if self.best_dist is None or dist < self.best_dist - fa['progress_min_m']:
             self.best_dist, self.best_since = dist, snap.t
@@ -464,7 +502,8 @@ class Task:
         if self.pending is None:
             if it is None or it.status != SEEN:
                 return self.go('SEARCH', snap)
-            self.pending = self.io.pick(self.item, (it.x, it.y, it.z, it.yaw), it.size)
+            _, pose, frame = self.item_target(snap, it)
+            self.pending = self.io.pick(self.item, pose, it.size, frame=frame)
             return
         r = self.result()
         if r is None:
@@ -584,8 +623,8 @@ class Task:
     def bin_final_approach(self, snap):
         """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
         fa = self.cfg['final_approach']
-        bx, by, _, _ = self.bins[self.at_bin]
-        x, y = to_robot(snap.robot, bx, by)
+        robot, (bx, by, _, _), _ = self.bin_target(snap, self.at_bin)
+        x, y = to_robot(robot, bx, by)
         err = x - self.cfg['bin_place_distance_m']
         settled = self.settle(snap, err, y, 0.03, 0.05)
         if settled is not None:
@@ -633,9 +672,9 @@ class Task:
                 self.leave_since = snap.t
                 return self.go('PLACE', snap, sub='leave')
             bin_id, iid = here[0]
-            bx, by, rim, byaw = self.bins[bin_id]
+            _, pose, frame = self.bin_target(snap, bin_id)
             self.item = iid
-            self.pending = self.io.place('bin', iid, bin_id, (bx, by, rim, byaw))
+            self.pending = self.io.place('bin', iid, bin_id, pose, frame=frame)
             return
         r = self.result()
         if r is None:
@@ -688,10 +727,10 @@ class Task:
         and no back-out next to the bins), then the bin's final approach and PLACE. No progress
         -> back out and let Nav2 walk (as bin_placement `walk`)."""
         fa = self.cfg['final_approach']
-        bx, by, _, byaw = self.bins[self.step_to]
+        robot, (bx, by, _, byaw), _ = self.bin_target(snap, self.step_to)
         d = self.cfg['bin_place_distance_m']
-        x, y = to_robot(snap.robot, bx + d * math.cos(byaw), by + d * math.sin(byaw))
-        heading = wrap(byaw + math.pi - snap.robot[2])
+        x, y = to_robot(robot, bx + d * math.cos(byaw), by + d * math.sin(byaw))
+        heading = wrap(byaw + math.pi - robot[2])
         dist = math.hypot(x, y)
         if dist <= fa['tolerance_m']:
             self.stop()
@@ -717,8 +756,8 @@ class Task:
         (next bin, or back to SEARCH): at the place distance the footprint is inside the bin's
         inflation and Nav2's controller refuses to move ("collision ahead"; reversing is off)."""
         fa = self.cfg['final_approach']
-        bx, by, _, _ = self.bins[self.at_bin]
-        x, _ = to_robot(snap.robot, bx, by)
+        robot, (bx, by, _, _), _ = self.bin_target(snap, self.at_bin)
+        x, _ = to_robot(robot, bx, by)
         err = x - self.cfg['bin_standoff_m']            # negative while too close
         if err >= -fa['tolerance_m'] or snap.t - self.leave_since > self.cfg['bin_leave_timeout_s']:
             self.stop()

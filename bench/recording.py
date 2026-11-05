@@ -66,6 +66,14 @@ class Episodes:
         return e
 
 
+def percentile(values, q):
+    """q-th percentile (nearest rank) of a list, None if empty."""
+    if not values:
+        return None
+    v = sorted(values)
+    return v[min(len(v) - 1, max(0, math.ceil(q / 100 * len(v)) - 1))]
+
+
 class Recording:
     def __init__(self, cfg, stop_distance_m, geofence=None):
         self.cfg = cfg
@@ -96,7 +104,7 @@ class Recording:
         self.arm_window = deque()                     # (t, q) of the last arm_window_s while not ok
         self.outside = Episodes(cfg['episode_gap_s'])
         self.outside_s = 0.0
-        self.drift = {'n': 0, 'sum': 0.0, 'max': 0.0, 'last': None}
+        self.drift = {'n': 0, 'sum': 0.0, 'max': 0.0, 'last': None, 'samples': []}
         self.drift_next = None
         self.odom_global = None                       # (t, x, y)
         self.task_state, self.task_changes = '', 0
@@ -274,6 +282,7 @@ class Recording:
         d['sum'] += e
         d['max'] = max(d['max'], e)
         d['last'] = e
+        d['samples'].append(round(e, 3))           # for the p95 (B4); ~1 Hz, a few thousand per run
 
     def snapshot(self, wall, final=False):
         d = self.drift
@@ -293,7 +302,8 @@ class Recording:
             'geofence_source': self.geofence_source, 'outside_geofence_s': self.outside_s,
             'outside_geofence': self.outside.items,
             'drift': {'samples': d['n'], 'mean_m': d['sum'] / d['n'] if d['n'] else None,
-                      'max_m': d['max'] if d['n'] else None, 'last_m': d['last']},
+                      'max_m': d['max'] if d['n'] else None, 'last_m': d['last'],
+                      'p95_m': percentile(d['samples'], 95)},
             'world_model': self.wm, 'wm_ids': self.wm_ids,
             'objects_t': self.objects_t, 'objects': self.objects, 'objects_robot': self.objects_robot,
         }
