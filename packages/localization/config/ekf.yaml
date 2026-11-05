@@ -83,6 +83,9 @@ ekf_global:
     odom1_queue_size: 10
     odom1_differential: false
     odom1_relative: false
+    # navsat_transform's very first output (t 3.0 in a live run) is in UTM, not local cartesian
+    # (183368, 4194057): reject GNSS whose Mahalanobis distance exceeds this (normal fixes: < 4)
+    odom1_pose_rejection_threshold: 10.0
     imu0: /localization/imu
     imu0_config: [false, false, false,
                   false, false, true,

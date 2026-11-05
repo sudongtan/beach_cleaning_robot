@@ -106,7 +106,7 @@ class OwnEkf(Node):
         sec = f.t or 0.0
         o.header.stamp.sec, o.header.stamp.nanosec = int(sec), int((sec % 1) * 1e9)
         o.header.frame_id, o.child_frame_id = frame, 'base_link'
-        x, y, yaw, vx, vy, wz = f.s
+        x, y, yaw, vx, vy, wz = f.s[:6]
         o.pose.pose.position.x, o.pose.pose.position.y = float(x), float(y)
         o.pose.pose.orientation.z, o.pose.pose.orientation.w = math.sin(yaw / 2), math.cos(yaw / 2)
         cov = np.zeros((6, 6))
