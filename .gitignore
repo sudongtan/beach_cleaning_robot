@@ -31,3 +31,8 @@ results/runs/*.tmp
 results/videos/
 # record_video.py temp file in the Gazebo server working directory while recording
 /[0-9]*.mp4
+
+# B5 visual check frames and world (sim/gazebo/tools/visual_check.py); the contact sheet is kept
+results/b5/frames/
+results/b5/visual_check.sdf
+results/b5/gz.log
