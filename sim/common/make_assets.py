@@ -219,6 +219,8 @@ def main():
         mesh.write_obj(MESH_DIR / f'{name}.obj', name)
     make_textures()
     print(f'wrote meshes to {MESH_DIR} and textures to {TEX_DIR}')
+    import trash_visuals                                 # B5: textured trash visuals
+    trash_visuals.main()
 
 
 if __name__ == '__main__':
