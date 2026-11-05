@@ -5,7 +5,8 @@ task:
     # view_distance_m ahead (2 * d * tan(hfov / 2), hfov from config/sensors.yaml) * (1 - overlap).
     view_distance_m: 2.0
     overlap: 0.2
-    edge_margin_m: 0.5         # lanes and waypoints stay this far inside the geofence
+    edge_margin_m: 0.7         # lanes and waypoints stay this far inside the geofence (> safety.yaml
+                               # geofence_margin_m 0.5; B4: was 0.5 with the 0.3 m margin)
     waypoint_spacing_m: 5.0    # waypoints along a lane (progress checks; lethal ones are dropped)
   fsm:
     rate_hz: 10.0

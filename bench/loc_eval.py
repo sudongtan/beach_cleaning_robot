@@ -54,9 +54,12 @@ def run_own(msgs, scene, cfg, imu_std):
     geo = scene['geo']
     enu = LocalEnu(geo['latitude_deg'], geo['longitude_deg'], geo.get('elevation_m', 0.0))
     start = scene['robot_start']['pose']
-    local = PlanarEkf(cfg['process_noise'], x0=(0.0, 0.0, start[2]), p0=cfg['initial_stddev_local'])
+    sc = cfg['odom_scale']
+    local = PlanarEkf(cfg['process_noise'], x0=(0.0, 0.0, start[2]), p0=cfg['initial_stddev_local'],
+                      scale0=sc['initial'])
     glob = PlanarEkf(cfg['process_noise'], x0=tuple(start[:3]), p0=cfg['initial_stddev_global'],
-                     gate_chi2=cfg['gnss_gate_chi2'])
+                     gate_chi2=cfg['gnss_gate_chi2'], estimate_scale=sc['estimate'], scale0=sc['initial'],
+                     scale_std=sc['initial_stddev'], scale_noise=sc['noise'])
     lever = None
     from tf2_ros import Buffer
     from rclpy.time import Time
@@ -87,9 +90,11 @@ def run_own(msgs, scene, cfg, imu_std):
             e, n, _ = enu(m.latitude, m.longitude, m.altitude)
             c = m.position_covariance
             glob.update_gnss(t, e, n, max(c[0], 1e-4), max(c[4], 1e-4), lever)
+            local.s[6] = glob.scale()                  # the odom filter uses the calibrated scale
             out['map'].append((t, *glob.pose()))
             out['odom'].append((t, *local.pose()))
-    print(f'own EKF: GNSS used {glob.gnss_used}, gated out {glob.gnss_rejected}, lever {lever}')
+    print(f'own EKF: GNSS used {glob.gnss_used}, gated out {glob.gnss_rejected}, lever {lever}, '
+          f'odom scale {glob.scale():.3f}')
     return out
 
 
@@ -138,7 +143,31 @@ def evaluate(est, gt, skip_s, window_s, est_odom=None):
         shift = np.hypot(later[ok, 1] - mo[ok, 1], later[ok, 2] - mo[ok, 2])
         res[f'map_odom_change_{window_s:g}s_p95_m'] = round(float(np.percentile(shift, 95)), 3) if ok.any() else None
         res[f'map_odom_change_{window_s:g}s_max_m'] = round(float(shift.max()), 3) if ok.any() else None
+    if est_odom is not None and len(est_odom):
+        res.update(odom_drift(np.asarray(est_odom), gt, window_s))
     return res
+
+
+def odom_drift(odom, gt, window_s):
+    """Relative error of the odom track over window_s: |odom displacement - true displacement| (both
+    frames share the IMU's absolute heading), and that per metre walked (moving windows only)."""
+    gt = np.asarray(gt)
+    later = nearest(odom, odom[:, 0] + window_s)
+    ok = later[:, 0] - odom[:, 0] > 0.8 * window_s
+    g0, g1 = nearest(gt, odom[ok, 0]), nearest(gt, later[ok, 0])
+    d_est = later[ok, 1:3] - odom[ok, 1:3]
+    d_gt = g1[:, 1:3] - g0[:, 1:3]
+    err = np.linalg.norm(d_est - d_gt, axis=1)
+    walked = np.linalg.norm(d_gt, axis=1)
+    moving = walked > 0.2
+    out = {f'odom_drift_{window_s:g}s_p50_m': round(float(np.percentile(err, 50)), 3),
+           f'odom_drift_{window_s:g}s_p95_m': round(float(np.percentile(err, 95)), 3)}
+    if moving.any():
+        out['odom_drift_per_m_p50'] = round(float(np.percentile(err[moving] / walked[moving], 50)), 3)
+        out['odom_drift_per_m_p95'] = round(float(np.percentile(err[moving] / walked[moving], 95)), 3)
+        along = np.sum(d_est[moving] * d_gt[moving], axis=1) / walked[moving] ** 2
+        out['odom_scale_p50'] = round(float(np.percentile(along, 50)), 3)    # 1 = right speed
+    return out
 
 
 def main():

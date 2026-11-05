@@ -1,8 +1,10 @@
 """Own planar EKF (localization:=own_ekf, B4): pure numpy, no ROS.
 
-State s = [x, y, yaw, vx, vy, wz]: pose in the world frame (odom or map), velocity in the body frame
-(x forward, y left). Constant-velocity prediction; measurements:
-  - leg odometry: body velocity (vx, vy, wz)
+State s = [x, y, yaw, vx, vy, wz, k]: pose in the world frame (odom or map), velocity in the body frame
+(x forward, y left), k = the leg odometry's speed scale (leg speed = k * true speed; measured 0.87-0.94
+in Gazebo, B4 log). Constant-velocity prediction; k is a slow random walk, estimated only when
+estimate_scale is on (it needs GNSS to be observable: map filter only). Measurements:
+  - leg odometry: body velocity (k vx, k vy, wz)
   - IMU: yaw (world-referenced, ENU) and yaw rate
   - GNSS: the antenna's x, y in the world frame (local ENU about the datum), with the antenna's
     lever arm from base_link; rejected when its Mahalanobis distance exceeds the gate (chi-square,
@@ -49,12 +51,15 @@ class LocalEnu:
 
 class PlanarEkf:
 
-    def __init__(self, process_noise, x0=(0.0, 0.0, 0.0), p0=(1.0, 1.0, 0.1), gate_chi2=9.21):
+    def __init__(self, process_noise, x0=(0.0, 0.0, 0.0), p0=(1.0, 1.0, 0.1), gate_chi2=9.21,
+                 estimate_scale=False, scale0=1.0, scale_std=0.1, scale_noise=1e-6):
         """process_noise: 6 spectral densities (per second) for x, y, yaw, vx, vy, wz;
-        x0 = (x, y, yaw) start; p0 = their standard deviations."""
-        self.q = np.asarray(process_noise, dtype=float)
-        self.s = np.array([x0[0], x0[1], x0[2], 0.0, 0.0, 0.0])
-        self.P = np.diag([p0[0] ** 2, p0[1] ** 2, p0[2] ** 2, 1.0, 1.0, 1.0])
+        x0 = (x, y, yaw) start; p0 = their standard deviations; the scale k starts at scale0 (std
+        scale_std, random walk scale_noise per s) and stays fixed unless estimate_scale."""
+        self.q = np.append(np.asarray(process_noise, dtype=float), scale_noise if estimate_scale else 0.0)
+        self.s = np.array([x0[0], x0[1], x0[2], 0.0, 0.0, 0.0, scale0])
+        self.P = np.diag([p0[0] ** 2, p0[1] ** 2, p0[2] ** 2, 1.0, 1.0, 1.0,
+                          scale_std ** 2 if estimate_scale else 0.0])
         self.t = None
         self.gate = gate_chi2
         self.gnss_rejected = 0
@@ -67,10 +72,10 @@ class PlanarEkf:
         dt = t - self.t
         if dt <= 0:
             return                                # late message: update at the current state
-        x, y, yaw, vx, vy, wz = self.s
+        x, y, yaw, vx, vy, wz, k = self.s
         c, s = math.cos(yaw), math.sin(yaw)
-        self.s = np.array([x + (c * vx - s * vy) * dt, y + (s * vx + c * vy) * dt, wrap(yaw + wz * dt), vx, vy, wz])
-        F = np.eye(6)
+        self.s = np.array([x + (c * vx - s * vy) * dt, y + (s * vx + c * vy) * dt, wrap(yaw + wz * dt), vx, vy, wz, k])
+        F = np.eye(7)
         F[0, 2], F[0, 3], F[0, 4] = (-s * vx - c * vy) * dt, c * dt, -s * dt
         F[1, 2], F[1, 3], F[1, 4] = (c * vx - s * vy) * dt, s * dt, c * dt
         F[2, 5] = dt
@@ -84,20 +89,23 @@ class PlanarEkf:
         K = self.P @ H.T @ np.linalg.inv(S)
         self.s = self.s + K @ r
         self.s[2] = wrap(self.s[2])
-        I_KH = np.eye(6) - K @ H
+        I_KH = np.eye(7) - K @ H
         self.P = I_KH @ self.P @ I_KH.T + K @ R @ K.T       # Joseph form: stays symmetric positive
         return float(r @ np.linalg.solve(S, r))
 
     def update_body_velocity(self, t, v, var):
-        """Leg odometry: (vx, vy, wz) in the body frame, variances var (3)."""
+        """Leg odometry: (vx, vy, wz) in the body frame, variances var (3); measures (k vx, k vy, wz)."""
         self.predict(t)
-        H = np.zeros((3, 6))
-        H[0, 3] = H[1, 4] = H[2, 5] = 1.0
-        self._update(np.asarray(v, float) - self.s[3:6], H, np.diag(var))
+        vx, vy, k = self.s[3], self.s[4], self.s[6]
+        H = np.zeros((3, 7))
+        H[0, 3], H[1, 4], H[2, 5] = k, k, 1.0
+        H[0, 6], H[1, 6] = vx, vy
+        h = np.array([k * vx, k * vy, self.s[5]])
+        self._update(np.asarray(v, float) - h, H, np.diag(var))
 
     def update_imu(self, t, yaw, wz, yaw_var, wz_var):
         self.predict(t)
-        H = np.zeros((2, 6))
+        H = np.zeros((2, 7))
         H[0, 2] = H[1, 5] = 1.0
         self._update(np.array([yaw - self.s[2], wz - self.s[5]]), H, np.diag([yaw_var, wz_var]), angle_rows=(0,))
 
@@ -108,7 +116,7 @@ class PlanarEkf:
         c, s = math.cos(yaw), math.sin(yaw)
         lx, ly = lever
         h = np.array([x + c * lx - s * ly, y + s * lx + c * ly])
-        H = np.zeros((2, 6))
+        H = np.zeros((2, 7))
         H[0, 0] = H[1, 1] = 1.0
         H[0, 2], H[1, 2] = -s * lx - c * ly, c * lx - s * ly
         r = np.array([east, north]) - h
@@ -123,3 +131,6 @@ class PlanarEkf:
 
     def pose(self):
         return tuple(self.s[:3])
+
+    def scale(self):
+        return float(self.s[6])

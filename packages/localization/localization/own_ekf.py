@@ -5,8 +5,9 @@
 
 Same inputs and outputs as localization:=ekf (robot_localization). The local filter starts at the
 odom origin; the global one at the scene's robot_start (as ekf.launch.py). The GNSS antenna's lever
-arm comes from TF base_link -> gnss_link. Parameters: repo, seed; settings: config/localization.yaml
-`own_ekf`.
+arm comes from TF base_link -> gnss_link. The global filter also estimates the leg odometry's speed
+scale (GNSS makes it observable); the local filter uses that estimate. Parameters: repo, seed; settings:
+config/localization.yaml `own_ekf`.
 """
 
 import math
@@ -54,10 +55,12 @@ class OwnEkf(Node):
         self.enu = LocalEnu(geo['latitude_deg'], geo['longitude_deg'], geo.get('elevation_m', 0.0))
         self.cfg = cfg
         start = scene['robot_start']['pose']
+        sc = cfg['odom_scale']
         self.local = PlanarEkf(cfg['process_noise'], x0=(0.0, 0.0, start[2]), p0=cfg['initial_stddev_local'],
-                               gate_chi2=cfg['gnss_gate_chi2'])
+                               gate_chi2=cfg['gnss_gate_chi2'], scale0=sc['initial'])
         self.glob = PlanarEkf(cfg['process_noise'], x0=tuple(start[:3]), p0=cfg['initial_stddev_global'],
-                              gate_chi2=cfg['gnss_gate_chi2'])
+                              gate_chi2=cfg['gnss_gate_chi2'], estimate_scale=sc['estimate'], scale0=sc['initial'],
+                              scale_std=sc['initial_stddev'], scale_noise=sc['noise'])
         self.lever = None
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -96,6 +99,7 @@ class OwnEkf(Node):
         e, n, _ = self.enu(msg.latitude, msg.longitude, msg.altitude)
         cov = msg.position_covariance
         self.glob.update_gnss(stamp_s(msg.header.stamp), e, n, max(cov[0], 1e-4), max(cov[4], 1e-4), self.lever)
+        self.local.s[6] = self.glob.scale()        # the odom filter uses the calibrated leg odometry scale
 
     def odometry(self, f, frame):
         o = Odometry()
@@ -129,7 +133,8 @@ class OwnEkf(Node):
         self.tf.sendTransform(tfs)
 
     def report(self):
-        self.get_logger().info(f'gnss used {self.glob.gnss_used}, gated out {self.glob.gnss_rejected}')
+        self.get_logger().info(f'gnss used {self.glob.gnss_used}, gated out {self.glob.gnss_rejected}, '
+                               f'leg odometry scale {self.glob.scale():.3f}')
 
 
 def main():

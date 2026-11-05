@@ -1,0 +1,1096 @@
+{
+ "run_id": "devb4_s5",
+ "row": "devb4",
+ "seed": 5,
+ "sim": "gazebo",
+ "attempt": 1,
+ "commit": "739ae30",
+ "dirty": true,
+ "components": {
+  "locomotion": "legubiao",
+  "localization": "ekf",
+  "mapping": "ground_truth",
+  "perception": "ground_truth",
+  "classifier": "ground_truth",
+  "navigation": "nav2",
+  "grasp_mode": "attach"
+ },
+ "limits": {
+  "sim_s": 900.0,
+  "wall_min": 200,
+  "stall_s": 600,
+  "stall_move_m": 0.5,
+  "startup_s": 300,
+  "dead_after_s": 120
+ },
+ "started": "2026-11-05T18:26:54Z",
+ "log_dir": "results/bench/devb4/devb4_s5_20261105T182654Z",
+ "tracebacks_in_launch_log": 0,
+ "end_reason": "fell",
+ "end_detail": "task fell / FALL: in the launch log",
+ "ended": "2026-11-05T18:39:29Z",
+ "wall_s": 755.0,
+ "sim_end_t": 268.46,
+ "recorder_final": true,
+ "metrics": {
+  "items_total": 8,
+  "items_collected": 0,
+  "items_in_basket": 0,
+  "items_missing_from_ground_truth": [],
+  "sorting_correct": 0,
+  "sorting_accuracy": null,
+  "contamination_count": 0,
+  "contamination_rate": null,
+  "recyclable_in_residual": 0,
+  "weighted_sorting_errors": 0.0,
+  "placement": {
+   "trash_00": "ground",
+   "trash_01": "ground",
+   "trash_02": "ground",
+   "trash_03": "ground",
+   "trash_04": "ground",
+   "trash_05": "ground",
+   "trash_06": "ground",
+   "trash_07": "ground"
+  },
+  "false_pickups": 0,
+  "false_pickup_ids": [],
+  "grasp_success_rate": null,
+  "grasp_mode": "simulated attach",
+  "picks": 0,
+  "picks_ok": 0,
+  "confusion": {
+   "pet": {},
+   "metal": {},
+   "glass": {},
+   "residual": {}
+  },
+  "classified": 0,
+  "classified_unmatched": 0,
+  "items_per_min": 0.0,
+  "sim_s": 254.83999999999997,
+  "falls": 1,
+  "fall_t": 268.14,
+  "fall_pose": [
+   4.131,
+   12.786
+  ],
+  "max_tilt_deg": 71.8791377354068,
+  "stuck_events": 1,
+  "timeout": false,
+  "skipped": {
+   "no_progress": 1
+  },
+  "distance_m": 0.27183795445908027,
+  "duplicates": 71,
+  "duplicate_ids": {
+   "trash_01": 21,
+   "trash_03": 21,
+   "distractor_02": 21,
+   "distractor_06": 8
+  },
+  "coverage": 0.3904320987654321,
+  "safety": {
+   "violations": 0,
+   "person_violations": [],
+   "arm_violations": [],
+   "geofence_episodes": [],
+   "outside_geofence_s": 0,
+   "min_person_distance": {
+    "d": 2.603,
+    "t": 51.94,
+    "speed": 0.0,
+    "cmd": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "robot": [
+     4.059,
+     12.862
+    ]
+   },
+   "arm_max_change_not_ok_rad": 0.014165096246165774,
+   "safety_state_changes": {
+    "stop": 4,
+    "ok": 3
+   },
+   "after_fall": {
+    "person": [],
+    "arm": [],
+    "geofence": []
+   },
+   "fall_cutoff_t": 266.14
+  },
+  "components": {
+   "detection": "n/a (ground truth detector: reads /sim/ground_truth/objects)",
+   "classification_accuracy": null,
+   "localization_drift_m": {
+    "samples": 255,
+    "mean_m": 0.5771371399866021,
+    "max_m": 1.6521210543087805,
+    "last_m": 0.17573062445029186,
+    "p95_m": 1.153
+   }
+  }
+ },
+ "recorder": {
+  "final": true,
+  "wall": 1793903963.8364701,
+  "sim_t0": 13.62,
+  "sim_t": 268.46,
+  "last_pose_wall": 1793903963.8012996,
+  "progress_wall": 1793903963.1198547,
+  "task_state": "FELL wm_027",
+  "task_changes": 5,
+  "pose": [
+   4.121414631298389,
+   12.746365462882052,
+   0.38399436925193114,
+   -0.06433945543532198
+  ],
+  "distance_m": 0.27183795445908027,
+  "max_tilt_deg": 71.8791377354068,
+  "fall_t": 268.14,
+  "fall_pose": [
+   4.131,
+   12.786
+  ],
+  "stop_distance_m": 1.5,
+  "min_person": {
+   "d": 2.603,
+   "t": 51.94,
+   "speed": 0.0,
+   "cmd": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "robot": [
+    4.059,
+    12.862
+   ]
+  },
+  "person_violations": [],
+  "safety_state": "stop",
+  "safety_counts": {
+   "stop": 4,
+   "ok": 3
+  },
+  "safety_transitions": [
+   [
+    null,
+    "stop",
+    null,
+    0.0
+   ],
+   [
+    31.64,
+    "ok",
+    26.114,
+    0.0
+   ],
+   [
+    32.3,
+    "stop",
+    25.343,
+    0.085
+   ],
+   [
+    212.84,
+    "ok",
+    25.949,
+    0.0
+   ],
+   [
+    213.74,
+    "stop",
+    25.928,
+    0.049
+   ],
+   [
+    267.34,
+    "ok",
+    18.746,
+    0.0
+   ],
+   [
+    267.54,
+    "stop",
+    18.991,
+    0.059
+   ]
+  ],
+  "arm_max_change_not_ok_rad": 0.014165096246165774,
+  "arm_max_change_at": {
+   "t": 268.45,
+   "joint": "arm_forearm_roll",
+   "state": "stop"
+  },
+  "arm_violations": [],
+  "geofence_source": "/geofence",
+  "outside_geofence_s": 0.0,
+  "outside_geofence": [],
+  "drift": {
+   "samples": 255,
+   "mean_m": 0.5771371399866021,
+   "max_m": 1.6521210543087805,
+   "last_m": 0.17573062445029186,
+   "p95_m": 1.153
+  },
+  "world_model": {
+   "items": [
+    {
+     "id": "wm_000",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 3,
+     "skip_reason": "no_progress"
+    },
+    {
+     "id": "wm_001",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_002",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_003",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_004",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_005",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_006",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_007",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_008",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_009",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_010",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_011",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_012",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_013",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_014",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_015",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_016",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_017",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_018",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_019",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_020",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_021",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_022",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_023",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_024",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_025",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_026",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_027",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_028",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_029",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_030",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_031",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_032",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_033",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_034",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_035",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_036",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_037",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_038",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_039",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_040",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_041",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_042",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_043",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_044",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_045",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_046",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_047",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_048",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_049",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_050",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_051",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_052",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_053",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_054",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_055",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_056",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_057",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_058",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_059",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_060",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_061",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_062",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_063",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_064",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_065",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_066",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_067",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_068",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_069",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_070",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_071",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_072",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_073",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_074",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    }
+   ],
+   "coverage": 0.3904320987654321,
+   "duplicates": 71,
+   "duplicate_ids": {
+    "trash_01": 21,
+    "trash_03": 21,
+    "distractor_02": 21,
+    "distractor_06": 8
+   }
+  },
+  "wm_ids": {
+   "wm_000": "trash_01",
+   "wm_001": "trash_03",
+   "wm_002": "distractor_02",
+   "wm_003": "trash_01",
+   "wm_004": "trash_03",
+   "wm_005": "distractor_02",
+   "wm_006": "trash_01",
+   "wm_007": "trash_03",
+   "wm_008": "distractor_02",
+   "wm_009": "trash_01",
+   "wm_010": "trash_03",
+   "wm_011": "distractor_02",
+   "wm_012": "trash_01",
+   "wm_013": "trash_03",
+   "wm_014": "distractor_02",
+   "wm_015": "trash_01",
+   "wm_016": "trash_03",
+   "wm_017": "distractor_02",
+   "wm_018": "trash_01",
+   "wm_019": "trash_03",
+   "wm_020": "distractor_02",
+   "wm_021": "trash_01",
+   "wm_022": "trash_03",
+   "wm_023": "distractor_02",
+   "wm_024": "trash_01",
+   "wm_025": "trash_03",
+   "wm_026": "distractor_02",
+   "wm_027": "trash_01",
+   "wm_028": "trash_03",
+   "wm_029": "distractor_02",
+   "wm_030": "trash_01",
+   "wm_031": "trash_03",
+   "wm_032": "distractor_02",
+   "wm_033": "trash_01",
+   "wm_034": "trash_03",
+   "wm_035": "distractor_02",
+   "wm_036": "trash_01",
+   "wm_037": "trash_03",
+   "wm_038": "distractor_02",
+   "wm_039": "trash_01",
+   "wm_040": "trash_03",
+   "wm_041": "distractor_02",
+   "wm_042": "trash_01",
+   "wm_043": "trash_03",
+   "wm_044": "distractor_02",
+   "wm_045": "trash_01",
+   "wm_046": "trash_03",
+   "wm_047": "distractor_02",
+   "wm_048": "trash_01",
+   "wm_049": "trash_01",
+   "wm_050": "trash_03",
+   "wm_051": "distractor_02",
+   "wm_052": "trash_01",
+   "wm_053": "trash_03",
+   "wm_054": "distractor_02",
+   "wm_055": "trash_01",
+   "wm_056": "trash_03",
+   "wm_057": "distractor_02",
+   "wm_058": "trash_01",
+   "wm_059": "trash_03",
+   "wm_060": "distractor_02",
+   "wm_061": "trash_01",
+   "wm_062": "trash_03",
+   "wm_063": "distractor_02",
+   "wm_064": "trash_03",
+   "wm_065": "distractor_02",
+   "wm_066": "distractor_06",
+   "wm_067": "distractor_06",
+   "wm_068": "distractor_06",
+   "wm_069": "distractor_06",
+   "wm_070": "distractor_06",
+   "wm_071": "distractor_06",
+   "wm_072": "distractor_06",
+   "wm_073": "distractor_06",
+   "wm_074": "distractor_06"
+  },
+  "objects_t": 268.385,
+  "objects": {
+   "trash_00": [
+    23.227,
+    10.0027,
+    0.0675
+   ],
+   "trash_01": [
+    10.562,
+    10.2488,
+    0.0692
+   ],
+   "trash_02": [
+    17.4319,
+    13.4807,
+    0.1317
+   ],
+   "trash_03": [
+    11.6019,
+    12.0347,
+    0.1311
+   ],
+   "trash_04": [
+    19.1993,
+    10.1341,
+    0.0742
+   ],
+   "trash_05": [
+    23.923,
+    8.044,
+    0.065
+   ],
+   "trash_06": [
+    9.239,
+    7.302,
+    0.06
+   ],
+   "trash_07": [
+    17.31,
+    6.572,
+    0.06
+   ],
+   "distractor_00": [
+    19.569,
+    13.511,
+    0.1638
+   ],
+   "distractor_01": [
+    24.332,
+    7.448,
+    0.06
+   ],
+   "distractor_02": [
+    13.301,
+    10.635,
+    0.0463
+   ],
+   "distractor_03": [
+    8.768,
+    8.587,
+    0.04
+   ],
+   "distractor_04": [
+    1.988,
+    17.246,
+    0.24
+   ],
+   "distractor_05": [
+    5.616,
+    9.406,
+    0.04
+   ],
+   "distractor_06": [
+    15.585,
+    15.592,
+    0.2738
+   ],
+   "distractor_07": [
+    2.131,
+    7.172,
+    0.04
+   ]
+  },
+  "objects_robot": [
+   4.127165998233029,
+   12.762172418230769,
+   0.392227755404918,
+   -0.06830669867366039
+  ]
+ },
+ "infra_attempts": []
+}

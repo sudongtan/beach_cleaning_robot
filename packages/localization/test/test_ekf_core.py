@@ -83,3 +83,21 @@ def test_noisy_gnss_averages_down():
         truth = drive(ekf, 10.0, v=(0.3, 0.0, 0.05), gnss=1.5, rng=rng)
         errs.append(math.dist(ekf.pose()[:2], truth[:2]))
     assert max(errs) < 1.0 and np.mean(errs) < 0.6
+
+
+def test_odometry_scale_is_estimated_with_gnss():
+    """Leg odometry reads 12 % slow; with GNSS the map filter learns the scale."""
+    rng = np.random.default_rng(2)
+    ekf = PlanarEkf(Q, x0=(0.0, 0.0, 0.0), p0=(0.5, 0.5, 0.05), estimate_scale=True, scale_std=0.1, scale_noise=1e-5)
+    truth = [0.0, 0.0, 0.0]
+    t = 0.0
+    for k in range(15000):                       # 300 s at 0.3 m/s, gentle curve
+        t += 0.02
+        v, wz = 0.3, 0.02
+        c, s = math.cos(truth[2]), math.sin(truth[2])
+        truth = [truth[0] + c * v * 0.02, truth[1] + s * v * 0.02, wrap(truth[2] + wz * 0.02)]
+        ekf.update_body_velocity(t, (0.88 * v, 0.0, wz), (0.01 ** 2, 0.01 ** 2, 0.01))
+        ekf.update_imu(t, truth[2], wz, 0.035 ** 2, 1e-6)
+        if k % 5 == 0:
+            ekf.update_gnss(t, truth[0] + rng.normal(0, 1.5), truth[1] + rng.normal(0, 1.5), 2.25, 2.25)
+    assert abs(ekf.scale() - 0.88) < 0.03

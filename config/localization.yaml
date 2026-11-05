@@ -8,9 +8,15 @@ localization:
     orientation_stddev_rad: [0.01, 0.01, 0.035]
   own_ekf:                       # localization:=own_ekf (localization/own_ekf.py, ekf_core.py)
     # process noise spectral densities (per s) for x, y, yaw, vx, vy, wz; start values from the
-    # robot_localization tutorial's diagonal (x, y 1e-3 local; yaw 0.01; vx, vy 0.5; wz 0.3), tuned offline
-    process_noise: [1.0e-3, 1.0e-3, 1.0e-2, 0.5, 0.5, 0.3]
+    # robot_localization tutorial's diagonal (x, y 1e-3 local; yaw 0.01; vx, vy 0.5; wz 0.3); vx, vy x10 after
+    # the offline one-at-a-time sweep on the B4 recording (RMS 0.170 -> 0.165 m, odom drift 10 s p95 0.27 -> 0.21 m)
+    process_noise: [1.0e-3, 1.0e-3, 1.0e-2, 5.0, 5.0, 0.3]
     initial_stddev_local: [0.01, 0.01, 0.01]     # odom starts at its origin
     initial_stddev_global: [0.5, 0.5, 0.05]      # the scene's robot_start (known docking pose)
     gnss_gate_chi2: 9.21                         # 2 dof, 99 %
+    odom_scale:                  # leg odometry speed scale (leg = k * true; measured 0.87-0.94, B4 log)
+      estimate: true             # estimated in the map filter (GNSS makes it observable), shared with odom
+      initial: 1.0
+      initial_stddev: 0.1
+      noise: 1.0e-5              # random walk per s
     publish_hz: 30.0
