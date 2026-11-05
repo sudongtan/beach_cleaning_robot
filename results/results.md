@@ -30,6 +30,7 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | `baseline` | 2026-11-04 | 318758e | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | fell 7, stall 3 | 17/110 | 1.00 (17/17) | 0 | 0 | 0.92 (69/75) simulated attach | 0.12 (0.00–0.40) | 7 / 3 / 0 | 48 (8–92) | 10 | 0.84 (0.50–1.00) | 0 | 0.22 | 1.00 (69/69) | 0.002 (0.029) | n/a (ground truth) |
 | `b1_rim` | 2026-11-04 | f63ed1a | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | fell 10 | 12/110 | 1.00 (12/12) | 0 | 0 | 1.00 (50/50) simulated attach | 0.12 (0.00–0.53) | 10 / 0 / 0 | 43 (2–145) | 8 | 0.73 (0.22–1.00) | 0 | 0.09 | 1.00 (50/50) | 0.003 (0.036) | n/a (ground truth) |
 | `b2_bins` | 2026-11-04 | c5dfba7 | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 2, fell 5, stall 3 | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (85/91) simulated attach | 0.14 (0.00–0.37) | 5 / 3 / 0 | 135 (0–367) | 13 | 0.82 (0.25–1.00) | 1 | 0.04 | 1.00 (85/85) | 0.002 (0.037) | n/a (ground truth) |
+| `b3_nav` | 2026-11-05 | 974f56f | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 3, fell 7 | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (81/87) simulated attach | 0.13 (0.00–0.35) | 7 / 0 / 0 | 169 (0–409) | 15 | 0.76 (0.24–1.00) | 0 | 0.04 | 1.00 (81/81) | 0.003 (0.052) | n/a (ground truth) |
 <!-- summary rows above this line -->
 
 ### Row `baseline`: per seed
@@ -76,3 +77,18 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | 7 | fell | 370 | 17 | 0/13 | – | 0 | 0 | 6/6 | 369 s, 97° | 0 | 22 | 0 | 0.74 | 0 (0 / 0 / 0) | 0.28 | 0.042 | 0 |
 | 8 | stall | 1466 | 66 | 9/11 | 1.00 | 0 | 0 | 13/13 | – (max 4°) | 1 | 157 | 3 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
 | 9 | fell | 1384 | 59 | 3/8 | 1.00 | 0 | 0 | 8/8 | 1383 s, 104° | 0 | 218 | 1 | 1.00 | 1 (1 / 0 / 0) | 0.04 | 0.092 | 0 |
+
+### Row `b3_nav`: per seed
+
+| Seed | End | Sim s | Wall min | Collected | Sorting acc. | Contam. | False pickups | Grasp | Fall (t, tilt) | Stuck | Distance (m) | Dup. | Coverage | Safety viol. (person / arm / geofence) | Min person d. (m) | Arm change since not ok (rad) | Infra retries |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | done | 2396 | 105 | 10/12 | 1.00 | 0 | 0 | 14/17 | – (max 7°) | 0 | 390 | 4 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 1 | fell | 72 | 3 | 0/13 | – | 0 | 0 | 1/1 | 70 s, 31° | 0 | 5 | 0 | 0.44 | 0 (0 / 0 / 0) | 6.54 | 0.000 | 0 |
+| 2 | done | 2534 | 123 | 14/15 | 1.00 | 0 | 0 | 19/22 | – (max 7°) | 0 | 409 | 4 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 3 | fell | 971 | 50 | 0/9 | – | 0 | 0 | 8/8 | 970 s, 99° | 0 | 155 | 0 | 1.00 | 0 (0 / 0 / 0) | 0.96 | 0.035 | 0 |
+| 4 | fell | 326 | 15 | 0/13 | – | 0 | 0 | 6/6 | 325 s, 78° | 0 | 27 | 0 | 0.68 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 5 | fell | 1901 | 77 | 7/8 | 1.00 | 0 | 0 | 10/10 | 1900 s, 33° | 0 | 284 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.04 | 0.029 | 0 |
+| 6 | fell | 329 | 13 | 0/8 | – | 0 | 0 | 5/5 | 328 s, 105° | 0 | 29 | 0 | 0.62 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 7 | fell | 17 | 1 | 0/13 | – | 0 | 0 | 0/0 | 16 s, 71° | 0 | 0 | 0 | 0.24 | 0 (0 / 0 / 0) | 5.16 | 0.009 | 0 |
+| 8 | done | 2149 | 88 | 6/11 | 1.00 | 0 | 0 | 15/15 | – (max 8°) | 0 | 352 | 3 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 9 | fell | 361 | 14 | 2/8 | 1.00 | 0 | 0 | 3/3 | 360 s, 64° | 0 | 36 | 2 | 0.66 | 0 (0 / 0 / 0) | 0.77 | 0.019 | 0 |
