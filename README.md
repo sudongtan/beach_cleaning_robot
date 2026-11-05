@@ -41,8 +41,9 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **A2a** Components | Every pipeline component built as a ground-truth baseline, with unit and node tests | ✅ done |
 | **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | ✅ done: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls (a known limitation the benchmark measures) |
 | **A3** Benchmark | `make bench` over 10 seeded scenes, unattended overnight; baseline results row | ✅ done: baseline row with zero safety violations; most runs end in a fall or a navigation stall (see Results) |
-| **B1–B8** CPU upgrades | One at a time, easiest first, each benchmarked against the row before: (1) bin rim height, (2) placing in both bins without walking between them, (3) navigation stalls, (4) EKF localization (GNSS + leg odometry + IMU), (5) realistic trash visuals, (6) detection with a pretrained text-prompted model, (7) material classifier, (8) an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics | 🟡 B1–B3 done (rows `b1_rim`, `b2_bins`, `b3_nav`); next: B4 |
-| **C0–C1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
+| **B1–B4** Real upgrades | Make the robot itself better while every input is still ground truth, one at a time, each benchmarked against the row before: (1) bin rim height, (2) placing in both bins without walking between them, (3) navigation stalls, (4) a walking controller that falls less | 🟡 B1–B3 done (rows `b1_rim`, `b2_bins`, `b3_nav`); next: B4 |
+| **C1–C5** Ground truth → real | Replace each ground-truth baseline with a real component: (1) EKF localization (GNSS + leg odometry + IMU), (2) realistic trash visuals, (3) detection with a pretrained text-prompted model, (4) material classifier, (5) an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics. The ground-truth rows are the upper bound, so each row shows what making that component real costs | 🟡 C1–C3 in progress |
+| **D0–D1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
 
 ### Implemented vs. planned, per component
 
@@ -50,7 +51,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 
 | Component | Implemented now | Planned upgrade |
 |---|---|---|
-| Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Tested: the pretrained HIMLoco policy (ICLR 2024) from the same repo, on the CPU (`locomotion:=legubiao_rl`): no falls in our tests, but it doesn't move at the slow speeds the approach needs (it was trained without commands below 0.2 m/s), so it isn't the default. Later: own Isaac Lab RL policy (Part C) |
+| Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) controller (pinned, two small patches); fall detection makes the legs go passive | Tested: the pretrained HIMLoco policy (ICLR 2024) from the same repo, on the CPU (`locomotion:=legubiao_rl`): no falls in our tests, but it doesn't move at the slow speeds the approach needs (it was trained without commands below 0.2 m/s), so it isn't the default. Next (B4): a controller that falls less, picked by a repeatable fall test (candidates: the `robot_lab` policy, tuned gains of the current controller, the OCS2 MPC controller from the same repo). Later: own Isaac Lab RL policy (Part D) |
 | Robot | Go2 + Interbotix WidowX 250 6DOF + custom wide jaws (2–15 cm) + 34 × 30 cm basket, own xacro | — |
 | World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), procedural meshes | Better-looking trash meshes before training the detector |
 | Localization | Ground-truth pose published as `/odom`, `/odom/global` and TFs | Dual EKF + `navsat_transform` over noisy GNSS, leg odometry and IMU |
@@ -59,7 +60,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 | Classifier | Ground-truth material + sorting rules from config | Zero-shot classifier on close-up crops; confusion matrix and contamination rate |
 | World model | Removes duplicate detections, tracks the coverage grid and what is in each compartment | — |
 | Navigation | Nav2 (NavFn planner + Regulated Pure Pursuit) plus a camera-relative final approach | — |
-| Grasping | Own IK and reach-envelope module, scripted top-down pick, "attach on contact" in simulation | **Last and hardest upgrade (B8).** Picks by contact physics (a feasibility study is done, see below). Stages: segment the item, estimate its geometry, generate grasp candidates (`simple_grasping` and our own), plan the motion (MoveIt 2 / MTC and our own planner), then a guarded descent and a check that the grasp worked. |
+| Grasping | Own IK and reach-envelope module, scripted top-down pick, "attach on contact" in simulation | **Last and hardest step (C5).** Picks by contact physics (a feasibility study is done, see below). Stages: segment the item, estimate its geometry, generate grasp candidates (`simple_grasping` and our own), plan the motion (MoveIt 2 / MTC and our own planner), then a guarded descent and a check that the grasp worked. |
 | Safety | Rule-based supervisor, the only publisher of `/cmd_vel`: person slow/stop, e-stop, geofence, arm interlock | — |
 | Task | State machine with retries, skips, pause on a safety state and fall handling; one event log per run | — |
 | Benchmark | `make bench`: 10 seeded scenes headless, one JSON per run, metrics from the final ground truth, one row per configuration in `results/results.md` | A row per upgrade |
@@ -116,7 +117,7 @@ The pretrained HIMLoco policy (Long et al., ICLR 2024) ships with the same contr
 | Slow commands: 0.05–0.10 m/s forward, slow right turns | **doesn't move** | follows them |
 | Full scene-3 run | no item picked: both approaches stalled at the slow final steps | (see the four runs above) |
 
-It never fell, but it can't walk slowly, and the approach to an item and the docking at a bin need slow steps. The cause is in its training code, which sets every command below 0.2 m/s to zero, so the policy never learned that range. It also stands 9 cm lower and about 6° tilted with the arm and basket, which it never saw in training. So the current controller stays the default, and an own policy trained with slow commands and the arm's mass is planned for Part C. One integration detail: upstream's config lists the leg joints in a different order from the policy's (front right first instead of front left), and with that order the robot fell as soon as the policy took over.
+It never fell, but it can't walk slowly, and the approach to an item and the docking at a bin need slow steps. The cause is in its training code, which sets every command below 0.2 m/s to zero, so the policy never learned that range. It also stands 9 cm lower and about 6° tilted with the arm and basket, which it never saw in training. So the current controller stays the default, and an own policy trained with slow commands and the arm's mass is planned for Part D. One integration detail: upstream's config lists the leg joints in a different order from the policy's (front right first instead of front left), and with that order the robot fell as soon as the policy took over.
 
 ## Results
 
