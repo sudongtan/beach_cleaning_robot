@@ -35,7 +35,7 @@ A rule-based safety supervisor runs throughout. It slows the robot when a person
 | **A2a** Components | Every pipeline component built as a ground-truth baseline, with unit and node tests | ✅ done |
 | **A2b** Integration | The whole pipeline running together in Gazebo, end to end and unattended | ✅ done: a full unattended run works on the small dev scene; on benchmark-size scenes the walking controller still falls (a known limitation the benchmark measures) |
 | **A3** Benchmark | `make bench` over 10 seeded scenes, unattended overnight; baseline results row | ✅ done: baseline row with zero safety violations; most runs end in a fall or a navigation stall (see Results) |
-| **B1–B8** CPU upgrades | One at a time, easiest first, each benchmarked against the row before: (1) bin rim height, (2) placing in both bins without walking between them, (3) navigation stalls, (4) EKF localization (GNSS + leg odometry + IMU), (5) realistic trash visuals, (6) detection with a pretrained text-prompted model, (7) material classifier, (8) an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics | 🟡 B1 done (row `b1_rim`); next: B2 |
+| **B1–B8** CPU upgrades | One at a time, easiest first, each benchmarked against the row before: (1) bin rim height, (2) placing in both bins without walking between them, (3) navigation stalls, (4) EKF localization (GNSS + leg odometry + IMU), (5) realistic trash visuals, (6) detection with a pretrained text-prompted model, (7) material classifier, (8) an industry-style perception + grasping pipeline (look → plan → move → verify) with picks done by contact physics | 🟡 B1, B2 done (rows `b1_rim`, `b2_bins`); next: B3 |
 | **C0–C1** Isaac Sim | Port to NVIDIA Isaac Sim with no changes outside the simulator layer; Gazebo-vs-Isaac comparison | ⬜ optional |
 
 ### Implemented vs. planned, per component
@@ -120,10 +120,13 @@ Baseline row (2026-11-04, commit `318758e`): 10 seeded scenes, one run each, eve
 |---|---|---|---|---|---|---|---|---|---|
 | Baseline (ground truth) | 17/110 | 1.00 (17/17) | 0 | 0 | 0.92 (69/75), simulated attach | 7 / 3 of 10 runs | 0 | 0.22 m (robot at rest) | 0.002 m (ground truth) |
 | B1: bin rim height from the terrain | 12/110 | 1.00 (12/12) | 0 | 0 | 1.00 (50/50), simulated attach | 10 / 0 of 10 runs | 0 | 0.09 m (robot at rest) | 0.003 m (ground truth) |
+| B2: sideways step between the bins | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (85/91), simulated attach | 5 / 3 of 10 runs | 1 | 0.04 m (robot at rest) | 0.002 m (ground truth) |
 
 Every item that reached a bin was in the right one, and no run had a safety violation. Few items reach a bin, though: 7 of the 10 runs ended with the walking controller falling (three of them on the short walk between the two bins) and 3 with the robot stuck in navigation. These two failures are where the upgrades start (B1–B3). Each later upgrade adds one row, including any that make things worse.
 
 B1 (commit `f63ed1a`) puts each bin's rim at its real height: the bins stand on sand 5–23 cm above the level the task assumed, so the arm released items lower than intended. With the right rim, 12 items reached a bin: 10 placed and 2 correctly recognised as already inside (carried along with another item). One item could no longer be placed (out of the arm's reach at the correct height); B2 adds a lower release for that case. The row also shows how noisy the walking controller is: all 10 runs ended in a fall, 4 of them in the first 160 s and 7 of them away from the bins, before or without any placement. B1 can't change those runs, so this row's totals are lower than the baseline's from the falls alone.
+
+B2 (commit `c5dfba7`) replaces the walk from one bin to the other (back out, turn, walk) with one straight sideways step of 1.2 m, and lets the arm release an item a little lower when the full height is out of reach. 39 items reached a bin, two runs finished the whole beach for the first time, all 5 sideways steps went through, and no run fell at the bins. Three runs still ended stuck in navigation (that's B3). This row has the project's first safety violation: in one run the robot was still creeping at 5–6 cm/s for about a second after the supervisor had stopped it, while the person walked up to 1.1 m. The supervisor's stop distance assumes the robot brakes faster than it did here; the longer runs meet the person far more often.
 
 ## Architecture
 

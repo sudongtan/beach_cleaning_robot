@@ -29,6 +29,7 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `baseline` | 2026-11-04 | 318758e | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | fell 7, stall 3 | 17/110 | 1.00 (17/17) | 0 | 0 | 0.92 (69/75) simulated attach | 0.12 (0.00–0.40) | 7 / 3 / 0 | 48 (8–92) | 10 | 0.84 (0.50–1.00) | 0 | 0.22 | 1.00 (69/69) | 0.002 (0.029) | n/a (ground truth) |
 | `b1_rim` | 2026-11-04 | f63ed1a | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | fell 10 | 12/110 | 1.00 (12/12) | 0 | 0 | 1.00 (50/50) simulated attach | 0.12 (0.00–0.53) | 10 / 0 / 0 | 43 (2–145) | 8 | 0.73 (0.22–1.00) | 0 | 0.09 | 1.00 (50/50) | 0.003 (0.036) | n/a (ground truth) |
+| `b2_bins` | 2026-11-04 | c5dfba7 | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 2, fell 5, stall 3 | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (85/91) simulated attach | 0.14 (0.00–0.37) | 5 / 3 / 0 | 135 (0–367) | 13 | 0.82 (0.25–1.00) | 1 | 0.04 | 1.00 (85/85) | 0.002 (0.037) | n/a (ground truth) |
 <!-- summary rows above this line -->
 
 ### Row `baseline`: per seed
@@ -60,3 +61,18 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | 7 | fell | 105 | 4 | 0/13 | – | 0 | 0 | 1/1 | 105 s, 61° | 0 | 8 | 0 | 0.47 | 0 (0 / 0 / 0) | 0.28 | 0.017 | 0 |
 | 8 | fell | 582 | 26 | 5/11 | 1.00 | 0 | 0 | 8/8 | 581 s, 33° | 0 | 62 | 2 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
 | 9 | fell | 426 | 18 | 0/8 | – | 0 | 0 | 6/6 | 425 s, 104° | 0 | 45 | 0 | 1.00 | 0 (0 / 0 / 0) | 0.37 | 0.052 | 0 |
+
+### Row `b2_bins`: per seed
+
+| Seed | End | Sim s | Wall min | Collected | Sorting acc. | Contam. | False pickups | Grasp | Fall (t, tilt) | Stuck | Distance (m) | Dup. | Coverage | Safety viol. (person / arm / geofence) | Min person d. (m) | Arm change since not ok (rad) | Infra retries |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | fell | 15 | 1 | 0/12 | – | 0 | 0 | 0/0 | 14 s, 104° | 0 | 0 | 0 | 0.25 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 1 | fell | 182 | 8 | 0/13 | – | 0 | 0 | 3/3 | 181 s, 74° | 0 | 14 | 0 | 0.64 | 0 (0 / 0 / 0) | 0.80 | 0.282 | 0 |
+| 2 | done | 2289 | 111 | 13/15 | 1.00 | 0 | 0 | 17/23 | – (max 7°) | 0 | 367 | 3 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 3 | done | 1764 | 104 | 8/9 | 1.00 | 0 | 0 | 8/8 | – (max 5°) | 0 | 275 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.16 | 0.021 | 0 |
+| 4 | stall | 1252 | 57 | 5/13 | 1.00 | 0 | 0 | 12/12 | – (max 17°) | 1 | 60 | 2 | 0.92 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 5 | fell | 1342 | 62 | 1/8 | 1.00 | 0 | 0 | 10/10 | 1341 s, 98° | 0 | 206 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.17 | 0.039 | 0 |
+| 6 | stall | 746 | 35 | 0/8 | – | 0 | 0 | 8/8 | – (max 5°) | 1 | 35 | 0 | 0.70 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 7 | fell | 370 | 17 | 0/13 | – | 0 | 0 | 6/6 | 369 s, 97° | 0 | 22 | 0 | 0.74 | 0 (0 / 0 / 0) | 0.28 | 0.042 | 0 |
+| 8 | stall | 1466 | 66 | 9/11 | 1.00 | 0 | 0 | 13/13 | – (max 4°) | 1 | 157 | 3 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 9 | fell | 1384 | 59 | 3/8 | 1.00 | 0 | 0 | 8/8 | 1383 s, 104° | 0 | 218 | 1 | 1.00 | 1 (1 / 0 / 0) | 0.04 | 0.092 | 0 |

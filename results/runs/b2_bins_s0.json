@@ -1,0 +1,358 @@
+{
+ "run_id": "b2_bins_s0",
+ "row": "b2_bins",
+ "seed": 0,
+ "sim": "gazebo",
+ "attempt": 1,
+ "commit": "c5dfba7",
+ "dirty": false,
+ "components": {
+  "locomotion": "legubiao",
+  "localization": "ground_truth",
+  "mapping": "ground_truth",
+  "perception": "ground_truth",
+  "classifier": "ground_truth",
+  "navigation": "nav2",
+  "grasp_mode": "attach"
+ },
+ "limits": {
+  "sim_s": 3600,
+  "wall_min": 200,
+  "stall_s": 600,
+  "stall_move_m": 0.5,
+  "startup_s": 300,
+  "dead_after_s": 120
+ },
+ "started": "2026-11-04T14:55:21Z",
+ "log_dir": "results/bench/b2_bins/b2_bins_s0_20261104T145521Z",
+ "tracebacks_in_launch_log": 0,
+ "end_reason": "fell",
+ "end_detail": "task fell / FALL: in the launch log",
+ "ended": "2026-11-04T14:56:10Z",
+ "wall_s": 48.5,
+ "sim_end_t": 14.58,
+ "recorder_final": true,
+ "metrics": {
+  "items_total": 12,
+  "items_collected": 0,
+  "items_in_basket": 0,
+  "items_missing_from_ground_truth": [],
+  "sorting_correct": 0,
+  "sorting_accuracy": null,
+  "contamination_count": 0,
+  "contamination_rate": null,
+  "recyclable_in_residual": 0,
+  "weighted_sorting_errors": 0.0,
+  "placement": {
+   "trash_00": "ground",
+   "trash_01": "ground",
+   "trash_02": "ground",
+   "trash_03": "ground",
+   "trash_04": "ground",
+   "trash_05": "ground",
+   "trash_06": "ground",
+   "trash_07": "ground",
+   "trash_08": "ground",
+   "trash_09": "ground",
+   "trash_10": "ground",
+   "trash_11": "ground"
+  },
+  "false_pickups": 0,
+  "false_pickup_ids": [],
+  "grasp_success_rate": null,
+  "grasp_mode": "simulated attach",
+  "picks": 0,
+  "picks_ok": 0,
+  "confusion": {
+   "pet": {},
+   "metal": {},
+   "glass": {},
+   "residual": {}
+  },
+  "classified": 0,
+  "classified_unmatched": 0,
+  "items_per_min": 0.0,
+  "sim_s": 1.0999999999999996,
+  "falls": 1,
+  "fall_t": 13.84,
+  "fall_pose": [
+   4.494,
+   16.32
+  ],
+  "max_tilt_deg": 104.21930584134932,
+  "stuck_events": 0,
+  "timeout": false,
+  "skipped": {},
+  "distance_m": 0.3782900851429951,
+  "duplicates": 0,
+  "duplicate_ids": {},
+  "coverage": 0.2467948717948718,
+  "safety": {
+   "violations": 0,
+   "person_violations": [],
+   "arm_violations": [],
+   "geofence_episodes": [],
+   "outside_geofence_s": 0,
+   "min_person_distance": null,
+   "arm_max_change_not_ok_rad": 0.0,
+   "safety_state_changes": {
+    "ok": 1
+   },
+   "after_fall": {
+    "person": [],
+    "arm": [],
+    "geofence": []
+   },
+   "fall_cutoff_t": 11.84
+  },
+  "components": {
+   "detection": "n/a (ground truth detector: reads /sim/ground_truth/objects)",
+   "classification_accuracy": null,
+   "localization_drift_m": {
+    "samples": 2,
+    "mean_m": 0.0018995737753182205,
+    "max_m": 0.003799147550636441,
+    "last_m": 0.003799147550636441
+   }
+  }
+ },
+ "recorder": {
+  "final": true,
+  "wall": 1793804164.6890018,
+  "sim_t0": 13.48,
+  "sim_t": 14.58,
+  "last_pose_wall": 1793804164.6484299,
+  "progress_wall": 1793804163.0774918,
+  "task_state": "FELL wm_002",
+  "task_changes": 2,
+  "pose": [
+   4.609923227333981,
+   16.425965948841924,
+   0.47305323901743895,
+   -0.32458554896374
+  ],
+  "distance_m": 0.3782900851429951,
+  "max_tilt_deg": 104.21930584134932,
+  "fall_t": 13.84,
+  "fall_pose": [
+   4.494,
+   16.32
+  ],
+  "stop_distance_m": 1.5,
+  "min_person": null,
+  "person_violations": [],
+  "safety_state": "ok",
+  "safety_counts": {
+   "ok": 1
+  },
+  "safety_transitions": [
+   [
+    13.66,
+    "ok",
+    null,
+    0.0
+   ]
+  ],
+  "arm_max_change_not_ok_rad": 0.0,
+  "arm_max_change_at": null,
+  "arm_violations": [],
+  "geofence_source": "/geofence",
+  "outside_geofence_s": 0.0,
+  "outside_geofence": [],
+  "drift": {
+   "samples": 2,
+   "mean_m": 0.0018995737753182205,
+   "max_m": 0.003799147550636441,
+   "last_m": 0.003799147550636441
+  },
+  "world_model": {
+   "items": [
+    {
+     "id": "wm_000",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_001",
+     "scene_id": "trash_02",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_002",
+     "scene_id": "trash_05",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_003",
+     "scene_id": "trash_06",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_004",
+     "scene_id": "trash_08",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_005",
+     "scene_id": "trash_04",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_006",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    }
+   ],
+   "coverage": 0.2467948717948718,
+   "duplicates": 0,
+   "duplicate_ids": {}
+  },
+  "wm_ids": {
+   "wm_000": "trash_01",
+   "wm_001": "trash_02",
+   "wm_002": "trash_05",
+   "wm_003": "trash_06",
+   "wm_004": "trash_08",
+   "wm_005": "trash_04",
+   "wm_006": "distractor_02"
+  },
+  "objects_t": 14.51,
+  "objects": {
+   "trash_00": [
+    21.9532,
+    17.4035,
+    0.3366
+   ],
+   "trash_01": [
+    9.9194,
+    14.6697,
+    0.2303
+   ],
+   "trash_02": [
+    14.4032,
+    11.4664,
+    0.0847
+   ],
+   "trash_03": [
+    24.3509,
+    17.3846,
+    0.3397
+   ],
+   "trash_04": [
+    15.1892,
+    11.922,
+    0.1004
+   ],
+   "trash_05": [
+    6.3688,
+    15.0275,
+    0.2388
+   ],
+   "trash_06": [
+    8.5081,
+    16.0899,
+    0.3198
+   ],
+   "trash_07": [
+    22.2422,
+    12.5229,
+    0.1477
+   ],
+   "trash_08": [
+    14.3033,
+    10.7287,
+    0.0716
+   ],
+   "trash_09": [
+    1.485,
+    6.081,
+    0.0675
+   ],
+   "trash_10": [
+    3.571,
+    8.462,
+    0.065
+   ],
+   "trash_11": [
+    1.1038,
+    11.1505,
+    0.091
+   ],
+   "distractor_00": [
+    6.079,
+    13.83,
+    0.2026
+   ],
+   "distractor_01": [
+    2.114,
+    11.685,
+    0.1395
+   ],
+   "distractor_02": [
+    9.176,
+    8.877,
+    0.04
+   ],
+   "distractor_03": [
+    23.651,
+    6.477,
+    0.04
+   ],
+   "distractor_04": [
+    4.806,
+    11.741,
+    0.1227
+   ],
+   "distractor_05": [
+    21.458,
+    17.401,
+    0.326
+   ],
+   "distractor_06": [
+    6.647,
+    12.841,
+    0.1269
+   ],
+   "distractor_07": [
+    8.726,
+    6.729,
+    0.07
+   ]
+  },
+  "objects_robot": [
+   4.622893427632771,
+   16.432585237848123,
+   0.48092885979712396,
+   -0.31594035136760307
+  ]
+ },
+ "infra_attempts": []
+}
