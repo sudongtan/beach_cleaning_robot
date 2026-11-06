@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from task.fsm import COLLECTED, PLACED, SEEN, SKIPPED, Capacity, ItemView, Snapshot, Task
+from task.fsm import COLLECTED, PLACED, SEEN, SKIPPED, Capacity, ItemView, Snapshot, Task, min_planar
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']
@@ -263,6 +263,43 @@ def test_final_approach_gets_the_item_into_reach():
     rx, ry = c * (8.0 - x) + s * (14.5 - y), -s * (8.0 - x) + c * (14.5 - y)
     assert GRASP['reach_x_m'][0] <= rx <= GRASP['reach_x_m'][1] and abs(ry) <= GRASP['reach_y_max_m']
     assert w.cmd == (0.0, 0.0, 0.0)                            # standing still for the pick
+
+
+def test_min_planar_scales_only_slow_nonzero_commands():
+    assert min_planar(0.0, 0.0, 0.08) == (0.0, 0.0)
+    assert min_planar(0.1, 0.0, 0.08) == (0.1, 0.0)
+    assert min_planar(0.02, 0.0, 0.0) == (0.02, 0.0)                     # off
+    vx, vy = min_planar(-0.03, 0.04, 0.08)                               # same direction, norm 0.08
+    assert math.isclose(math.hypot(vx, vy), 0.08) and math.isclose(vy / vx, 0.04 / -0.03) and vx < 0
+
+
+def deadband_world(band):
+    """A walking controller that doesn't move on planar commands slower than `band` (robot_lab)."""
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    real_step = w.step
+
+    def step():
+        vx, vy, wz = w.cmd
+        if math.hypot(vx, vy) < band:
+            w.cmd = (0.0, 0.0, wz)
+        real_step()
+        w.cmd = (vx, vy, wz)
+    w.step = step
+    return w
+
+
+@pytest.mark.parametrize('min_speed, reached', [(0.0, False), (0.08, True)])
+def test_min_speed_gets_a_deadband_controller_into_reach(min_speed, reached):
+    fa = dict(CFG['final_approach'], min_speed_mps=min_speed)
+    w = deadband_world(0.05)
+    t = make(w, PATH, cfg=dict(CFG, final_approach=fa))
+    while t.state != 'PICK' and w.known.get('a', None) is None or (w.known['a'].status == SEEN
+                                                                     and t.state != 'PICK' and w.tick_no < 5000):
+        t.tick(w.snapshot())
+        w.step()
+    assert (t.state == 'PICK') == reached
+    if not reached:
+        assert w.known['a'].skip_reason == 'no_progress'
 
 
 def test_no_progress_times_out():

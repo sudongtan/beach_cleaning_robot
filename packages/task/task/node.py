@@ -148,6 +148,10 @@ class TaskNode(Node):
         run_id = self.declare_parameter('run_id', '').value or datetime.now(timezone.utc).strftime(
             f'%Y%m%dT%H%M%SZ_seed{self.seed}')
         cfg = yaml.safe_load(open(repo / 'config' / 'task.yaml'))['task']
+        locomotion = self.declare_parameter('locomotion', 'legubiao').value
+        fa = cfg['fsm']['final_approach']
+        fa['min_speed_mps'] = fa.get('min_speed_by_locomotion_mps', {}).get(locomotion, 0.0)
+        self.get_logger().info(f"locomotion {locomotion}: own moves at least {fa['min_speed_mps']} m/s (0 = off)")
         grasp = yaml.safe_load(open(repo / 'config' / 'grasping.yaml'))['grasping']
         wmc = yaml.safe_load(open(repo / 'config' / 'world_model.yaml'))['world_model']
         limits = yaml.safe_load(open(repo / 'config' / 'robot_limits.yaml'))['robot_limits']

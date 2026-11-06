@@ -62,7 +62,7 @@ def launch_setup(context):
         Node(package='grasping', executable='grasping', output='screen',
              parameters=[{'repo': repo, 'grasp_mode': cfg['grasp_mode'], **common}]),
         Node(package='task', executable='task', output='screen',
-             parameters=[{**scene, 'run_id': cfg['run_id']}]),
+             parameters=[{**scene, 'run_id': cfg['run_id'], 'locomotion': cfg['locomotion']}]),
     ]
     # all our nodes (and Nav2) take the 100 Hz sim-time clock from sim_bridge_gazebo's clock_throttle
     # instead of the 1 kHz /clock (CPU; decisions 2026-10-31). Empty clock_topic = /clock.
@@ -80,6 +80,8 @@ def generate_launch_description():
         DeclareLaunchArgument('navigation', default_value='nav2'),
         DeclareLaunchArgument('grasp_mode', default_value='attach'),
         DeclareLaunchArgument('run_id', default_value='', description='event log name (default: time + seed)'),
+        DeclareLaunchArgument('locomotion', default_value='legubiao',
+                              description='walking controller (sim.launch.py); the task adapts its small moves'),
         DeclareLaunchArgument('clock_topic', default_value='',
                               description='clock topic for all nodes (sim.launch.py: /sim/clock_throttled)'),
         *args,

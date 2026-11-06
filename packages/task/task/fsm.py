@@ -73,6 +73,15 @@ def wrap(a):
     return math.atan2(math.sin(a), math.cos(a))
 
 
+def min_planar(vx, vy, vmin):
+    """Scale a planar command (vx, vy) that is non-zero but slower than vmin up to vmin, same
+    direction (vmin 0 = off). For walking controllers that don't move on small commands."""
+    v = math.hypot(vx, vy)
+    if v == 0.0 or v >= vmin:
+        return vx, vy
+    return vx * vmin / v, vy * vmin / v
+
+
 def to_robot(robot, x, y):
     """Map point -> robot frame (x forward, y left)."""
     rx, ry, ryaw = robot
@@ -164,6 +173,7 @@ class Task:
         """Command (vx, vy, wz), changed from the last own command by at most final_approach
         max_accel per second (like Nav2's velocity smoother; Nav2's commands are already smoothed)."""
         dt = 0.1 if self.cmd_t is None else min(max(snap.t - self.cmd_t, 0.0), 0.5)
+        vx, vy = min_planar(vx, vy, self.cfg['final_approach'].get('min_speed_mps', 0.0))
         lim = self.cfg['final_approach']['max_accel']
         self.cmd = tuple(c + max(-a * dt, min(a * dt, w - c)) for c, w, a in zip(self.cmd, (vx, vy, wz), lim))
         self.cmd_t = snap.t

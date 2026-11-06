@@ -44,6 +44,12 @@ task:
       # the task's own commands change at most this fast (as Nav2's velocity smoother): a step in
       # the turn rate tips the robot (A2b falls)
       max_accel: [0.3, 0.3, 0.5]     # vx, vy (m/s^2), wz (rad/s^2)
+      # B4: the slowest planar speed of the task's own moves (final approaches, bin step, back-out,
+      # escape): slower non-zero commands are scaled up to it, same direction. Upstream of the safety
+      # supervisor, which still scales and stops them. Per walking controller (locomotion:=), else 0 = off.
+      # robot_lab barely moves below ~0.05 m/s and not at all sideways (its training zeroes planar
+      # commands <= 0.2 m/s; notes/logs/B4.md --tiny); 0.08 tracked as 0.09 in G2 sweep 2.
+      min_speed_by_locomotion_mps: {legubiao_robot_lab: 0.08}
       settle_s: 1.0              # stand still this long before the arm moves
       progress_timeout_s: 10.0   # give up (no_progress) if the distance to the item hasn't shrunk ...
       progress_min_m: 0.05       # ... by this much in progress_timeout_s

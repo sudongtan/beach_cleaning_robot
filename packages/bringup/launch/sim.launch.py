@@ -53,7 +53,8 @@ def launch_setup(context):
         nodes.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('bringup'), 'launch', 'skeleton.launch.py')),
-            launch_arguments={'seed': str(seed), 'run_id': cfg['run_id'], 'clock_topic': CLOCK}.items()))
+            launch_arguments={'seed': str(seed), 'run_id': cfg['run_id'], 'clock_topic': CLOCK,
+                              'locomotion': loco}.items()))
     if cfg['rviz'] == 'true':
         nodes.append(Node(package='rviz2', executable='rviz2', output='log',
                           arguments=['-d', os.path.join(get_package_share_directory('sim_bridge_gazebo'),
