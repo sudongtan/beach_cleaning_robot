@@ -9,7 +9,7 @@ Run it on a stack without the task, e.g. through turn_walk_test.sh:
 
     LOCO=legubiao_rl TOOL=velocity_track_test.py turn_walk_test.sh 101 [--sweep] [--step-s 6]
 
-Default steps: a short mix (walk, turn both ways, walk + turn, sideways). --sweep: slow commands
+--tiny: final-approach sized steps (vx 0.02-0.05, vy 0.02-0.1, both signs). Default steps: a short mix (walk, turn both ways, walk + turn, sideways). --sweep: slow commands
 (vx 0.05-0.25, wz +-0.1 to +-0.5, vy 0.05-0.2), each followed by a stop. The steps walk the robot
 forward a few metres: rows after it has run into something are not about the controller (check
 z and the scene).
@@ -43,6 +43,16 @@ def sweep_steps():
     return steps
 
 
+def tiny_steps():
+    """Final-approach sized commands (task final_approach: gain 0.8 on a few cm of error)."""
+    steps = [(0.0, 0.0, 0.0)]
+    for v in (0.02, 0.03, 0.05, -0.03):
+        steps += [(v, 0.0, 0.0), (0.0, 0.0, 0.0)]
+    for v in (0.02, 0.03, 0.05, 0.1, -0.03, -0.05):
+        steps += [(0.0, v, 0.0), (0.0, 0.0, 0.0)]
+    return steps
+
+
 def window_speed(samples, t, half=0.25):
     """Speed from (t, x, y) samples over [t - half, t + half] (nearest samples); None at the ends."""
     if not samples or t - half < samples[0][0] or t + half > samples[-1][0]:
@@ -70,10 +80,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--sweep', action='store_true', help='slow-command sweep instead of the short mix')
     ap.add_argument('--step-s', type=float, default=6.0, help='sim seconds per step')
+    ap.add_argument('--tiny', action='store_true', help='final-approach sized vx / vy steps')
     ap.add_argument('--brake', action='store_true', help='braking test (B4 G3) instead of steps')
     ap.add_argument('--brake-n', type=int, default=3)
     a, _ = ap.parse_known_args()      # turn_walk_test.sh passes its own args too
-    steps = sweep_steps() if a.sweep else MIX
+    steps = sweep_steps() if a.sweep else tiny_steps() if a.tiny else MIX
     if a.brake:
         steps = [(0.0, 0.0, 0.0)] + [(0.3, 0.0, 0.0), (0.0, 0.0, 0.0)] * a.brake_n
     rclpy.init()
