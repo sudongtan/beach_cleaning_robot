@@ -1,0 +1,95 @@
+{"event": "run_start", "run_id": "b4_robot_lab_s1", "seed": 1, "waypoints": 47, "wall_time": "2026-11-06T11:01:21.478985+00:00", "t": 0.0}
+{"event": "servers_ready", "t": 0.1}
+{"t": 1.6, "event": "target", "item": "wm_001", "x": 6.98, "y": 15.574, "z": 0.167, "robot": [3.969, 14.748, -0.002]}
+{"t": 1.6, "event": "state", "state": "APPROACH", "item": "wm_001"}
+{"t": 25.91, "event": "state", "state": "PICK", "item": "wm_001"}
+{"t": 40.81, "event": "pick", "item": "wm_001", "success": true, "message": "ok"}
+{"t": 40.81, "event": "state", "state": "CLASSIFY", "item": "wm_001"}
+{"t": 41.01, "event": "classify", "item": "wm_001", "material": "residual", "bin": "residual", "confidence": 1.0}
+{"t": 41.01, "event": "state", "state": "STORE", "item": "wm_001"}
+{"t": 56.31, "event": "store", "item": "wm_001", "bin": "residual", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_001", "status": 1, "ok": true, "material": "residual", "bin": "residual", "reason": "", "t": 56.31}
+{"t": 56.31, "event": "state", "state": "SEARCH", "item": ""}
+{"t": 56.41, "event": "target", "item": "wm_000", "x": 8.474, "y": 12.789, "z": 0.122, "robot": [6.502, 15.392, 0.409]}
+{"t": 56.41, "event": "state", "state": "APPROACH", "item": "wm_000"}
+{"t": 74.31, "event": "state", "state": "PICK", "item": "wm_000"}
+{"t": 89.41, "event": "pick", "item": "wm_000", "success": true, "message": "ok"}
+{"t": 89.41, "event": "state", "state": "CLASSIFY", "item": "wm_000"}
+{"t": 89.61, "event": "classify", "item": "wm_000", "material": "metal", "bin": "recyclable", "confidence": 1.0}
+{"t": 89.61, "event": "state", "state": "STORE", "item": "wm_000"}
+{"t": 105.2, "event": "store", "item": "wm_000", "bin": "recyclable", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_000", "status": 1, "ok": true, "material": "metal", "bin": "recyclable", "reason": "", "t": 105.2}
+{"t": 105.2, "event": "state", "state": "SEARCH", "item": ""}
+{"t": 105.3, "event": "target", "item": "wm_005", "x": 7.492, "y": 6.692, "z": 0.065, "robot": [8.103, 13.13, -0.65]}
+{"t": 105.3, "event": "state", "state": "APPROACH", "item": "wm_005"}
+{"t": 150.1, "event": "state", "state": "PICK", "item": "wm_005"}
+{"t": 165.21, "event": "pick", "item": "wm_005", "success": true, "message": "ok"}
+{"t": 165.21, "event": "state", "state": "CLASSIFY", "item": "wm_005"}
+{"t": 165.41, "event": "classify", "item": "wm_005", "material": "residual", "bin": "residual", "confidence": 1.0}
+{"t": 165.41, "event": "state", "state": "STORE", "item": "wm_005"}
+{"t": 180.9, "event": "store", "item": "wm_005", "bin": "residual", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_005", "status": 1, "ok": true, "material": "residual", "bin": "residual", "reason": "", "t": 180.9}
+{"t": 180.9, "event": "state", "state": "SEARCH", "item": ""}
+{"t": 181.0, "event": "target", "item": "wm_003", "x": 10.467, "y": 4.411, "z": 0.067, "robot": [7.654, 7.149, -1.965]}
+{"t": 181.0, "event": "state", "state": "APPROACH", "item": "wm_003"}
+{"t": 206.61, "event": "state", "state": "PICK", "item": "wm_003"}
+{"t": 222.2, "event": "pick", "item": "wm_003", "success": true, "message": "ok"}
+{"t": 222.2, "event": "state", "state": "CLASSIFY", "item": "wm_003"}
+{"t": 222.4, "event": "classify", "item": "wm_003", "material": "pet", "bin": "recyclable", "confidence": 1.0}
+{"t": 222.4, "event": "state", "state": "STORE", "item": "wm_003"}
+{"t": 237.9, "event": "store", "item": "wm_003", "bin": "recyclable", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_003", "status": 1, "ok": true, "material": "pet", "bin": "recyclable", "reason": "", "t": 237.9}
+{"t": 237.9, "event": "state", "state": "SEARCH", "item": ""}
+{"t": 238.0, "event": "target", "item": "wm_002", "x": 12.798, "y": 6.168, "z": 0.072, "robot": [10.108, 4.763, -0.679]}
+{"t": 238.0, "event": "state", "state": "APPROACH", "item": "wm_002"}
+{"t": 238.1, "event": "escape", "robot": [10.108, 4.763, -0.681], "trail": 7}
+{"t": 238.4, "event": "escape_done", "turn_free": true, "clear": true, "moved_m": 0.008, "stage": 0, "robot": [10.105, 4.769, -0.714]}
+{"t": 260.81, "event": "state", "state": "PICK", "item": "wm_002"}
+{"t": 275.8, "event": "pick", "item": "wm_002", "success": true, "message": "ok"}
+{"t": 275.8, "event": "state", "state": "CLASSIFY", "item": "wm_002"}
+{"t": 276.0, "event": "classify", "item": "wm_002", "material": "metal", "bin": "recyclable", "confidence": 1.0}
+{"t": 276.0, "event": "state", "state": "STORE", "item": "wm_002"}
+{"t": 276.2, "event": "store", "item": "wm_002", "bin": "recyclable", "success": false, "message": "compartment_full (pile 0.237)"}
+{"t": 276.2, "event": "state", "state": "PUT_BACK", "item": "wm_002"}
+{"t": 292.61, "event": "state", "state": "GO_TO_BIN", "item": ""}
+{"t": 350.8, "event": "state", "state": "PLACE", "item": ""}
+{"t": 377.11, "event": "place", "item": "wm_000", "bin": "recyclable", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_000", "status": 2, "ok": true, "material": "", "bin": "recyclable", "reason": "", "t": 377.11}
+{"t": 377.31, "event": "place", "item": "wm_003", "bin": "recyclable", "success": true, "message": "already_in_bin"}
+{"event": "update", "item": "wm_003", "status": 2, "ok": true, "material": "", "bin": "recyclable", "reason": "", "t": 377.31}
+{"t": 377.41, "event": "bin_step", "from": "recyclable", "to": "residual", "robot": [2.384, 14.074, 3.099]}
+{"t": 377.41, "event": "state", "state": "PLACE", "item": ""}
+{"t": 388.61, "event": "bin_step_failed", "to": "residual", "robot": [2.328, 14.146, 3.141]}
+{"t": 388.61, "event": "state", "state": "PLACE", "item": ""}
+{"t": 408.61, "event": "state", "state": "GO_TO_BIN", "item": ""}
+{"t": 433.4, "event": "state", "state": "PLACE", "item": ""}
+{"t": 459.5, "event": "place", "item": "wm_001", "bin": "residual", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_001", "status": 2, "ok": true, "material": "", "bin": "residual", "reason": "", "t": 459.5}
+{"t": 485.8, "event": "place", "item": "wm_005", "bin": "residual", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_005", "status": 2, "ok": true, "material": "", "bin": "residual", "reason": "", "t": 485.8}
+{"t": 485.91, "event": "state", "state": "PLACE", "item": ""}
+{"t": 506.01, "event": "state", "state": "GO_TO_BIN", "item": ""}
+{"t": 506.11, "event": "state", "state": "SEARCH", "item": ""}
+{"t": 506.21, "event": "target", "item": "wm_002", "x": 12.798, "y": 6.168, "z": 0.072, "robot": [2.528, 15.029, 2.72]}
+{"t": 506.21, "event": "state", "state": "APPROACH", "item": "wm_002"}
+{"t": 506.31, "event": "escape", "robot": [2.514, 15.033, 2.736], "trail": 6}
+{"t": 507.41, "event": "escape_done", "turn_free": true, "clear": true, "moved_m": 0.051, "stage": 0, "robot": [2.518, 15.049, 2.546]}
+{"t": 578.3, "event": "state", "state": "PICK", "item": "wm_002"}
+{"t": 601.91, "event": "pick", "item": "wm_002", "success": true, "message": "ok"}
+{"t": 601.91, "event": "state", "state": "CLASSIFY", "item": "wm_002"}
+{"t": 602.11, "event": "classify", "item": "wm_002", "material": "metal", "bin": "recyclable", "confidence": 1.0}
+{"t": 602.11, "event": "state", "state": "STORE", "item": "wm_002"}
+{"t": 617.91, "event": "store", "item": "wm_002", "bin": "recyclable", "success": true, "message": "ok"}
+{"event": "update", "item": "wm_002", "status": 1, "ok": true, "material": "metal", "bin": "recyclable", "reason": "", "t": 617.91}
+{"t": 617.91, "event": "state", "state": "SEARCH", "item": ""}
+{"t": 618.01, "event": "target", "item": "wm_004", "x": 13.706, "y": 6.918, "z": 0.067, "robot": [12.34, 6.37, -0.375]}
+{"t": 618.01, "event": "state", "state": "APPROACH", "item": "wm_004"}
+{"t": 632.51, "event": "state", "state": "PICK", "item": "wm_004"}
+{"t": 648.11, "event": "pick", "item": "wm_004", "success": true, "message": "ok"}
+{"t": 648.11, "event": "state", "state": "CLASSIFY", "item": "wm_004"}
+{"t": 648.31, "event": "classify", "item": "wm_004", "material": "pet", "bin": "recyclable", "confidence": 1.0}
+{"t": 648.31, "event": "state", "state": "STORE", "item": "wm_004"}
+{"t": 648.51, "event": "store", "item": "wm_004", "bin": "recyclable", "success": false, "message": "compartment_full (pile 0.183)"}
+{"t": 648.51, "event": "state", "state": "PUT_BACK", "item": "wm_004"}
+{"t": 669.8, "event": "state", "state": "GO_TO_BIN", "item": ""}
+{"t": 669.9, "event": "escape", "robot": [13.257, 6.683, 0.539], "trail": 7}
