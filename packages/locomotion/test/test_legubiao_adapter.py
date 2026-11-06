@@ -1,6 +1,6 @@
 import math
 
-from locomotion.legubiao_adapter import clamp, rotate_to_body, sticks, tilt_deg, yaw_trim_step
+from locomotion.legubiao_adapter import clamp, rotate_to_body, sticks, tilt_deg, yaw_trim_step, map_speed
 
 
 def test_rotate_identity():
@@ -55,3 +55,13 @@ def test_yaw_trim_cancels_a_constant_bias():
             meas = 0.15 + 0.73 * (wz + trim)
             trim = yaw_trim_step(trim, wz, meas, dt, 1.0, 0.4)
         assert abs(0.15 + 0.73 * (wz + trim) - wz) < 0.01
+
+
+def test_map_speed():
+    tin, tout = [0.0, 0.02, 0.10, 0.25], [0.0, 0.08, 0.15, 0.25]
+    assert map_speed(0.0, tin, tout) == 0.0
+    assert math.isclose(map_speed(0.01, tin, tout), 0.04)
+    assert math.isclose(map_speed(0.10, tin, tout), 0.15)
+    assert math.isclose(map_speed(-0.06, tin, tout), -0.115)
+    assert map_speed(0.3, tin, tout) == 0.3          # beyond the table: unchanged
+    assert map_speed(0.07, [], []) == 0.07           # off

@@ -13,6 +13,10 @@ Default steps: a short mix (walk, turn both ways, walk + turn, sideways). --swee
 (vx 0.05-0.25, wz +-0.1 to +-0.5, vy 0.05-0.2), each followed by a stop. The steps walk the robot
 forward a few metres: rows after it has run into something are not about the controller (check
 z and the scene).
+
+--brake (B4 gate G3): --brake-n times walk at 0.3 m/s for --step-s, then command zero for --step-s.
+Speed = ground-truth distance over 0.5 s windows centred on each sample (as in A3); deceleration =
+(speed at the zero command - 0.05) / time until the speed is <= 0.05 m/s.
 """
 import argparse
 import math
@@ -39,12 +43,39 @@ def sweep_steps():
     return steps
 
 
+def window_speed(samples, t, half=0.25):
+    """Speed from (t, x, y) samples over [t - half, t + half] (nearest samples); None at the ends."""
+    if not samples or t - half < samples[0][0] or t + half > samples[-1][0]:
+        return None
+    a = min(samples, key=lambda s: abs(s[0] - (t - half)))
+    b = min(samples, key=lambda s: abs(s[0] - (t + half)))
+    return math.hypot(b[1] - a[1], b[2] - a[2]) / (b[0] - a[0]) if b[0] > a[0] else None
+
+
+def braking(samples, t_zero, stopped=0.05):
+    """(speed at t_zero, seconds until the windowed speed is <= stopped, deceleration) or None."""
+    v0 = window_speed(samples, t_zero)
+    if v0 is None:
+        return None
+    for t, _, _ in samples:
+        if t >= t_zero:
+            v = window_speed(samples, t)
+            if v is not None and v <= stopped:
+                dt = t - t_zero
+                return v0, dt, (v0 - stopped) / dt if dt > 0 else float('inf')
+    return v0, None, 0.0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--sweep', action='store_true', help='slow-command sweep instead of the short mix')
     ap.add_argument('--step-s', type=float, default=6.0, help='sim seconds per step')
+    ap.add_argument('--brake', action='store_true', help='braking test (B4 G3) instead of steps')
+    ap.add_argument('--brake-n', type=int, default=3)
     a, _ = ap.parse_known_args()      # turn_walk_test.sh passes its own args too
     steps = sweep_steps() if a.sweep else MIX
+    if a.brake:
+        steps = [(0.0, 0.0, 0.0)] + [(0.3, 0.0, 0.0), (0.0, 0.0, 0.0)] * a.brake_n
     rclpy.init()
     n = Node('velocity_track_test', parameter_overrides=[Parameter('use_sim_time', value=True)])
     st = {'p': None, 'out': Twist()}
@@ -65,14 +96,19 @@ def main():
     while st['p'] is None:
         rclpy.spin_once(n, timeout_sec=0.1)
     max_tilt = 0.0
+    samples, zeros, prev = [], [], None
     for vx, vy, wz in steps:
         t0, mid = now(), None
+        if a.brake and prev is not None and prev[0] > 0.0 and vx == 0.0:
+            zeros.append(t0)
+        prev = (vx, vy, wz)
         while now() - t0 < a.step_s:
             c = Twist()
             c.linear.x, c.linear.y, c.angular.z = float(vx), float(vy), float(wz)
             pub.publish(c)
             rclpy.spin_once(n, timeout_sec=0.02)
             x, y, yaw, tilt, _ = pose()
+            samples.append((now(), x, y))
             max_tilt = max(max_tilt, tilt)
             if mid is None and now() - t0 >= a.step_s / 2:
                 mid = (now(), x, y, yaw)
@@ -89,6 +125,18 @@ def main():
         o = st['out']
         print(f'cmd ({vx:+.2f},{vy:+.2f},{wz:+.2f})  passed ({o.linear.x:+.2f},{o.linear.y:+.2f},{o.angular.z:+.2f})  '
               f'meas ({bx:+.2f},{by:+.2f},{bw:+.2f})  z {z:.3f} tilt {tilt:.1f}', flush=True)
+    if a.brake:
+        decels = []
+        for tz in zeros:
+            b = braking(samples, tz)
+            if b is None:
+                continue
+            decels.append(b[2])
+            print(f'brake at t {tz:.1f}: v0 {b[0]:.3f} m/s, '
+                  f'{"never stopped" if b[1] is None else f"<= 0.05 after {b[1]:.2f} s"}, decel {b[2]:.3f} m/s^2',
+                  flush=True)
+        print(f'RESULT fell=False max_tilt={max_tilt:.1f} min_decel={min(decels, default=0.0):.3f}', flush=True)
+        return
     print(f'RESULT fell=False max_tilt={max_tilt:.1f}', flush=True)
 
 

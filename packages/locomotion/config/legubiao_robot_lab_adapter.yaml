@@ -27,3 +27,8 @@
     # drift"): integral yaw-rate trim from the IMU gyro
     yaw_trim_ki: 1.0         # 1/s
     yaw_trim_max: 0.4        # rad/s
+    # forward deadband: the policy walks 0.10 m/s commands at 0.03 (B4 G2 sweep, scene 101:
+    # command -> measured 0.05 -> 0.00, 0.08 -> 0.02, 0.10 -> 0.03, 0.15 -> 0.10, 0.20 -> 0.19,
+    # 0.25 -> 0.26); wanted speed -> command, the inverse of that curve
+    vx_map_in: [0.0, 0.02, 0.03, 0.10, 0.19, 0.25]
+    vx_map_out: [0.0, 0.08, 0.10, 0.15, 0.20, 0.25]

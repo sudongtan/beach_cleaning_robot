@@ -24,6 +24,11 @@ Yaw trim (`yaw_trim_ki` > 0, needs `state_source: imu`): the robot_lab policy tu
 (commanded - measured yaw rate, IMU gyro z) to the yaw command, limited to +-`yaw_trim_max`.
 Off (0) by default.
 
+Forward speed map (`vx_map_in` -> `vx_map_out`, both empty = off): the robot_lab policy walks
+0.10 m/s commands at 0.03 and 0.05 at 0 (B4 G2 sweep), so the adapter sends the command that the
+measured sweep says gives the wanted speed: piecewise linear, odd (same for backwards), unchanged
+beyond the table's last point. Zero stays zero.
+
 The controller publishes its twist in the odom frame; /leg_odom carries it in base_link
 (nav_msgs/Odometry convention). Simulator-agnostic: talks to the controller over ROS only.
 """
@@ -54,6 +59,19 @@ def sticks(vx, vy, wz, max_v, limit=1.0):
 def yaw_trim_step(trim, wz_cmd, wz_meas, dt, ki, limit):
     """One integrator step of the yaw trim: trim += ki * (wz_cmd - wz_meas) * dt, kept in +-limit."""
     return clamp(trim + ki * (wz_cmd - wz_meas) * dt, -limit, limit)
+
+
+def map_speed(v, table_in, table_out):
+    """Piecewise-linear map of |v| through (table_in -> table_out), sign kept; v unchanged
+    beyond the last point or without a table."""
+    a = abs(v)
+    if not table_in or a >= table_in[-1]:
+        return v
+    for i in range(1, len(table_in)):
+        if a <= table_in[i]:
+            f = (a - table_in[i - 1]) / (table_in[i] - table_in[i - 1])
+            return math.copysign(table_out[i - 1] + f * (table_out[i] - table_out[i - 1]), v)
+    return v
 
 
 def tilt_deg(q):
@@ -95,6 +113,12 @@ class LegubiaoAdapter(Node):
         self.state_source = p('state_source', 'controller_odom').value   # controller_odom | imu
         self.yaw_trim_ki = p('yaw_trim_ki', 0.0).value       # 1/s; 0 = off
         self.yaw_trim_max = p('yaw_trim_max', 0.4).value     # rad/s
+        self.vx_map_in = list(p('vx_map_in', [0.0]).value)    # wanted m/s, increasing, from 0
+        self.vx_map_out = list(p('vx_map_out', [0.0]).value)  # command m/s for each
+        if len(self.vx_map_in) != len(self.vx_map_out):
+            raise ValueError('vx_map_in and vx_map_out differ in length')
+        if len(self.vx_map_in) < 2:
+            self.vx_map_in = self.vx_map_out = []
         self.yaw_trim = 0.0
         self.gyro_z = 0.0
         self.trim_time = None
@@ -197,6 +221,7 @@ class LegubiaoAdapter(Node):
         vx = vy = wz = 0.0
         if self.cmd_time is not None and now - self.cmd_time <= self.cmd_timeout:
             vx, vy, wz = self.cmd.linear.x, self.cmd.linear.y, self.cmd.angular.z
+        vx = map_speed(vx, self.vx_map_in, self.vx_map_out)
         if self.yaw_trim_ki > 0.0:
             if self.trim_time is not None:
                 self.yaw_trim = yaw_trim_step(self.yaw_trim, wz, self.gyro_z, now - self.trim_time,
