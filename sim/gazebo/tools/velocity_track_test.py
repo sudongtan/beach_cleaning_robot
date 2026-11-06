@@ -65,6 +65,18 @@ def tiny_yaw_steps():
     return steps
 
 
+def calib_steps():
+    """Raw backward / sideways commands 0.10-0.30 m/s for the adapter's maps. Backward goes through
+    the robot_lab adapter's odd vx map, so these are the wanted speeds it maps to raw -0.10, -0.15,
+    -0.20, -0.25, -0.30 (its table points); vy is unmapped. Sideways in +/- pairs to stay in place."""
+    steps = [(0.0, 0.0, 0.0)]
+    for v in (-0.03, -0.10, -0.19, -0.25, -0.30):
+        steps += [(v, 0.0, 0.0), (0.0, 0.0, 0.0), (-v, 0.0, 0.0), (0.0, 0.0, 0.0)]
+    for v in (0.10, 0.15, 0.20, 0.25, 0.30):
+        steps += [(0.0, v, 0.0), (0.0, 0.0, 0.0), (0.0, -v, 0.0), (0.0, 0.0, 0.0)]
+    return steps
+
+
 def window_speed(samples, t, half=0.25):
     """Speed from (t, x, y) samples over [t - half, t + half] (nearest samples); None at the ends."""
     if not samples or t - half < samples[0][0] or t + half > samples[-1][0]:
@@ -94,10 +106,14 @@ def main():
     ap.add_argument('--step-s', type=float, default=6.0, help='sim seconds per step')
     ap.add_argument('--tiny', action='store_true', help='final-approach sized vx / vy steps')
     ap.add_argument('--tiny-yaw', action='store_true', help='escape-waypoint sized yaw steps')
+    ap.add_argument('--calib', action='store_true', help='raw backward / sideways 0.10-0.30 for the adapter maps')
+    ap.add_argument('--steps', help='own steps "vx,vy,wz;vx,vy,wz;..." (wanted, before the adapter)')
     ap.add_argument('--brake', action='store_true', help='braking test (B4 G3) instead of steps')
     ap.add_argument('--brake-n', type=int, default=3)
     a, _ = ap.parse_known_args()      # turn_walk_test.sh passes its own args too
-    steps = sweep_steps() if a.sweep else tiny_steps() if a.tiny else tiny_yaw_steps() if a.tiny_yaw else MIX
+    steps = sweep_steps() if a.sweep else tiny_steps() if a.tiny else tiny_yaw_steps() if a.tiny_yaw else calib_steps() if a.calib else MIX
+    if a.steps:
+        steps = [tuple(float(v) for v in st.split(',')) for st in a.steps.split(';')]
     if a.brake:
         steps = [(0.0, 0.0, 0.0)] + [(0.3, 0.0, 0.0), (0.0, 0.0, 0.0)] * a.brake_n
     rclpy.init()

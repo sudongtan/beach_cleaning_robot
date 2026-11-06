@@ -32,3 +32,18 @@
     # 0.25 -> 0.26); wanted speed -> command, the inverse of that curve
     vx_map_in: [0.0, 0.02, 0.03, 0.10, 0.19, 0.25]
     vx_map_out: [0.0, 0.08, 0.10, 0.15, 0.20, 0.25]
+    # backward / sideways deadbands, measured on scene 101 away from the geofence, points the
+    # supervisor slowed (person) dropped (B4 log, "Backward / sideways calibration"):
+    # backward -0.15 -> -0.01, -0.19 -> -0.10, -0.25 -> -0.135, -0.30 -> -0.21, -0.35 -> -0.26;
+    # left 0.15 -> 0.04, 0.18 -> 0.08 / 0 (twice), 0.20 -> 0.11; right 0.15 -> 0, 0.18 -> 0.07,
+    # 0.20 -> 0.085 / 0, 0.25 -> 0.125. Robot_lab was trained to stand at planar commands with norm
+    # <= 0.2 (UniformThresholdVelocityCommand) and 0.15-0.19 is a cliff, so any wanted speed from
+    # 0.05 gets at least 0.21: it can't walk slower than ~0.1 m/s backward or sideways. Beyond the
+    # last point: last offset (+0.09 back, +0.10 left, unmeasured beyond). The task's own moves stay
+    # <= 0.15 back, <= 0.10 sideways; the Nav2 controller (RPP) sends no vy and doesn't reverse.
+    vx_back_map_in: [0.0, 0.05, 0.135, 0.21, 0.26]
+    vx_back_map_out: [0.0, 0.21, 0.25, 0.30, 0.35]
+    vy_map_in: [0.0, 0.05, 0.12]
+    vy_map_out: [0.0, 0.21, 0.22]
+    vy_neg_map_in: [0.0, 0.05, 0.10, 0.125]
+    vy_neg_map_out: [0.0, 0.21, 0.22, 0.25]

@@ -97,10 +97,22 @@ class Escape:
     def __init__(self, task, goal, start):
         self.task, self.goal, self.inner = task, goal, None
         self.last, self.travelled, self.stage = tuple(start), 0.0, 0     # 0 trail, 1 straight, 2 turn, 3 back
+        self.target, self.best, self.since = None, None, 0.0    # progress towards the current trail pose
 
     def track(self, robot):
         self.travelled += math.dist(self.last[:2], robot[:2])
         self.last = tuple(robot)
+
+    def stalled(self, target, dist, heading_err, t, cfg):
+        """No progress towards target (distance by progress_min_m or heading by progress_min_rad) for
+        progress_timeout_s; a new target restarts the clock."""
+        if target != self.target or self.best is None:
+            self.target, self.best, self.since = target, (dist, heading_err), t
+            return False
+        if dist < self.best[0] - cfg['progress_min_m'] or heading_err < self.best[1] - cfg['progress_min_rad']:
+            self.best, self.since = (min(dist, self.best[0]), min(heading_err, self.best[1])), t
+            return False
+        return t - self.since > cfg['progress_timeout_s']
 
     def done(self):
         return self.inner is not None and self.inner.done()
@@ -148,6 +160,7 @@ class Task:
     best_dist: float = None                      # final approach: closest distance so far ...
     best_since: float = 0.0                      # ... and since when
     trail: list = field(default_factory=list)    # own moves since the last Nav2 goal: robot poses
+    bin_approach_fails: int = 0                  # bin final approaches without progress in a row
 
     # --- helpers ------------------------------------------------------------------------
     def go(self, state, snap, item=None, sub=''):
@@ -268,7 +281,7 @@ class Task:
         e, fa, ec = self.pending, self.cfg['final_approach'], self.cfg['escape']
         if not snap.safety_ok:
             self.stop()
-            self.best_since = snap.t
+            self.best_since = e.since = snap.t
             return
         e.track(snap.robot)
         free = self.turn_free(snap.robot)
@@ -289,9 +302,14 @@ class Task:
             if not self.trail and e.stage == 2 and not self.outline_clear(snap.robot):
                 e.stage = 3
                 self.trail.append((x - ec['back_m'] * math.cos(yaw), y - ec['back_m'] * math.sin(yaw), yaw))
-        if free or not self.trail or e.travelled > ec['max_m']:
+        stalled = False
+        if not free and self.trail:
+            tx, ty, tyaw = self.trail[-1]
+            stalled = e.stalled(self.trail[-1], math.dist((tx, ty), snap.robot[:2]),
+                                abs(wrap(tyaw - snap.robot[2])), snap.t, {**fa, **ec})
+        if free or not self.trail or e.travelled > ec['max_m'] or stalled:
             self.stop()
-            self.io.log({'t': round(snap.t, 2), 'event': 'escape_done', 'turn_free': free,
+            self.io.log({'t': round(snap.t, 2), 'event': 'escape_done', 'turn_free': free, 'stalled': stalled,
                          'clear': self.outline_clear(snap.robot), 'moved_m': round(e.travelled, 3),
                          'stage': e.stage, 'robot': [round(v, 3) for v in snap.robot]})
             self.trail = []
@@ -536,7 +554,7 @@ class Task:
             self.pending, r = None, False
         if r is True:
             self.nav_fails = 0
-            self.sub = 'final'
+            self.sub, self.best_dist = 'final', None
         elif r is False:
             self.nav_fails += 1
             self.io.log({'t': round(snap.t, 2), 'event': 'bin_nav_failed', 'bin': self.at_bin})
@@ -558,9 +576,26 @@ class Task:
             if self.settle_since is None:
                 self.settle_since = snap.t
             if snap.t - self.settle_since >= fa['settle_s']:
-                self.settle_since = None
+                self.settle_since, self.best_dist, self.bin_approach_fails = None, None, 0
                 self.go('PLACE', snap)
             return
+        # no progress (a controller that doesn't make the small move): Nav2 to the standoff again,
+        # after nav_retries leave this bin's items in the basket
+        dist = math.hypot(err, y)
+        if self.best_dist is None or dist < self.best_dist - fa['progress_min_m']:
+            self.best_dist, self.best_since = dist, snap.t
+        elif snap.t - self.best_since > fa['progress_timeout_s']:
+            self.stop()
+            self.best_dist, self.settle_since = None, None
+            self.bin_approach_fails += 1
+            self.io.log({'t': round(snap.t, 2), 'event': 'bin_approach_failed', 'bin': self.at_bin,
+                         'robot': [round(v, 3) for v in snap.robot]})
+            if self.bin_approach_fails > self.cfg['nav_retries']:
+                stuck = [i for b, i in self.unload if b == self.at_bin]
+                self.stuck.update(stuck)
+                self.io.log({'t': round(snap.t, 2), 'event': 'left_in_basket', 'items': stuck})
+                self.bin_approach_fails = 0
+            return self.go('GO_TO_BIN', snap)
         self.settle_since = None
         clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
         self.move(snap, clip(fa['gain'] * err, fa['max_vx']), clip(fa['gain'] * y, fa['max_vy']),

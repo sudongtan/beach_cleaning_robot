@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from task.fsm import COLLECTED, PLACED, SEEN, SKIPPED, Capacity, ItemView, Snapshot, Task, min_planar
+from task.fsm import COLLECTED, PLACED, SEEN, SKIPPED, Capacity, Escape, ItemView, Snapshot, Task, min_planar
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']
@@ -767,3 +767,56 @@ def test_escape_leaves_a_pocket_too_narrow_to_turn_in():
     assert done and done[0]['turn_free'] and done[0]['stage'] == 1 and starts and starts[0]
     esc = done[0]['robot']
     assert abs(esc[1] - 8.64) < 0.2 and abs(esc[0] - 22.56) > 0.2                  # moved along the strip
+
+
+def freeze_planar(w, when):
+    """The walking controller ignores every planar command while when() (robot_lab on small
+    backward / sideways moves, B4); turning still works."""
+    real_step = w.step
+
+    def step():
+        vx, vy, wz = w.cmd
+        if when():
+            w.cmd = (0.0, 0.0, wz)
+        real_step()
+        w.cmd = (vx, vy, wz)
+    w.step = step
+
+
+def test_escape_ends_when_the_controller_does_not_move():
+    """b4_robot_lab s0, s1: an escape step the controller didn't make stalled the run for > 200 s.
+    Now the escape ends after progress_timeout_s without progress and Nav2 tries anyway."""
+    w, t, starts = escape_run()
+    freeze_planar(w, lambda: any(r['event'] == 'escape' for r in w.log_records))
+    run(t, w)
+    done = [r for r in w.log_records if r['event'] == 'escape_done']
+    esc = [r for r in w.log_records if r['event'] == 'escape']
+    assert done and done[0]['stalled'] and not done[0]['turn_free']
+    assert done[0]['t'] - esc[0]['t'] <= CFG['final_approach']['progress_timeout_s'] + 2.0
+    assert t.state == 'DONE'
+
+
+def test_escape_turning_on_the_spot_is_progress():
+    w, t, _ = escape_run()
+    e = Escape(t, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+    cfg = {**CFG['final_approach'], **CFG['escape']}
+    target, dt = (0.0, 0.0, 1.5), cfg['progress_timeout_s'] / 2
+    assert not e.stalled(target, 0.0, 1.5, 0.0, cfg)
+    assert not e.stalled(target, 0.0, 1.0, dt, cfg)                # turning
+    assert not e.stalled(target, 0.0, 0.5, 2 * dt + 0.1, cfg)
+    assert not e.stalled(target, 0.0, 0.5, 4 * dt, cfg)           # < progress_timeout_s since the last turn
+    assert e.stalled(target, 0.0, 0.5, 4 * dt + 0.2, cfg)         # stopped turning
+
+
+def test_bin_approach_without_progress_renavigates_then_leaves_the_items():
+    """b4_robot_lab s2: the bin's final approach never converged and had no timeout (stall). Now each
+    attempt ends after progress_timeout_s, Nav2 walks to the standoff again, and after nav_retries
+    the bin's items stay in the basket; the run still finishes."""
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    t = make(w, PATH)
+    freeze_planar(w, lambda: t.state == 'GO_TO_BIN' and t.sub == 'final')
+    run(t, w)
+    fails = [r for r in w.log_records if r['event'] == 'bin_approach_failed']
+    assert len(fails) == CFG['nav_retries'] + 1
+    assert any(r['event'] == 'left_in_basket' and r['items'] == ['a'] for r in w.log_records)
+    assert t.state == 'DONE'

@@ -1,6 +1,8 @@
 import math
 
-from locomotion.legubiao_adapter import clamp, rotate_to_body, sticks, tilt_deg, yaw_trim_step, map_speed
+import pytest
+
+from locomotion.legubiao_adapter import clamp, rotate_to_body, sticks, tilt_deg, yaw_trim_step, map_speed, speed_map, map_planar
 
 
 def test_rotate_identity():
@@ -63,5 +65,29 @@ def test_map_speed():
     assert math.isclose(map_speed(0.01, tin, tout), 0.04)
     assert math.isclose(map_speed(0.10, tin, tout), 0.15)
     assert math.isclose(map_speed(-0.06, tin, tout), -0.115)
-    assert map_speed(0.3, tin, tout) == 0.3          # beyond the table: unchanged
+    assert math.isclose(map_speed(0.3, tin, tout), 0.3)   # beyond the table: last offset, here 0
+    assert math.isclose(map_speed(-0.3, [0.0, 0.1], [0.0, 0.2]), -0.4)   # last offset +0.1 kept
     assert map_speed(0.07, [], []) == 0.07           # off
+
+
+def test_speed_map():
+    assert speed_map([0.0, 0.1], [0.0, 0.2], 'vy_map') == ([0.0, 0.1], [0.0, 0.2])
+    assert speed_map([0.0], [0.0], 'vy_map') == ([], [])       # parameter default: off
+    with pytest.raises(ValueError):
+        speed_map([0.0, 0.1], [0.0], 'vy_map')
+
+
+def test_map_planar():
+    off = ([], [])
+    m = {'vx_map': ([0.0, 0.1, 0.25], [0.0, 0.15, 0.25]), 'vx_back_map': ([0.0, 0.05, 0.1], [0.0, 0.21, 0.25]),
+         'vy_map': ([0.0, 0.05], [0.0, 0.21]), 'vy_neg_map': off}
+    assert map_planar(0.0, 0.0, m) == (0.0, 0.0)
+    assert map_planar(0.2, 0.05, {k: off for k in m}) == (0.2, 0.05)           # all off
+    assert all(math.isclose(a, b) for a, b in zip(map_planar(-0.05, 0.0, m), (-0.21, 0.0)))
+    vx, vy = map_planar(0.0, -0.05, m)                         # right falls back to left
+    assert math.isclose(vx, 0.0, abs_tol=1e-12) and math.isclose(vy, -0.21)
+    vx, vy = map_planar(-0.05, 0.05, m)                        # diagonal: both maps, direction kept
+    assert math.isclose(vx, -vy) and math.hypot(vx, vy) > 0.21
+    # walking forward fast, a small sideways correction is not lifted
+    vx, vy = map_planar(0.3, 0.03, m)
+    assert math.isclose(vy / vx, 0.1) and math.hypot(vx, vy) < 1.02 * math.hypot(0.3, 0.03)
