@@ -1,6 +1,7 @@
 """Task state machine against a fake world (no ROS): full runs, distractors, grasp retries,
 unreachable items, safety pauses, a full basket, low confidence, failed placing, timeouts."""
 
+import dataclasses
 import math
 from pathlib import Path
 
@@ -300,6 +301,43 @@ def test_min_speed_gets_a_deadband_controller_into_reach(min_speed, reached):
     assert (t.state == 'PICK') == reached
     if not reached:
         assert w.known['a'].skip_reason == 'no_progress'
+
+
+def sway_world(amp, period=0.8):
+    """The trunk sways `amp` along its heading while the feet stand (robot_lab at zero command, B4)."""
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    real_snapshot = w.snapshot
+
+    def snapshot():
+        snap = real_snapshot()
+        x, y, yaw = snap.robot
+        d = amp * math.sin(2 * math.pi * w.t / period)
+        return dataclasses.replace(snap, robot=(x + d * math.cos(yaw), y + d * math.sin(yaw), yaw))
+    w.snapshot = snapshot
+    return w
+
+
+def test_a_swaying_body_settles_on_the_mean_error():
+    w = sway_world(0.04)                    # instantaneous error leaves the 0.03 window every period
+    t = make(w, PATH)
+    while t.state != 'PICK' and ('a' not in w.known or w.known['a'].status == SEEN) and w.tick_no < 5000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.state == 'PICK'
+
+
+def test_settle_accepts_only_a_mean_error_inside_the_band():
+    fa = CFG['final_approach']
+    t = make(FakeWorld({}, {}), PATH)
+    snap = lambda s: Snapshot(s, (0.0, 0.0, 0.0), {}, {}, 0.0, True)       # noqa: E731
+    assert t.settle(snap(0.0), 0.04, 0.0, 0.03, 0.03) is None                 # outside: move
+    ticks = int(fa['settle_s'] / DT) + 1
+    for k in range(ticks):                                                  # entered, then drifted away
+        r = t.settle(snap(k * DT), 0.03 if k == 0 else 0.03 + fa['settle_band_m'] + 0.02, 0.0, 0.03, 0.03)
+    assert r is None and t.settle_since is None
+    for k in range(ticks):                                                  # sways 0.01-0.05: mean 0.03
+        r = t.settle(snap(k * DT), 0.01 + (0.04 if k % 2 else 0.0), 0.0, 0.03, 0.03)
+    assert r is True
 
 
 def test_no_progress_times_out():

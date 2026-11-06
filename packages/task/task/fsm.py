@@ -147,6 +147,7 @@ class Task:
     nav_fails: int = 0
     item_since: float = 0.0
     settle_since: float = None
+    settle_sum: list = None
     nav_since: float = 0.0
     material: str = ''
     bin_id: str = ''
@@ -164,7 +165,7 @@ class Task:
 
     # --- helpers ------------------------------------------------------------------------
     def go(self, state, snap, item=None, sub=''):
-        self.state, self.sub, self.pending = state, sub, None
+        self.state, self.sub, self.pending, self.settle_since = state, sub, None, None
         if item is not None:
             if item != self.item:
                 self.item_since = snap.t
@@ -445,16 +446,13 @@ class Task:
             self.best_dist = None
             return self.skip(snap, 'no_progress')
         # stop near the middle of the envelope: grasping checks it in 3D (body pitch shifts x)
-        if abs(x - fa['target_x_m']) <= fa['tolerance_m'] and abs(y) <= fa['tolerance_m']:
+        settled = self.settle(snap, x - fa['target_x_m'], y, fa['tolerance_m'], fa['tolerance_m'])
+        if settled is not None:
             self.stop()
-            if self.settle_since is None:
-                self.settle_since = snap.t
-            if snap.t - self.settle_since >= fa['settle_s']:
-                self.settle_since = None
+            if settled:
                 self.best_dist = None
                 self.go('PICK', snap)
             return
-        self.settle_since = None
         clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
         bearing = math.atan2(y, x)
         self.move(snap, clip(fa['gain'] * (x - fa['target_x_m']), fa['max_vx']),
@@ -565,18 +563,35 @@ class Task:
                 self.nav_fails = 0
                 self.go('GO_TO_BIN', snap)
 
+    def settle(self, snap, ex, ey, tol_x, tol_y):
+        """Final approach stop: None = move on (not in the window, or the settle failed), False = standing,
+        True = settled. Starts when the error is within (tol_x, tol_y); then stands settle_s and accepts if
+        the *mean* error over that time is within the window + settle_band_m: robot_lab's trunk sways
+        3-4 cm at zero command, which the mean averages out and an instantaneous window doesn't (B4)."""
+        fa = self.cfg['final_approach']
+        if self.settle_since is None:
+            if abs(ex) > tol_x or abs(ey) > tol_y:
+                return None
+            self.settle_since, self.settle_sum = snap.t, [0.0, 0.0, 0]
+        s = self.settle_sum
+        s[0], s[1], s[2] = s[0] + ex, s[1] + ey, s[2] + 1
+        if snap.t - self.settle_since < fa['settle_s']:
+            return False
+        self.settle_since = None
+        b = fa['settle_band_m']
+        return True if abs(s[0] / s[2]) <= tol_x + b and abs(s[1] / s[2]) <= tol_y + b else None
+
     def bin_final_approach(self, snap):
         """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
         fa = self.cfg['final_approach']
         bx, by, _, _ = self.bins[self.at_bin]
         x, y = to_robot(snap.robot, bx, by)
         err = x - self.cfg['bin_place_distance_m']
-        if abs(err) <= 0.03 and abs(y) <= 0.05:
+        settled = self.settle(snap, err, y, 0.03, 0.05)
+        if settled is not None:
             self.stop()
-            if self.settle_since is None:
-                self.settle_since = snap.t
-            if snap.t - self.settle_since >= fa['settle_s']:
-                self.settle_since, self.best_dist, self.bin_approach_fails = None, None, 0
+            if settled:
+                self.best_dist, self.bin_approach_fails = None, 0
                 self.go('PLACE', snap)
             return
         # no progress (a controller that doesn't make the small move): Nav2 to the standoff again,

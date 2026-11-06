@@ -51,6 +51,11 @@ task:
       # commands <= 0.2 m/s; notes/logs/B4.md --tiny); 0.08 tracked as 0.09 in G2 sweep 2.
       min_speed_by_locomotion_mps: {legubiao_robot_lab: 0.08}
       settle_s: 1.0              # stand still this long before the arm moves
+      # B4: the robot stops when the error is within tolerance_m (bin final approach 0.03 / 0.05), stands
+      # settle_s, and is settled if the *mean* error over that time is within the window + this (else it
+      # moves again): robot_lab's trunk sways 3-4 cm at zero command, so an instantaneous window seldom
+      # holds for settle_s (approach_test.py, notes/logs/B4.md). 0.05 stays inside grasping.yaml reach_x_m / y.
+      settle_band_m: 0.02
       progress_timeout_s: 10.0   # give up (no_progress) if the distance to the item hasn't shrunk ...
       progress_min_m: 0.05       # ... by this much in progress_timeout_s; the same rule ends a bin step, a bin
                                  # final approach (Nav2 again; after nav_retries its items stay in the basket, B4)
