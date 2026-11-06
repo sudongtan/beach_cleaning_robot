@@ -1,0 +1,26 @@
+[2026-11-06T03:38:37Z] bench row devb4_robot_lab, seeds [1, 2, 6, 7, 9], commit 31b9a69 (dirty), limits {'sim_s': 450.0, 'wall_min': 200, 'stall_s': 600, 'stall_move_m': 0.5, 'startup_s': 300, 'dead_after_s': 120}
+[2026-11-06T03:38:42Z] devb4_robot_lab_s1: launching (attempt 1), logs in /home/xd/wt/beach_b4/results/bench/devb4_robot_lab/devb4_robot_lab_s1_20261106T033842Z
+[2026-11-06T03:39:18Z] devb4_robot_lab_s1: stood up after 36 s, starting the recorder
+[2026-11-06T04:00:11Z] devb4_robot_lab_s1: end sim_cap (sim time 450.0 s)
+[2026-11-06T04:00:16Z] devb4_robot_lab_s1: stop_sim.sh: remaining: 0
+[2026-11-06T04:00:16Z] devb4_robot_lab_s1: sim_cap, 0/13 collected, sim 450.66 s, wall 22 min
+[2026-11-06T04:00:21Z] devb4_robot_lab_s2: launching (attempt 1), logs in /home/xd/wt/beach_b4/results/bench/devb4_robot_lab/devb4_robot_lab_s2_20261106T040021Z
+[2026-11-06T04:01:03Z] devb4_robot_lab_s2: stood up after 42 s, starting the recorder
+[2026-11-06T04:21:31Z] devb4_robot_lab_s2: end sim_cap (sim time 450.0 s)
+[2026-11-06T04:21:36Z] devb4_robot_lab_s2: stop_sim.sh: remaining: 0
+[2026-11-06T04:21:36Z] devb4_robot_lab_s2: sim_cap, 1/15 collected, sim 451.7 s, wall 21 min
+[2026-11-06T04:21:41Z] devb4_robot_lab_s6: launching (attempt 1), logs in /home/xd/wt/beach_b4/results/bench/devb4_robot_lab/devb4_robot_lab_s6_20261106T042141Z
+[2026-11-06T04:22:19Z] devb4_robot_lab_s6: stood up after 38 s, starting the recorder
+[2026-11-06T04:40:12Z] devb4_robot_lab_s6: end sim_cap (sim time 450.0 s)
+[2026-11-06T04:40:17Z] devb4_robot_lab_s6: stop_sim.sh: remaining: 0
+[2026-11-06T04:40:17Z] devb4_robot_lab_s6: sim_cap, 0/8 collected, sim 450.04 s, wall 19 min
+[2026-11-06T04:40:22Z] devb4_robot_lab_s7: launching (attempt 1), logs in /home/xd/wt/beach_b4/results/bench/devb4_robot_lab/devb4_robot_lab_s7_20261106T044022Z
+[2026-11-06T04:41:02Z] devb4_robot_lab_s7: stood up after 40 s, starting the recorder
+[2026-11-06T05:00:55Z] devb4_robot_lab_s7: end sim_cap (sim time 450.0 s)
+[2026-11-06T05:01:00Z] devb4_robot_lab_s7: stop_sim.sh: remaining: 0
+[2026-11-06T05:01:00Z] devb4_robot_lab_s7: sim_cap, 2/13 collected, sim 451.2 s, wall 21 min
+[2026-11-06T05:01:05Z] devb4_robot_lab_s9: launching (attempt 1), logs in /home/xd/wt/beach_b4/results/bench/devb4_robot_lab/devb4_robot_lab_s9_20261106T050105Z
+[2026-11-06T05:01:45Z] devb4_robot_lab_s9: stood up after 40 s, starting the recorder
+[2026-11-06T05:19:07Z] devb4_robot_lab_s9: end sim_cap (sim time 450.0 s)
+[2026-11-06T05:19:12Z] devb4_robot_lab_s9: stop_sim.sh: remaining: 0
+[2026-11-06T05:19:12Z] devb4_robot_lab_s9: sim_cap, 2/8 collected, sim 452.0 s, wall 18 min
