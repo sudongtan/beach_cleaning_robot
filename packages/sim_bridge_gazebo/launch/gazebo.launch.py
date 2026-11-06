@@ -3,7 +3,7 @@ topic bridge (sensors, /clock, ground-truth pose), GNSS covariance relay and, fo
 beach scenes, ground truth + attach/detach.
 
   ros2 launch sim_bridge_gazebo gazebo.launch.py [world:=empty] [headless:=false] [basket_load_kg:=0.0]
-      [variant:=custom|stock] [locomotion:=legubiao|legubiao_rl|legubiao_robot_lab]
+      [variant:=custom|stock] [locomotion:=legubiao|legubiao_rl|legubiao_robot_lab|legubiao_tuned]
   ros2 launch sim_bridge_gazebo gazebo.launch.py scene:=<scene_N.manifest.yaml>
 
 `variant` (robot, notes/decisions.md "Two robot variants"): default `custom`; with a scene, the
@@ -54,7 +54,8 @@ LEG_CONTROLLER_REMAPS = ('-r odom:=/locomotion/controller_odom',
 # locomotion:= -> leg controller (config/gazebo_controllers.yaml)
 LEG_CONTROLLERS = {'legubiao': 'basic_quadruped_controller',     # model-based trot (default)
                    'legubiao_rl': 'rl_quadruped_controller',     # learned policy (HIMLoco)
-                   'legubiao_robot_lab': 'rl_robot_lab_controller'}   # learned policy (robot_lab)
+                   'legubiao_robot_lab': 'rl_robot_lab_controller',   # learned policy (robot_lab)
+                   'legubiao_tuned': 'basic_tuned_controller'}   # basic with set joint gains (B4)
 RL_CONTROLLERS = ('rl_quadruped_controller', 'rl_robot_lab_controller')   # need libtorch
 
 
@@ -159,7 +160,7 @@ def generate_launch_description():
                                           'manifest, else custom'),
         DeclareLaunchArgument('locomotion', default_value='legubiao',
                               description='leg controller: legubiao (basic, default) | legubiao_rl (HIMLoco policy) | '
-                                          'legubiao_robot_lab (robot_lab policy)'),
+                                          'legubiao_robot_lab (robot_lab policy) | legubiao_tuned (basic, tuned gains)'),
         DeclareLaunchArgument('x', default_value='0.0'),
         DeclareLaunchArgument('y', default_value='0.0'),
         DeclareLaunchArgument('z', default_value='0.45'),

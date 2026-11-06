@@ -1,0 +1,20 @@
+# Adapter for locomotion:=legubiao_tuned (basic_tuned_controller, B4): the same values as legubiao_adapter.yaml.
+/**/legubiao_adapter:   # node runs in namespace /locomotion
+  ros__parameters:
+    # controller's hard-coded trotting limits (StateTrotting.cpp): stick value 1.0 maps to these
+    max_vx: 0.4      # m/s
+    max_vy: 0.3      # m/s
+    max_wz: 0.5      # rad/s
+    publish_rate: 50.0         # Hz, control_input stream
+    cmd_timeout: 0.5           # s without /cmd_vel -> zero velocity
+    # stand-up from passive: command 2 (fixed down), 2 (fixed stand), 4 (trotting), with waits
+    standup_sequence: [2, 2, 4]
+    standup_waits: [3.0, 4.0, 2.0]   # s after each command
+    standup_delay: 2.0               # s after the controller's odometry first appears
+    # /leg_odom
+    odom_frame: odom
+    base_frame: base_link
+    # A0: nothing else publishes odom -> base_link. From A2 the local EKF owns it -> false.
+    publish_tf: true
+    fall_tilt_deg: 30.0      # body tilt beyond this for fall_hold_s = fallen -> controller passive
+    fall_hold_s: 0.3

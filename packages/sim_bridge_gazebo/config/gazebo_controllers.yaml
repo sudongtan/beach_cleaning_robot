@@ -1,6 +1,7 @@
 # Gazebo controller manager: broadcasters + the Gazebo locomotion implementations
 # (legubiao basic_quadruped_controller = locomotion:=legubiao, rl_quadruped_controller =
-# locomotion:=legubiao_rl, rl_robot_lab_controller = locomotion:=legubiao_robot_lab; only the
+# locomotion:=legubiao_rl, rl_robot_lab_controller = locomotion:=legubiao_robot_lab,
+# basic_tuned_controller = locomotion:=legubiao_tuned; only the
 # selected one is spawned). The arm controllers come from
 # beach_description/config/arm_controllers.yaml (second <parameters> file).
 # Leg controller values from quadruped_ros2_control (dev, 4dfc15e) go2_description/config/gazebo.yaml.
@@ -17,6 +18,8 @@ controller_manager:
       type: rl_quadruped_controller/LeggedGymController
     rl_robot_lab_controller:
       type: rl_quadruped_controller/LeggedGymController
+    basic_tuned_controller:
+      type: basic_quadruped_controller/BasicQuadrupedController
 
 imu_sensor_broadcaster:
   ros__parameters:
@@ -61,6 +64,47 @@ basic_quadruped_controller:
       - linear_acceleration.x
       - linear_acceleration.y
       - linear_acceleration.z
+
+# Tuned basic controller (locomotion:=legubiao_tuned, B4): the basic block with its joint PD
+# gains set (code defaults: swing 3.0 / 2.0, stable 0.8 / 0.8, BasicQuadrupedController.h).
+# gait_height is not set: it has no effect at 4dfc15e (notes: B4 question 2).
+basic_tuned_controller:
+  ros__parameters:
+    update_rate: 500  # Hz
+    # loads go2_description/urdf/go2.urdf for its kinematic model (legs only; the arm,
+    # basket and load are not in it: tested to walk with 6 kg unmodelled, notes/logs/A0.md)
+    robot_name: "go2"
+    down_pos: [-0.01, 1.27, -2.8, 0.01, 1.27, -2.8, -0.3, 1.31, -2.8, 0.3, 1.31, -2.8]
+    joints:
+      - FR_hip_joint
+      - FR_thigh_joint
+      - FR_calf_joint
+      - FL_hip_joint
+      - FL_thigh_joint
+      - FL_calf_joint
+      - RR_hip_joint
+      - RR_thigh_joint
+      - RR_calf_joint
+      - RL_hip_joint
+      - RL_thigh_joint
+      - RL_calf_joint
+    command_interfaces: [effort, position, velocity, kp, kd]
+    state_interfaces: [effort, position, velocity]
+    feet_names: [FR_foot, FL_foot, RR_foot, RL_foot]
+    imu_name: "imu_sensor"
+    imu_interfaces:
+      - orientation.w
+      - orientation.x
+      - orientation.y
+      - orientation.z
+      - angular_velocity.x
+      - angular_velocity.y
+      - angular_velocity.z
+      - linear_acceleration.x
+      - linear_acceleration.y
+      - linear_acceleration.z
+    swing_gains: [20.0, 2.0]   # kp, kd (setting T1)
+    stable_gains: [0.8, 0.8]   # default
 
 # Learned policy (locomotion:=legubiao_rl). Values from go2_description/config/robot_control.yaml
 # (4dfc15e), except:
