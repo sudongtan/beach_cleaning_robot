@@ -1,0 +1,6 @@
+[2026-11-06T07:27:28Z] bench row devb4_tuned, seeds [6], commit 3ca3b69 (dirty), limits {'sim_s': 450.0, 'wall_min': 200, 'stall_s': 600, 'stall_move_m': 0.5, 'startup_s': 300, 'dead_after_s': 120}
+[2026-11-06T07:27:33Z] devb4_tuned_s6: launching (attempt 1), logs in /home/xd/wt/beach_b4/results/bench/devb4_tuned/devb4_tuned_s6_20261106T072733Z
+[2026-11-06T07:28:11Z] devb4_tuned_s6: stood up after 38 s, starting the recorder
+[2026-11-06T07:46:54Z] devb4_tuned_s6: end sim_cap (sim time 450.0 s)
+[2026-11-06T07:46:59Z] devb4_tuned_s6: stop_sim.sh: remaining: 0
+[2026-11-06T07:46:59Z] devb4_tuned_s6: sim_cap, 0/8 collected, sim 451.4 s, wall 19 min

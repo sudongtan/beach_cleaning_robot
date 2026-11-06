@@ -1,0 +1,122 @@
+{
+ "run_id": "devb4_tuned_s6",
+ "row": "devb4_tuned",
+ "seed": 6,
+ "sim": "gazebo",
+ "attempt": 2,
+ "commit": "3ca3b69",
+ "dirty": true,
+ "components": {
+  "locomotion": "legubiao_tuned",
+  "localization": "ground_truth",
+  "mapping": "ground_truth",
+  "perception": "ground_truth",
+  "classifier": "ground_truth",
+  "navigation": "nav2",
+  "grasp_mode": "attach"
+ },
+ "limits": {
+  "sim_s": 450.0,
+  "wall_min": 200,
+  "stall_s": 600,
+  "stall_move_m": 0.5,
+  "startup_s": 300,
+  "dead_after_s": 120
+ },
+ "started": "2026-11-06T06:46:16Z",
+ "log_dir": "results/bench/devb4_tuned/devb4_tuned_s6_20261106T064616Z",
+ "end_reason": "startup_failed",
+ "end_detail": "stop_sim.sh: remaining: 1",
+ "ended": "2026-11-06T06:46:16Z",
+ "wall_s": 0.0,
+ "sim_end_t": null,
+ "recorder_final": false,
+ "metrics": {
+  "items_total": 8,
+  "items_collected": 0,
+  "items_in_basket": 0,
+  "items_missing_from_ground_truth": [
+   "trash_00",
+   "trash_01",
+   "trash_02",
+   "trash_03",
+   "trash_04",
+   "trash_05",
+   "trash_06",
+   "trash_07"
+  ],
+  "sorting_correct": 0,
+  "sorting_accuracy": null,
+  "contamination_count": 0,
+  "contamination_rate": null,
+  "recyclable_in_residual": 0,
+  "weighted_sorting_errors": 0.0,
+  "placement": {
+   "trash_00": "missing",
+   "trash_01": "missing",
+   "trash_02": "missing",
+   "trash_03": "missing",
+   "trash_04": "missing",
+   "trash_05": "missing",
+   "trash_06": "missing",
+   "trash_07": "missing"
+  },
+  "false_pickups": 0,
+  "false_pickup_ids": [],
+  "grasp_success_rate": null,
+  "grasp_mode": "simulated attach",
+  "picks": 0,
+  "picks_ok": 0,
+  "confusion": {
+   "pet": {},
+   "metal": {},
+   "glass": {},
+   "residual": {}
+  },
+  "classified": 0,
+  "classified_unmatched": 0,
+  "items_per_min": null,
+  "sim_s": null,
+  "falls": 0,
+  "fall_t": null,
+  "fall_pose": null,
+  "max_tilt_deg": null,
+  "stuck_events": 0,
+  "timeout": false,
+  "skipped": {},
+  "distance_m": null,
+  "duplicates": null,
+  "duplicate_ids": null,
+  "coverage": null,
+  "safety": {
+   "violations": 0,
+   "person_violations": [],
+   "arm_violations": [],
+   "geofence_episodes": [],
+   "outside_geofence_s": 0,
+   "min_person_distance": null,
+   "arm_max_change_not_ok_rad": null,
+   "safety_state_changes": {},
+   "after_fall": {
+    "person": [],
+    "arm": [],
+    "geofence": []
+   },
+   "fall_cutoff_t": null
+  },
+  "components": {
+   "detection": "n/a (ground truth detector: reads /sim/ground_truth/objects)",
+   "classification_accuracy": null,
+   "localization_drift_m": null
+  }
+ },
+ "recorder": null,
+ "infra_attempts": [
+  {
+   "end_reason": "startup_failed",
+   "end_detail": "stop_sim.sh: remaining: 1",
+   "log_dir": "results/bench/devb4_tuned/devb4_tuned_s6_20261106T064546Z",
+   "wall_s": 0.0
+  }
+ ]
+}

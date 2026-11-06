@@ -1,0 +1,757 @@
+{
+ "run_id": "devb4_tuned_s7",
+ "row": "devb4_tuned",
+ "seed": 7,
+ "sim": "gazebo",
+ "attempt": 2,
+ "commit": "3ca3b69",
+ "dirty": true,
+ "components": {
+  "locomotion": "legubiao_tuned",
+  "localization": "ground_truth",
+  "mapping": "ground_truth",
+  "perception": "ground_truth",
+  "classifier": "ground_truth",
+  "navigation": "nav2",
+  "grasp_mode": "attach"
+ },
+ "limits": {
+  "sim_s": 450.0,
+  "wall_min": 200,
+  "stall_s": 600,
+  "stall_move_m": 0.5,
+  "startup_s": 300,
+  "dead_after_s": 120
+ },
+ "started": "2026-11-06T06:47:01Z",
+ "log_dir": "results/bench/devb4_tuned/devb4_tuned_s7_20261106T064701Z",
+ "tracebacks_in_launch_log": 0,
+ "end_reason": "sim_cap",
+ "end_detail": "sim time 450.0 s",
+ "ended": "2026-11-06T07:08:16Z",
+ "wall_s": 1274.1,
+ "sim_end_t": 450.62,
+ "recorder_final": true,
+ "metrics": {
+  "items_total": 13,
+  "items_collected": 1,
+  "items_in_basket": 5,
+  "items_missing_from_ground_truth": [],
+  "sorting_correct": 1,
+  "sorting_accuracy": 1.0,
+  "contamination_count": 0,
+  "contamination_rate": 0.0,
+  "recyclable_in_residual": 0,
+  "weighted_sorting_errors": 0.0,
+  "placement": {
+   "trash_00": "basket",
+   "trash_01": "ground",
+   "trash_02": "basket",
+   "trash_03": "ground",
+   "trash_04": "basket",
+   "trash_05": "ground",
+   "trash_06": "basket",
+   "trash_07": "bin:recyclable",
+   "trash_08": "ground",
+   "trash_09": "basket",
+   "trash_10": "ground",
+   "trash_11": "ground",
+   "trash_12": "ground"
+  },
+  "false_pickups": 0,
+  "false_pickup_ids": [],
+  "grasp_success_rate": 1.0,
+  "grasp_mode": "simulated attach",
+  "picks": 7,
+  "picks_ok": 7,
+  "confusion": {
+   "pet": {},
+   "metal": {
+    "metal": 2
+   },
+   "glass": {
+    "glass": 2
+   },
+   "residual": {
+    "residual": 3
+   }
+  },
+  "classified": 7,
+  "classified_unmatched": 0,
+  "items_per_min": 0.1373311970702678,
+  "sim_s": 436.9,
+  "falls": 0,
+  "fall_t": null,
+  "fall_pose": null,
+  "max_tilt_deg": 4.767769139515846,
+  "stuck_events": 0,
+  "timeout": true,
+  "skipped": {},
+  "distance_m": 25.192123158117244,
+  "duplicates": 0,
+  "duplicate_ids": {},
+  "coverage": 0.7633928571428571,
+  "safety": {
+   "violations": 1,
+   "person_violations": [],
+   "arm_violations": [
+    {
+     "t_start": 262.766,
+     "t_end": 262.856,
+     "samples": 10,
+     "state": "slow",
+     "max_change_rad": 0.0313,
+     "joint": "arm_forearm_roll",
+     "since_not_ok_s": 0.156,
+     "trace": [
+      [
+       262.766,
+       0.0307,
+       0.0554
+      ],
+      [
+       262.776,
+       0.0313,
+       0.056
+      ],
+      [
+       262.786,
+       0.0313,
+       0.056
+      ],
+      [
+       262.796,
+       0.0313,
+       0.056
+      ],
+      [
+       262.806,
+       0.0313,
+       0.056
+      ],
+      [
+       262.816,
+       0.0313,
+       0.056
+      ],
+      [
+       262.826,
+       0.0312,
+       0.0559
+      ],
+      [
+       262.836,
+       0.031,
+       0.0556
+      ],
+      [
+       262.846,
+       0.0306,
+       0.0552
+      ],
+      [
+       262.856,
+       0.0301,
+       0.0547
+      ]
+     ]
+    }
+   ],
+   "geofence_episodes": [],
+   "outside_geofence_s": 0,
+   "min_person_distance": {
+    "d": 0.293,
+    "t": 100.08,
+    "speed": 0.0,
+    "cmd": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "robot": [
+     9.925,
+     9.003
+    ]
+   },
+   "arm_max_change_not_ok_rad": 0.055990509299286284,
+   "safety_state_changes": {
+    "slow": 12,
+    "ok": 9,
+    "stop": 8
+   },
+   "after_fall": {
+    "person": [],
+    "arm": [],
+    "geofence": []
+   },
+   "fall_cutoff_t": null
+  },
+  "components": {
+   "detection": "n/a (ground truth detector: reads /sim/ground_truth/objects)",
+   "classification_accuracy": 1.0,
+   "localization_drift_m": {
+    "samples": 437,
+    "mean_m": 0.0012095394338828194,
+    "max_m": 0.011178308950941376,
+    "last_m": 0.0
+   }
+  }
+ },
+ "recorder": {
+  "final": true,
+  "wall": 1793948890.8157902,
+  "sim_t0": 13.72,
+  "sim_t": 450.62,
+  "last_pose_wall": 1793948890.7808714,
+  "progress_wall": 1793948808.2215273,
+  "task_state": "PLACE wm_007",
+  "task_changes": 38,
+  "pose": [
+   2.3778154540562877,
+   10.740062833859222,
+   0.40110696447369165,
+   -2.9430799966215027
+  ],
+  "distance_m": 25.192123158117244,
+  "max_tilt_deg": 4.767769139515846,
+  "fall_t": null,
+  "fall_pose": null,
+  "stop_distance_m": 1.5,
+  "min_person": {
+   "d": 0.293,
+   "t": 100.08,
+   "speed": 0.0,
+   "cmd": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "robot": [
+    9.925,
+    9.003
+   ]
+  },
+  "person_violations": [],
+  "safety_state": "ok",
+  "safety_counts": {
+   "slow": 12,
+   "ok": 9,
+   "stop": 8
+  },
+  "safety_transitions": [
+   [
+    null,
+    "slow",
+    null,
+    0.0
+   ],
+   [
+    16.04,
+    "ok",
+    5.904,
+    0.107
+   ],
+   [
+    96.9,
+    "slow",
+    2.991,
+    0.003
+   ],
+   [
+    98.1,
+    "stop",
+    1.855,
+    0.0
+   ],
+   [
+    103.4,
+    "ok",
+    3.103,
+    0.0
+   ],
+   [
+    146.2,
+    "slow",
+    2.971,
+    0.0
+   ],
+   [
+    147.5,
+    "stop",
+    1.833,
+    0.0
+   ],
+   [
+    152.54,
+    "ok",
+    3.096,
+    0.0
+   ],
+   [
+    179.4,
+    "stop",
+    4.559,
+    0.278
+   ],
+   [
+    180.6,
+    "slow",
+    3.544,
+    0.008
+   ],
+   [
+    182.04,
+    "stop",
+    2.483,
+    0.107
+   ],
+   [
+    186.74,
+    "slow",
+    3.326,
+    0.0
+   ],
+   [
+    189.0,
+    "ok",
+    5.374,
+    0.079
+   ],
+   [
+    231.44,
+    "slow",
+    2.959,
+    0.003
+   ],
+   [
+    232.04,
+    "stop",
+    2.525,
+    0.112
+   ],
+   [
+    237.8,
+    "slow",
+    3.511,
+    0.0
+   ],
+   [
+    240.4,
+    "ok",
+    5.555,
+    0.08
+   ],
+   [
+    262.7,
+    "slow",
+    3.013,
+    0.001
+   ],
+   [
+    269.14,
+    "ok",
+    4.06,
+    0.0
+   ],
+   [
+    317.84,
+    "slow",
+    2.946,
+    0.001
+   ],
+   [
+    319.04,
+    "stop",
+    1.829,
+    0.001
+   ],
+   [
+    324.3,
+    "ok",
+    3.124,
+    0.003
+   ],
+   [
+    341.8,
+    "stop",
+    5.337,
+    0.343
+   ],
+   [
+    343.0,
+    "slow",
+    4.233,
+    0.038
+   ],
+   [
+    345.04,
+    "stop",
+    2.36,
+    0.096
+   ],
+   [
+    351.3,
+    "slow",
+    3.594,
+    0.001
+   ],
+   [
+    354.0,
+    "ok",
+    6.127,
+    0.091
+   ],
+   [
+    426.6,
+    "slow",
+    2.995,
+    0.0
+   ],
+   [
+    430.5,
+    "ok",
+    3.845,
+    0.0
+   ]
+  ],
+  "arm_max_change_not_ok_rad": 0.055990509299286284,
+  "arm_max_change_at": {
+   "t": 262.79,
+   "joint": "arm_forearm_roll",
+   "state": "slow"
+  },
+  "arm_violations": [
+   {
+    "t_start": 262.766,
+    "t_end": 262.856,
+    "samples": 10,
+    "state": "slow",
+    "max_change_rad": 0.0313,
+    "joint": "arm_forearm_roll",
+    "since_not_ok_s": 0.156,
+    "trace": [
+     [
+      262.766,
+      0.0307,
+      0.0554
+     ],
+     [
+      262.776,
+      0.0313,
+      0.056
+     ],
+     [
+      262.786,
+      0.0313,
+      0.056
+     ],
+     [
+      262.796,
+      0.0313,
+      0.056
+     ],
+     [
+      262.806,
+      0.0313,
+      0.056
+     ],
+     [
+      262.816,
+      0.0313,
+      0.056
+     ],
+     [
+      262.826,
+      0.0312,
+      0.0559
+     ],
+     [
+      262.836,
+      0.031,
+      0.0556
+     ],
+     [
+      262.846,
+      0.0306,
+      0.0552
+     ],
+     [
+      262.856,
+      0.0301,
+      0.0547
+     ]
+    ]
+   }
+  ],
+  "geofence_source": "/geofence",
+  "outside_geofence_s": 0.0,
+  "outside_geofence": [],
+  "drift": {
+   "samples": 437,
+   "mean_m": 0.0012095394338828194,
+   "max_m": 0.011178308950941376,
+   "last_m": 0.0
+  },
+  "world_model": {
+   "items": [
+    {
+     "id": "wm_000",
+     "scene_id": "trash_02",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 1,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_001",
+     "scene_id": "trash_09",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 1,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_002",
+     "scene_id": "distractor_01",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_003",
+     "scene_id": "trash_04",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 1,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_004",
+     "scene_id": "distractor_03",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_005",
+     "scene_id": "trash_11",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_006",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_007",
+     "scene_id": "trash_07",
+     "object_class": "trash",
+     "material": "glass",
+     "bin_id": "recyclable",
+     "status": 1,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_008",
+     "scene_id": "trash_06",
+     "object_class": "trash",
+     "material": "glass",
+     "bin_id": "recyclable",
+     "status": 1,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_009",
+     "scene_id": "distractor_00",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_010",
+     "scene_id": "trash_00",
+     "object_class": "trash",
+     "material": "metal",
+     "bin_id": "recyclable",
+     "status": 1,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_011",
+     "scene_id": "trash_05",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_012",
+     "scene_id": "trash_10",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_013",
+     "scene_id": "distractor_04",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    }
+   ],
+   "coverage": 0.7633928571428571,
+   "duplicates": 0,
+   "duplicate_ids": {}
+  },
+  "wm_ids": {
+   "wm_000": "trash_02",
+   "wm_001": "trash_09",
+   "wm_002": "distractor_01",
+   "wm_003": "trash_04",
+   "wm_004": "distractor_03",
+   "wm_005": "trash_11",
+   "wm_006": "trash_03",
+   "wm_007": "trash_07",
+   "wm_008": "trash_06",
+   "wm_009": "distractor_00",
+   "wm_010": "trash_00",
+   "wm_011": "trash_05",
+   "wm_012": "trash_10",
+   "wm_013": "distractor_04"
+  },
+  "objects_t": 450.591,
+  "objects": {
+   "trash_00": [
+    2.6003,
+    10.7472,
+    0.5438
+   ],
+   "trash_01": [
+    22.4539,
+    11.5256,
+    0.1665
+   ],
+   "trash_02": [
+    2.4894,
+    10.7959,
+    0.5198
+   ],
+   "trash_03": [
+    17.429,
+    18.2514,
+    0.3825
+   ],
+   "trash_04": [
+    2.3485,
+    10.8408,
+    0.536
+   ],
+   "trash_05": [
+    4.1861,
+    13.7395,
+    0.2745
+   ],
+   "trash_06": [
+    2.5112,
+    10.729,
+    0.5439
+   ],
+   "trash_07": [
+    1.738,
+    10.5266,
+    0.1329
+   ],
+   "trash_08": [
+    23.2372,
+    14.031,
+    0.2311
+   ],
+   "trash_09": [
+    2.4664,
+    10.856,
+    0.5196
+   ],
+   "trash_10": [
+    5.1178,
+    18.2197,
+    0.4216
+   ],
+   "trash_11": [
+    15.2,
+    5.734,
+    0.065
+   ],
+   "trash_12": [
+    23.3766,
+    12.977,
+    0.1939
+   ],
+   "distractor_00": [
+    2.768,
+    6.262,
+    0.04
+   ],
+   "distractor_01": [
+    12.889,
+    7.544,
+    0.06
+   ],
+   "distractor_02": [
+    23.898,
+    16.541,
+    0.3027
+   ],
+   "distractor_03": [
+    9.063,
+    7.784,
+    0.06
+   ],
+   "distractor_04": [
+    8.429,
+    7.765,
+    0.04
+   ],
+   "distractor_05": [
+    19.742,
+    15.875,
+    0.3065
+   ]
+  },
+  "objects_robot": [
+   2.3778154540562877,
+   10.740062833859222,
+   0.40110696447369165,
+   -2.9430799966215027
+  ]
+ },
+ "infra_attempts": [
+  {
+   "end_reason": "startup_failed",
+   "end_detail": "stop_sim.sh: remaining: 1",
+   "log_dir": "results/bench/devb4_tuned/devb4_tuned_s7_20261106T064646Z",
+   "wall_s": 0.0
+  }
+ ]
+}
