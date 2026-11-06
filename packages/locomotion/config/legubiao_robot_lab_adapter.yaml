@@ -1,0 +1,29 @@
+# Adapter for legubiao rl_quadruped_controller (quadruped_ros2_control dev, 4dfc15e) with the
+# robot_lab policy (locomotion:=legubiao_robot_lab). Same node as legubiao_adapter.yaml.
+/**/legubiao_adapter:   # node runs in namespace /locomotion
+  ros__parameters:
+    # StateRL.cpp feeds the sticks to the policy scaled by (lin_vel_scale, lin_vel_scale,
+    # ang_vel_scale) = (2, 2, 0.25) and ignores the yaml's commands_scale; robot_lab (Isaac Lab)
+    # was trained with unscaled commands (rl_sar go2/robot_lab commands_scale [1, 1, 1], same
+    # policy.pt). So stick = v / 2 and 4 * wz: max_* = the command at stick 1.0.
+    max_vx: 2.0      # m/s
+    max_vy: 2.0      # m/s
+    max_wz: 0.25     # rad/s
+    stick_limit: 4.0           # up to 1 rad/s; Nav2 / task caps stay far below
+    publish_rate: 50.0         # Hz, control_input stream
+    cmd_timeout: 0.5           # s without /cmd_vel -> zero velocity
+    # stand-up from passive: command 2 (fixed down, 1.8 s), 2 (fixed stand, 1.8 s), 3 (RL policy)
+    standup_sequence: [2, 2, 3]
+    standup_waits: [3.0, 4.0, 2.0]   # s after each command
+    standup_delay: 2.0               # s after the controller is ready
+    # the RL controller publishes no odometry: readiness and tilt from the IMU broadcaster
+    state_source: imu
+    odom_frame: odom
+    base_frame: base_link
+    publish_tf: true
+    fall_tilt_deg: 30.0      # body tilt beyond this for fall_hold_s = fallen -> controller passive
+    fall_hold_s: 0.3
+    # the policy turns at ~+0.17 rad/s with a zero command in Gazebo (B4 log, "robot_lab yaw
+    # drift"): integral yaw-rate trim from the IMU gyro
+    yaw_trim_ki: 1.0         # 1/s
+    yaw_trim_max: 0.4        # rad/s

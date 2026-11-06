@@ -19,7 +19,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 SIMS = ('gazebo',)
-LOCOMOTION = {'gazebo': ('legubiao', 'legubiao_rl')}   # legubiao_rl: learned policy (HIMLoco)
+LOCOMOTION = {'gazebo': ('legubiao', 'legubiao_rl', 'legubiao_robot_lab')}   # *_rl / *_robot_lab: learned policies
 CLOCK = '/sim/clock_throttled'   # 100 Hz sim-time clock for our nodes (sim_bridge_gazebo clock_throttle)
 
 
@@ -73,7 +73,7 @@ def generate_launch_description():
         DeclareLaunchArgument('variant', default_value='',
                               description='custom | stock robot; empty = from the scene manifest, else custom'),
         DeclareLaunchArgument('locomotion', default_value='legubiao',
-                              description='legubiao (basic controller) | legubiao_rl (HIMLoco policy)'),
+                              description='legubiao (basic controller) | legubiao_rl (HIMLoco policy) | legubiao_robot_lab (robot_lab policy)'),
         DeclareLaunchArgument('rviz', default_value='false', description='RViz with robot, TF, camera images'),
         DeclareLaunchArgument('skeleton', default_value='false',
                               description='true: also start the A2 skeleton (skeleton.launch.py) for the scene'),

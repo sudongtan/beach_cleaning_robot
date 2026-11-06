@@ -29,7 +29,8 @@ import metrics  # noqa: E402
 
 STOP_SIM = REPO / 'sim' / 'gazebo' / 'tools' / 'stop_sim.sh'
 ROS_SETUP = '/opt/ros/jazzy/setup.bash'
-WS_SETUP = str(Path.home() / 'ros2_ws' / 'install' / 'setup.bash')
+# the Makefile exports WS_SETUP (an overlay install, e.g. a worktree's)
+WS_SETUP = os.environ.get('WS_SETUP') or str(Path.home() / 'ros2_ws' / 'install' / 'setup.bash')
 INFRA = ('startup_failed', 'dead_stack')
 
 

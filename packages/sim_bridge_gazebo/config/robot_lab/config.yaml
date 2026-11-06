@@ -1,0 +1,29 @@
+# robot_lab Go2 policy for rl_quadruped_controller (locomotion:=legubiao_robot_lab). policy.pt is
+# installed from go2_description/config/robot_lab/ (quadruped_ros2_control dev 4dfc15e; same file
+# as rl_sar policy/go2/robot_lab/policy.pt, md5 20a12e1f...). Values = rl_sar's deployment config
+# for that file (policy/go2/robot_lab/config.yaml), in StateRL.cpp's format; changed from
+# go2_description's copy: hip_scale_reduction 0.5 = rl_sar's hip action scale 0.125
+# (robot_lab trains hips at 0.125, other joints 0.25). StateRL quirk: the reduced hip action
+# is also what the policy sees as its last action (robot_lab: the raw one).
+model_name: "policy.pt"
+framework: "isaacsim"
+decimation: 4
+num_observations: 45
+observations: [ "ang_vel", "gravity_vec", "commands", "dof_pos", "dof_vel", "actions" ]
+clip_obs: 100.0
+clip_actions_lower: [ -100.0, -100.0, -100.0, -100.0, -100.0, -100.0,
+                      -100.0, -100.0, -100.0, -100.0, -100.0, -100.0 ]
+clip_actions_upper: [ 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
+                      100.0, 100.0, 100.0, 100.0, 100.0, 100.0 ]
+rl_kp: [ 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 ]
+rl_kd: [ 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 ]
+hip_scale_reduction: 0.5
+hip_scale_reduction_indices: [ 0, 3, 6, 9 ]
+num_of_dofs: 12
+action_scale: 0.25
+lin_vel_scale: 2.0
+ang_vel_scale: 0.25
+dof_pos_scale: 1.0
+dof_vel_scale: 0.05
+commands_scale: [ 1.0, 1.0, 1.0 ]   # ignored by StateRL.cpp (see the adapter yaml)
+torque_limits: [ 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23.5 ]

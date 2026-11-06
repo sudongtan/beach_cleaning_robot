@@ -19,6 +19,11 @@ Fall: if the body tilt (from the controller's own orientation estimate or the IM
 /cmd_vel from then on. A fallen robot kept walking its legs and crawled out of the geofence
 (A2b run 5); there is no automatic stand-up.
 
+Yaw trim (`yaw_trim_ki` > 0, needs `state_source: imu`): the robot_lab policy turns at about
++0.17 rad/s with a zero command in Gazebo (B4 log), so the adapter adds the integral of
+(commanded - measured yaw rate, IMU gyro z) to the yaw command, limited to +-`yaw_trim_max`.
+Off (0) by default.
+
 The controller publishes its twist in the odom frame; /leg_odom carries it in base_link
 (nav_msgs/Odometry convention). Simulator-agnostic: talks to the controller over ROS only.
 """
@@ -36,6 +41,19 @@ from tf2_ros import TransformBroadcaster
 
 def clamp(v, lo=-1.0, hi=1.0):
     return max(lo, min(hi, v))
+
+
+def sticks(vx, vy, wz, max_v, limit=1.0):
+    """Twist -> (ly, lx, rx) sticks for the controller: vx = max_vx*ly, vy = -max_vy*lx,
+    wz = -max_wz*rx, each stick clamped to +-limit. Returns the sticks and whether one was clamped."""
+    raw = (vx / max_v[0], -vy / max_v[1], -wz / max_v[2])
+    out = tuple(clamp(r, -limit, limit) for r in raw)
+    return out, out != raw
+
+
+def yaw_trim_step(trim, wz_cmd, wz_meas, dt, ki, limit):
+    """One integrator step of the yaw trim: trim += ki * (wz_cmd - wz_meas) * dt, kept in +-limit."""
+    return clamp(trim + ki * (wz_cmd - wz_meas) * dt, -limit, limit)
 
 
 def tilt_deg(q):
@@ -62,6 +80,8 @@ class LegubiaoAdapter(Node):
         self.max_vx = p('max_vx', 0.4).value
         self.max_vy = p('max_vy', 0.3).value
         self.max_wz = p('max_wz', 0.5).value
+        # largest stick value sent (1.0 = a real stick); the robot_lab policy needs more (its yaml)
+        self.stick_limit = p('stick_limit', 1.0).value
         rate = p('publish_rate', 50.0).value
         self.cmd_timeout = p('cmd_timeout', 0.5).value
         self.seq = list(p('standup_sequence', [2, 2, 4]).value)
@@ -73,6 +93,11 @@ class LegubiaoAdapter(Node):
         self.fall_tilt = p('fall_tilt_deg', 30.0).value
         self.fall_hold = p('fall_hold_s', 0.3).value
         self.state_source = p('state_source', 'controller_odom').value   # controller_odom | imu
+        self.yaw_trim_ki = p('yaw_trim_ki', 0.0).value       # 1/s; 0 = off
+        self.yaw_trim_max = p('yaw_trim_max', 0.4).value     # rad/s
+        self.yaw_trim = 0.0
+        self.gyro_z = 0.0
+        self.trim_time = None
         self.tilt = 0.0
         self.tilted_since = None
         self.fallen = False
@@ -108,6 +133,7 @@ class LegubiaoAdapter(Node):
             self.first_odom_time = self.now()
         q = msg.orientation
         self.tilt = tilt_deg((q.x, q.y, q.z, q.w))
+        self.gyro_z = msg.angular_velocity.z
 
     def on_controller_odom(self, msg):
         if self.first_odom_time is None:
@@ -168,17 +194,22 @@ class LegubiaoAdapter(Node):
             self.inputs_pub.publish(msg)
             return
 
+        vx = vy = wz = 0.0
         if self.cmd_time is not None and now - self.cmd_time <= self.cmd_timeout:
-            c = self.cmd
-            # controller: vx = max_vx*ly, vy = -max_vy*lx, wz = -max_wz*rx (StateTrotting.cpp;
-            # StateRL.cpp: the same with max 1)
-            msg.ly = clamp(c.linear.x / self.max_vx)
-            msg.lx = clamp(-c.linear.y / self.max_vy)
-            msg.rx = clamp(-c.angular.z / self.max_wz)
-            if (abs(c.linear.x) > self.max_vx or abs(c.linear.y) > self.max_vy
-                    or abs(c.angular.z) > self.max_wz):
-                self.get_logger().warn('cmd_vel beyond the controller limits, clamped',
-                                       throttle_duration_sec=5.0)
+            vx, vy, wz = self.cmd.linear.x, self.cmd.linear.y, self.cmd.angular.z
+        if self.yaw_trim_ki > 0.0:
+            if self.trim_time is not None:
+                self.yaw_trim = yaw_trim_step(self.yaw_trim, wz, self.gyro_z, now - self.trim_time,
+                                              self.yaw_trim_ki, self.yaw_trim_max)
+            self.trim_time = now
+            wz += self.yaw_trim
+        # controller: vx = max_vx*ly, vy = -max_vy*lx, wz = -max_wz*rx (StateTrotting.cpp;
+        # StateRL.cpp: the same with max 1)
+        (msg.ly, msg.lx, msg.rx), clamped = sticks(
+            vx, vy, wz, (self.max_vx, self.max_vy, self.max_wz), self.stick_limit)
+        if clamped:
+            self.get_logger().warn('cmd_vel beyond the controller limits, clamped',
+                                   throttle_duration_sec=5.0)
         self.inputs_pub.publish(msg)
 
 

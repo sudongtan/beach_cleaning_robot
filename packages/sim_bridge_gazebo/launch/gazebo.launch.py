@@ -3,7 +3,7 @@ topic bridge (sensors, /clock, ground-truth pose), GNSS covariance relay and, fo
 beach scenes, ground truth + attach/detach.
 
   ros2 launch sim_bridge_gazebo gazebo.launch.py [world:=empty] [headless:=false] [basket_load_kg:=0.0]
-      [variant:=custom|stock] [locomotion:=legubiao|legubiao_rl]
+      [variant:=custom|stock] [locomotion:=legubiao|legubiao_rl|legubiao_robot_lab]
   ros2 launch sim_bridge_gazebo gazebo.launch.py scene:=<scene_N.manifest.yaml>
 
 `variant` (robot, notes/decisions.md "Two robot variants"): default `custom`; with a scene, the
@@ -53,7 +53,9 @@ LEG_CONTROLLER_REMAPS = ('-r odom:=/locomotion/controller_odom',
                          '-r /tf:=/locomotion/controller_tf')
 # locomotion:= -> leg controller (config/gazebo_controllers.yaml)
 LEG_CONTROLLERS = {'legubiao': 'basic_quadruped_controller',     # model-based trot (default)
-                   'legubiao_rl': 'rl_quadruped_controller'}     # learned policy (HIMLoco)
+                   'legubiao_rl': 'rl_quadruped_controller',     # learned policy (HIMLoco)
+                   'legubiao_robot_lab': 'rl_robot_lab_controller'}   # learned policy (robot_lab)
+RL_CONTROLLERS = ('rl_quadruped_controller', 'rl_robot_lab_controller')   # need libtorch
 
 
 VARIANTS = ('custom', 'stock')
@@ -85,10 +87,10 @@ def launch_setup(context):
         raise RuntimeError(f"locomotion:={cfg['locomotion']} unknown (available: {', '.join(LEG_CONTROLLERS)})")
     leg_controller = LEG_CONTROLLERS[cfg['locomotion']]
     env = []
-    if leg_controller == 'rl_quadruped_controller':
+    if leg_controller in RL_CONTROLLERS:
         torch_lib = os.path.join(os.environ.get('Torch_DIR', os.path.expanduser('~/libtorch')), 'lib')
         if not os.path.isfile(os.path.join(torch_lib, 'libtorch.so')):
-            raise RuntimeError(f'locomotion:=legubiao_rl needs libtorch in {torch_lib} (VERSIONS.md)')
+            raise RuntimeError(f"locomotion:={cfg['locomotion']} needs libtorch in {torch_lib} (VERSIONS.md)")
         env = [AppendEnvironmentVariable('LD_LIBRARY_PATH', torch_lib)]
     if variant not in VARIANTS:
         raise RuntimeError(f"variant:={variant} unknown (available: {', '.join(VARIANTS)})")
@@ -156,7 +158,8 @@ def generate_launch_description():
                                           'stock (WidowX gripper, small basket). Empty = from the scene '
                                           'manifest, else custom'),
         DeclareLaunchArgument('locomotion', default_value='legubiao',
-                              description='leg controller: legubiao (basic, default) | legubiao_rl (HIMLoco policy)'),
+                              description='leg controller: legubiao (basic, default) | legubiao_rl (HIMLoco policy) | '
+                                          'legubiao_robot_lab (robot_lab policy)'),
         DeclareLaunchArgument('x', default_value='0.0'),
         DeclareLaunchArgument('y', default_value='0.0'),
         DeclareLaunchArgument('z', default_value='0.45'),

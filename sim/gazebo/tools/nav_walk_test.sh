@@ -12,7 +12,7 @@ OUT=${OUT:-$REPO/sim/gazebo/worlds/generated/tools}
 mkdir -p "$OUT"
 SEED=$1; LABEL=$2; shift 2
 V=$OUT/navwalk_${SEED}_${LABEL}
-source /opt/ros/jazzy/setup.bash && source "$HOME/ros2_ws/install/setup.bash"
+source /opt/ros/jazzy/setup.bash && source "${WS_SETUP:-$HOME/ros2_ws/install/setup.bash}"
 export GZ_PARTITION=navwalk ROS_DOMAIN_ID=71 GZ_IP=127.0.0.1 ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST BEACH_REPO=$REPO
 "$TOOLS/stop_sim.sh" > /dev/null
 cd "$REPO"

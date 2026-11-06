@@ -8,7 +8,7 @@
 LAUNCH_ARGS=()
 while [ $# -gt 0 ] && [ "$1" != "--" ]; do LAUNCH_ARGS+=("$1"); shift; done
 shift
-source ~/ros2_ws/install/setup.bash
+source "${WS_SETUP:-$HOME/ros2_ws/install/setup.bash}"
 export GZ_PARTITION=headless_$$
 export ROS_DOMAIN_ID=${ROS_DOMAIN_ID_HEADLESS:-44}
 LOG=${LOG:-/tmp/run_headless_$$.log}

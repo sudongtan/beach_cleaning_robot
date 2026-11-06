@@ -7,7 +7,8 @@
 #                                  needs `colcon build` first
 #   make run SEED=3                scene 3 + the A2 skeleton (the robot cleans the beach);
 #                                  HEADLESS / RVIZ as for scene; RUN_ID names the event log
-#                                  LOCO=legubiao (default) | legubiao_rl (HIMLoco policy) for
+#                                  LOCO=legubiao (default) | legubiao_rl (HIMLoco policy) |
+#                                  legubiao_robot_lab (robot_lab policy) for
 #                                  scene and run
 #   make world SEED=3              Gazebo GUI with scene 3, no robot
 #   make world-headless SEED=3     same, server only, headless rendering
@@ -34,6 +35,7 @@ GZ_PARTITION ?=
 GZ_ENV = $(if $(GZ_PARTITION),GZ_PARTITION=$(GZ_PARTITION))
 ROS_SETUP ?= /opt/ros/jazzy/setup.bash
 WS_SETUP ?= $(HOME)/ros2_ws/install/setup.bash
+export WS_SETUP
 # repository root for the A2 nodes (they read bench/, sim/common/ and config/ from it)
 export BEACH_REPO := $(CURDIR)
 WORLD = sim/gazebo/worlds/generated/scene_$(SEED).sdf

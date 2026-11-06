@@ -1,6 +1,7 @@
 # Gazebo controller manager: broadcasters + the Gazebo locomotion implementations
 # (legubiao basic_quadruped_controller = locomotion:=legubiao, rl_quadruped_controller =
-# locomotion:=legubiao_rl; only the selected one is spawned). The arm controllers come from
+# locomotion:=legubiao_rl, rl_robot_lab_controller = locomotion:=legubiao_robot_lab; only the
+# selected one is spawned). The arm controllers come from
 # beach_description/config/arm_controllers.yaml (second <parameters> file).
 # Leg controller values from quadruped_ros2_control (dev, 4dfc15e) go2_description/config/gazebo.yaml.
 controller_manager:
@@ -13,6 +14,8 @@ controller_manager:
     basic_quadruped_controller:
       type: basic_quadruped_controller/BasicQuadrupedController
     rl_quadruped_controller:
+      type: rl_quadruped_controller/LeggedGymController
+    rl_robot_lab_controller:
       type: rl_quadruped_controller/LeggedGymController
 
 imu_sensor_broadcaster:
@@ -96,6 +99,49 @@ rl_quadruped_controller:
     foot_force_interfaces: [FL_foot_force, FR_foot_force, RL_foot_force, RR_foot_force]
     imu_name: "imu_sensor"
     base_name: "base"
+    imu_interfaces:
+      - orientation.w
+      - orientation.x
+      - orientation.y
+      - orientation.z
+      - angular_velocity.x
+      - angular_velocity.y
+      - angular_velocity.z
+      - linear_acceleration.x
+      - linear_acceleration.y
+      - linear_acceleration.z
+
+# robot_lab policy (locomotion:=legubiao_robot_lab): a second instance of the RL controller.
+# Values from go2_description/config/gazebo.yaml (4dfc15e: upstream's Gazebo setup runs robot_lab)
+# and rl_sar's go2/robot_lab deployment config (same policy.pt): joints FR, FL, RR, RL (robot_lab's
+# joint_names order, identity joint_mapping), stand_pos = default_dof_pos 0.0 / 0.8 / -1.5;
+# down_pos = the basic controller's (same order). Model from our package (config/robot_lab/:
+# hip action scale 0.125). No foot force interfaces, as upstream: the controller's estimator stays
+# off (its leg kinematics take feet_names[0] as FL, which doesn't fit this joint order); the
+# adapter detects falls from the IMU.
+rl_robot_lab_controller:
+  ros__parameters:
+    update_rate: 200  # Hz; policy at 50 Hz (decimation 4), robot_lab's training rate
+    robot_pkg: "sim_bridge_gazebo"
+    model_folder: "robot_lab"
+    joints:
+      - FR_hip_joint
+      - FR_thigh_joint
+      - FR_calf_joint
+      - FL_hip_joint
+      - FL_thigh_joint
+      - FL_calf_joint
+      - RR_hip_joint
+      - RR_thigh_joint
+      - RR_calf_joint
+      - RL_hip_joint
+      - RL_thigh_joint
+      - RL_calf_joint
+    stand_pos: [0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5, 0.0, 0.8, -1.5]
+    down_pos: [-0.01, 1.27, -2.8, 0.01, 1.27, -2.8, -0.3, 1.31, -2.8, 0.3, 1.31, -2.8]
+    command_interfaces: [effort, position, velocity, kp, kd]
+    state_interfaces: [effort, position, velocity]
+    imu_name: "imu_sensor"
     imu_interfaces:
       - orientation.w
       - orientation.x

@@ -1,6 +1,7 @@
 # Source this: environment of the isolated test scene (scene_up.sh).
 source /opt/ros/jazzy/setup.bash
-source "$HOME/ros2_ws/install/setup.bash"
+# WS_SETUP: an overlay install instead of the main one (as in the Makefile)
+source "${WS_SETUP:-$HOME/ros2_ws/install/setup.bash}"
 export GZ_PARTITION=${SCENE_GZ_PARTITION:-a1b}
 export ROS_DOMAIN_ID=${SCENE_ROS_DOMAIN_ID:-43}
 # Loopback only: gz-transport and DDS discover peers by multicast on a network interface;

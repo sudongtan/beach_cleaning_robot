@@ -11,6 +11,10 @@ target_link_libraries(clock_throttle PUBLIC rclcpp::rclcpp ${rosgraph_msgs_TARGE
 install(TARGETS clock_throttle DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY urdf config launch rviz DESTINATION share/${PROJECT_NAME})
+# robot_lab policy (locomotion:=legubiao_robot_lab): our config/robot_lab/config.yaml + the
+# policy file from the pinned go2_description (not copied into this repo)
+find_package(go2_description REQUIRED)
+install(FILES ${go2_description_DIR}/../config/robot_lab/policy.pt DESTINATION share/${PROJECT_NAME}/config/robot_lab)
 # Gazebo worlds live in the repo's sim/ tree (simulator-specific, not a ROS package)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../sim/gazebo/worlds/ DESTINATION share/${PROJECT_NAME}/worlds
         FILES_MATCHING PATTERN "*.sdf")
