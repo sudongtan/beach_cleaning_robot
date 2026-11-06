@@ -21,7 +21,7 @@ bench:
     ROS_AUTOMATIC_DISCOVERY_RANGE: LOCALHOST
   # components of the stack the row was run with (launch defaults; reported in the row)
   components:
-    locomotion: legubiao
+    locomotion: legubiao_robot_lab
     localization: ground_truth
     mapping: ground_truth
     perception: ground_truth
