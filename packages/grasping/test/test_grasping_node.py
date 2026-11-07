@@ -18,6 +18,7 @@ from beach_interfaces.action import PickObject, PlaceObject  # noqa: E402
 from beach_interfaces.msg import TrashItem, WorldModel  # noqa: E402
 from beach_interfaces.srv import SimAttach  # noqa: E402
 from control_msgs.action import FollowJointTrajectory  # noqa: E402
+from control_msgs.msg import JointTrajectoryControllerState  # noqa: E402
 from geometry_msgs.msg import PoseStamped  # noqa: E402
 from rclpy.action import ActionClient, ActionServer, CancelResponse  # noqa: E402
 from rclpy.callback_groups import ReentrantCallbackGroup  # noqa: E402
@@ -26,7 +27,7 @@ from rclpy.parameter import Parameter  # noqa: E402
 from rclpy.qos import DurabilityPolicy, QoSProfile  # noqa: E402
 from std_msgs.msg import String  # noqa: E402
 
-from grasping.arm import TIPS  # noqa: E402
+from grasping.arm import ARM, TIPS  # noqa: E402
 from grasping.node import GraspingNode  # noqa: E402
 
 REPO = str(Path(__file__).resolve().parents[3])
@@ -163,6 +164,40 @@ def test_arm_holds_while_not_ok_and_resumes(system):
     th.join(timeout=30.0)
     assert result['r'].success, result['r'].message
     assert fakes.sim_calls == [('attach', 'trash_03')]
+
+
+def test_stop_holds_the_controller_reference(system):
+    """safety_stop hold_reference: a move stopped by not-ok is preempted by a goal to the reference."""
+    grasping, node, fakes = system
+    assert grasping.cfg['safety_stop'] == 'hold_reference'
+    ref = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    pub = node.create_publisher(JointTrajectoryControllerState, '/arm_controller/controller_state', 10)
+    msg = JointTrajectoryControllerState(joint_names=list(reversed(ARM)))      # order by name, not index
+    msg.reference.positions = list(reversed(ref))
+    running = threading.Event()
+    running.set()
+
+    def publish():
+        while running.is_set():
+            pub.publish(msg)
+            time.sleep(0.02)
+    th_ref = threading.Thread(target=publish, daemon=True)
+    th_ref.start()
+    set_safety(grasping, fakes, 'ok')
+    result = {}
+    th = threading.Thread(target=lambda: result.update(r=send(node, PickObject, '/grasp/pick', pick_goal())))
+    th.start()
+    while len(fakes.arm_goals) < 3:
+        time.sleep(0.01)
+    n = len(fakes.arm_goals)
+    fakes.safety.publish(String(data='slow'))
+    time.sleep(1.0)
+    assert len(fakes.arm_goals) == n + 1 and fakes.arm_goals[n] == pytest.approx(ref)
+    assert fakes.cancelled == 0
+    fakes.safety.publish(String(data='ok'))
+    th.join(timeout=30.0)
+    running.clear()
+    assert result['r'].success, result['r'].message
 
 
 def test_unreachable_pick_is_refused(system):

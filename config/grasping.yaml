@@ -45,4 +45,10 @@ grasping:
   release_joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, 1.0]
   move_time_s: 2.5              # duration of each arm move
   finger_time_s: 1.0
+  # How a running arm move stops when /safety/state leaves ok: hold_reference preempts it with a goal to
+  # the controller's reference position at that instant (reached after stop_hold_s); cancel cancels the
+  # goal, and the controller then holds the measured position, so a joint lagging its reference under
+  # load gives way by the lag (B4 question 9, b4_robot_lab s5; sim/gazebo/tools/cancel_test.py).
+  safety_stop: hold_reference   # hold_reference | cancel
+  stop_hold_s: 0.1
   safety_hold_timeout_s: 120.0  # give up a pick/place if /safety/state stays not-ok this long

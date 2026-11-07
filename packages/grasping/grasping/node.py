@@ -5,6 +5,12 @@ waits while /safety/state != ok and a running move is cancelled (the controller 
 position) as soon as the state leaves ok (arm rule, decisions 2026-10-30). Plans come
 from grasping.arm (IK), step order from grasping.sequence.
 
+The stop on not ok is config `safety_stop`: `hold_reference` (default) preempts the move with a
+goal to the controller's reference position at that instant (/arm_controller/controller_state),
+`cancel` cancels the goal. A cancel makes the controller hold the *measured* position
+(joint_trajectory_controller set_hold_position), so a PD joint lagging its reference under load
+gives way by that lag (B4 question 9, b4_robot_lab s5 arm violation).
+
 Attach mode needs the simulator's object id: the world model's scene_id for the item,
 else the /sim/ground_truth/objects entry nearest the jaw tips (attach mode is itself a
 simulation shortcut). Physics mode is not implemented yet (A2 runs in attach mode).
@@ -24,6 +30,7 @@ from beach_interfaces.msg import WorldModel
 from beach_interfaces.srv import SimAttach
 from builtin_interfaces.msg import Duration
 from control_msgs.action import FollowJointTrajectory
+from control_msgs.msg import JointTrajectoryControllerState
 from geometry_msgs.msg import TransformStamped
 from rclpy.action import ActionClient, ActionServer, CancelResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -99,13 +106,30 @@ class RosIo:
         end, wall_end = self.now() + limit, time.monotonic() + self.WALL_CAP * limit
         while not result.done():
             if watch_safety and not self.safety_ok():
-                self._wait(handle.cancel_goal_async(), 2.0)
+                self.stop(client, joints, handle)
                 return 'interrupted'
             if self.now() > end or time.monotonic() > wall_end:
                 self.n.get_logger().warn(f'{client._action_name}: no result after {limit:.1f} s sim time')
                 return 'failed'
             time.sleep(0.02)
         return 'ok' if result.result().result.error_code == 0 else 'failed'
+
+    def stop(self, client, joints, handle):
+        """Stop a running move: hold the controller reference (if fresh), else cancel the goal."""
+        ref, stamp = self.n.arm_reference
+        if self.n.cfg['safety_stop'] == 'hold_reference' and ref and time.monotonic() - stamp < 1.0 \
+                and all(j in ref for j in joints):
+            goal = FollowJointTrajectory.Goal()
+            goal.trajectory.joint_names = joints
+            goal.trajectory.points = [JointTrajectoryPoint(positions=[ref[j] for j in joints],
+                                                           velocities=[0.0] * len(joints),
+                                                           time_from_start=duration(self.n.cfg['stop_hold_s']))]
+            sent = client.send_goal_async(goal)           # preempts the running goal
+            if self._wait(sent, 2.0) and sent.result().accepted:
+                self.n.get_logger().info('safety stop: holding the arm at the controller reference')
+                return
+            self.n.get_logger().warn('hold goal not accepted; cancelling the move')
+        self._wait(handle.cancel_goal_async(), 2.0)
 
     def move_arm(self, q, secs):
         return self._trajectory(self.n.arm_client, ARM, q, secs, watch_safety=True)
@@ -149,6 +173,7 @@ class GraspingNode(Node):
         self.runner = Runner(RosIo(self), self.cfg['move_time_s'], self.cfg['finger_time_s'],
                              self.cfg['safety_hold_timeout_s'])
         self.safety_state = 'stop'                 # not ok until the supervisor says so
+        self.arm_reference = ({}, 0.0)             # arm controller reference {joint: rad}, wall stamp
         self.scene_ids = {}
         self.gt = None
         self.picks = {}                            # item id -> pick plan (for putting it back)
@@ -164,6 +189,8 @@ class GraspingNode(Node):
         self.attach_client = self.create_client(SimAttach, '/sim/attach', callback_group=cb)
         self.detach_client = self.create_client(SimAttach, '/sim/detach', callback_group=cb)
         self.create_subscription(String, '/safety/state', self.on_safety, LATCHED, callback_group=cb)
+        self.create_subscription(JointTrajectoryControllerState, '/arm_controller/controller_state',
+                                 self.on_arm_state, 10, callback_group=cb)
         self.create_subscription(WorldModel, '/world_model', self.on_world_model, 10, callback_group=cb)
         self.create_subscription(Detection3DArray, '/sim/ground_truth/objects', self.on_gt, 10, callback_group=cb)
         ActionServer(self, PickObject, '/grasp/pick', self.execute_pick, callback_group=cb,
@@ -173,6 +200,9 @@ class GraspingNode(Node):
 
     def on_safety(self, msg):
         self.safety_state = msg.data
+
+    def on_arm_state(self, msg):
+        self.arm_reference = (dict(zip(msg.joint_names, msg.reference.positions)), time.monotonic())
 
     def on_world_model(self, msg):
         self.scene_ids = {it.id: it.scene_id for it in msg.items}
