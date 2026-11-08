@@ -18,7 +18,11 @@ grasping:
   assumed_item_height_m: 0.075
   # After a pick the item is held in front of the head camera for /classify (A1c: item hangs
   # in full view below the jaws, seen edge-on). Order as arm_controller joints.
-  show_pose: [0.0, 1.685, -1.78, -3.099, -1.687, -0.089]
+  # B4: the A1c IK pose [.., -3.099, -1.687, -0.089] flipped (forearm_roll + pi, wrist_angle negated):
+  # same jaw tips and approach axis, gripper turned by pi about its (symmetric) axis, so the item is
+  # seen mirrored. Show -> up now turns forearm_roll / wrist_angle by < 0.1 rad instead of 3.1 / 3.3 rad
+  # (that move's wrist overshoot after a safety stop was the rerun s3 arm violation, notes B4).
+  show_pose: [0.0, 1.685, -1.78, 0.043, 1.687, -0.089]
   # Taking an item out of a basket compartment for the bin (attach mode): jaws closed and along
   # the compartment (the 18 cm gripper bar doesn't fit across a 15 cm compartment), tips at
   # hover_above_item_m above the item, then straight up until the item is rim_clearance_m above

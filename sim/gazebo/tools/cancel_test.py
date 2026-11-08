@@ -15,6 +15,10 @@ with no move first gives the stand-sway floor.
 
 --item <id> attaches a scene object first (the gripper loaded, as in a PUT_BACK).
 
+--targets store moves from `up` to the over_<bin> poses instead; --targets show moves from the
+grasping show_pose to `up` (the first store step, B4 rerun s3). Fractions > 1 stop after the
+trajectory's end, while the joints still settle.
+
 Prints one line per trial and a RESULT line (worst change vs arm_change_rad).
 """
 import argparse
@@ -44,6 +48,10 @@ UP = [0.0, 0.0, -0.8, 0.0, 1.6, 0.0]
 # IK-like pick/put-back poses in front of the robot (forearm_roll and wrist_rotate non-zero)
 TARGETS = {'front_left': [0.5, 1.2, -0.15, 0.6, 0.6, 0.4],
            'front_right': [-0.5, 1.25, -0.2, -0.6, 0.5, -0.4]}
+# store moves: up -> over a compartment (waist swing ~2.9 rad, as up -> above_spot in store_steps)
+STORE = ['over_recyclable', 'over_residual']
+# the first store step: show_pose (config/grasping.yaml, item in front of the camera) -> up
+# (forearm_roll 3.1 rad, wrist_angle 3.3 rad), the move of the B4 rerun s3 violation
 
 
 def main():
@@ -55,6 +63,7 @@ def main():
                     help='cancel: bare goal cancel (JTC holds the measured position); hold_ref: preempt with '
                          'a goal to the controller reference at the stop instant')
     ap.add_argument('--item', help='attach this scene object first (robot standing 0.49 m behind it, GOTO)')
+    ap.add_argument('--targets', choices=('front', 'store', 'show'), default='front')
     ap.add_argument('--hold-s', type=float, default=0.1, help='hold_ref: time_from_start of the hold point')
     a, _ = ap.parse_known_args()      # turn_walk_test.sh passes its own args too
     rule = yaml.safe_load(open(REPO / 'bench' / 'bench.yaml'))['recorder']
@@ -93,8 +102,7 @@ def main():
 
     def move(q, secs):
         h = send(q, secs)
-        r = h.get_result_async()
-        rclpy.spin_until_future_complete(n, r)
+        rclpy.spin_until_future_complete(n, h.get_result_async(), timeout_sec=a.move_s + 10.0)
         spin(0.5)
 
     def measure(t0):
@@ -132,21 +140,27 @@ def main():
     ch, j, dev = measure(t0)
     print(f'hold (no move): change {ch:.4f} rad ({j}), deviation {dev:.4f}', flush=True)
     worst = (ch, 'hold')
-    for name, q in TARGETS.items():
+    poses = arm_pose.load_poses('custom')
+    show = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']['show_pose']
+    targets = {k: (UP, q) for k, q in TARGETS.items()} if a.targets == 'front' else \
+        {k: (UP, poses[k]['arm']) for k in STORE} if a.targets == 'store' else {'show_to_up': (show, UP)}
+    for name, (start, q) in targets.items():
         for f in (float(v) for v in a.fractions.split(',')):
+            if start is not UP:
+                move(start, 4.0)
             st['log'] = []
             h = send(q, a.move_s)
             spin(f * a.move_s)
             tc = now()
             if a.mode == 'cancel':
-                rclpy.spin_until_future_complete(n, h.cancel_goal_async())
+                rclpy.spin_until_future_complete(n, h.cancel_goal_async(), timeout_sec=5.0)
             else:
                 send([st['ref'][j] for j in ARM], a.hold_s)
             spin(a.after_s)
             ch, j, dev = measure(tc)
-            status = h.get_result_async()
-            rclpy.spin_until_future_complete(n, status)
-            code = status.result().status
+            status = h.get_result_async()          # timeout: a cancel racing the goal's end can leave no result
+            rclpy.spin_until_future_complete(n, status, timeout_sec=10.0)
+            code = status.result().status if status.done() else 'no result'
             print(f'{name} {a.mode} at {f:.1f}: change {ch:.4f} rad ({j}), deviation {dev:.4f}, '
                   f'{"canceled" if code == GoalStatus.STATUS_CANCELED else "status " + str(code)}', flush=True)
             if ch > worst[0]:

@@ -1,0 +1,1765 @@
+{
+ "run_id": "b4_robot_lab_hold_s1",
+ "row": "b4_robot_lab_hold",
+ "seed": 1,
+ "sim": "gazebo",
+ "attempt": 1,
+ "commit": "653ad16",
+ "dirty": false,
+ "components": {
+  "locomotion": "legubiao_robot_lab",
+  "localization": "ground_truth",
+  "mapping": "ground_truth",
+  "perception": "ground_truth",
+  "classifier": "ground_truth",
+  "navigation": "nav2",
+  "grasp_mode": "attach"
+ },
+ "limits": {
+  "sim_s": 3600,
+  "wall_min": 200,
+  "stall_s": 600,
+  "stall_move_m": 0.5,
+  "startup_s": 300,
+  "dead_after_s": 120
+ },
+ "started": "2026-11-07T20:42:59Z",
+ "log_dir": "results/bench/b4_robot_lab_hold/b4_robot_lab_hold_s1_20261107T204259Z",
+ "tracebacks_in_launch_log": 0,
+ "end_reason": "done",
+ "end_detail": "task done",
+ "ended": "2026-11-07T23:21:10Z",
+ "wall_s": 9491.0,
+ "sim_end_t": 3000.12,
+ "recorder_final": true,
+ "metrics": {
+  "items_total": 13,
+  "items_collected": 10,
+  "items_in_basket": 0,
+  "items_missing_from_ground_truth": [],
+  "sorting_correct": 10,
+  "sorting_accuracy": 1.0,
+  "contamination_count": 0,
+  "contamination_rate": 0.0,
+  "recyclable_in_residual": 0,
+  "weighted_sorting_errors": 0.0,
+  "placement": {
+   "trash_00": "ground",
+   "trash_01": "ground",
+   "trash_02": "bin:recyclable",
+   "trash_03": "bin:recyclable",
+   "trash_04": "bin:residual",
+   "trash_05": "bin:recyclable",
+   "trash_06": "bin:recyclable",
+   "trash_07": "bin:recyclable",
+   "trash_08": "bin:recyclable",
+   "trash_09": "ground",
+   "trash_10": "bin:residual",
+   "trash_11": "bin:residual",
+   "trash_12": "bin:recyclable"
+  },
+  "false_pickups": 0,
+  "false_pickup_ids": [],
+  "grasp_success_rate": 1.0,
+  "grasp_mode": "simulated attach",
+  "picks": 16,
+  "picks_ok": 16,
+  "confusion": {
+   "pet": {
+    "pet": 6
+   },
+   "metal": {
+    "metal": 3
+   },
+   "glass": {
+    "glass": 3
+   },
+   "residual": {
+    "residual": 4
+   }
+  },
+  "classified": 16,
+  "classified_unmatched": 0,
+  "items_per_min": 0.20099963820065123,
+  "sim_s": 2985.08,
+  "falls": 0,
+  "fall_t": null,
+  "fall_pose": null,
+  "max_tilt_deg": 5.864926329127486,
+  "stuck_events": 0,
+  "timeout": false,
+  "skipped": {
+   "unreachable": 1
+  },
+  "distance_m": 431.4534510565846,
+  "duplicates": 2,
+  "duplicate_ids": {
+   "trash_06": 1,
+   "trash_10": 1
+  },
+  "coverage": 1.0,
+  "safety": {
+   "violations": 0,
+   "person_violations": [],
+   "arm_violations": [],
+   "geofence_episodes": [],
+   "outside_geofence_s": 0,
+   "min_person_distance": {
+    "d": 0.281,
+    "t": 616.9,
+    "speed": 0.005,
+    "cmd": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "robot": [
+     8.847,
+     10.012
+    ]
+   },
+   "arm_max_change_not_ok_rad": 0.034207306880306376,
+   "safety_state_changes": {
+    "ok": 55,
+    "stop": 68,
+    "slow": 70
+   },
+   "after_fall": {
+    "person": [],
+    "arm": [],
+    "geofence": []
+   },
+   "fall_cutoff_t": null
+  },
+  "components": {
+   "detection": "n/a (ground truth detector: reads /sim/ground_truth/objects)",
+   "classification_accuracy": 1.0,
+   "localization_drift_m": {
+    "samples": 2985,
+    "mean_m": 0.002958242110159631,
+    "max_m": 0.026446319226461814,
+    "last_m": 0.0004127249584971396
+   }
+  }
+ },
+ "recorder": {
+  "final": true,
+  "wall": 1794093665.2321725,
+  "sim_t0": 15.04,
+  "sim_t": 3000.12,
+  "last_pose_wall": 1794093665.1862118,
+  "progress_wall": 1794093662.6673265,
+  "task_state": "DONE",
+  "task_changes": 131,
+  "pose": [
+   2.514194619757553,
+   13.588576288267225,
+   0.42989685943916883,
+   2.6938751565192227
+  ],
+  "distance_m": 431.4534510565846,
+  "max_tilt_deg": 5.864926329127486,
+  "fall_t": null,
+  "fall_pose": null,
+  "stop_distance_m": 1.5,
+  "min_person": {
+   "d": 0.281,
+   "t": 616.9,
+   "speed": 0.005,
+   "cmd": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "robot": [
+    8.847,
+    10.012
+   ]
+  },
+  "person_violations": [],
+  "safety_state": "ok",
+  "safety_counts": {
+   "ok": 55,
+   "stop": 68,
+   "slow": 70
+  },
+  "safety_transitions": [
+   [
+    null,
+    "ok",
+    null,
+    0.0
+   ],
+   [
+    116.24,
+    "stop",
+    5.386,
+    0.345
+   ],
+   [
+    117.5,
+    "slow",
+    4.04,
+    0.024
+   ],
+   [
+    118.64,
+    "stop",
+    2.818,
+    0.136
+   ],
+   [
+    123.54,
+    "slow",
+    3.585,
+    0.0
+   ],
+   [
+    126.04,
+    "ok",
+    6.291,
+    0.115
+   ],
+   [
+    144.64,
+    "slow",
+    2.982,
+    0.0
+   ],
+   [
+    148.6,
+    "ok",
+    4.096,
+    0.0
+   ],
+   [
+    183.1,
+    "stop",
+    5.341,
+    0.339
+   ],
+   [
+    184.3,
+    "slow",
+    4.194,
+    0.005
+   ],
+   [
+    191.5,
+    "ok",
+    6.243,
+    0.112
+   ],
+   [
+    274.8,
+    "stop",
+    5.274,
+    0.334
+   ],
+   [
+    276.04,
+    "slow",
+    4.051,
+    0.018
+   ],
+   [
+    277.8,
+    "stop",
+    2.598,
+    0.117
+   ],
+   [
+    280.84,
+    "slow",
+    3.289,
+    0.001
+   ],
+   [
+    283.84,
+    "ok",
+    6.269,
+    0.119
+   ],
+   [
+    457.5,
+    "stop",
+    5.221,
+    0.328
+   ],
+   [
+    458.74,
+    "slow",
+    3.995,
+    0.012
+   ],
+   [
+    459.94,
+    "stop",
+    2.916,
+    0.144
+   ],
+   [
+    463.84,
+    "slow",
+    3.375,
+    0.0
+   ],
+   [
+    466.74,
+    "ok",
+    6.191,
+    0.094
+   ],
+   [
+    474.0,
+    "stop",
+    5.294,
+    0.335
+   ],
+   [
+    475.3,
+    "slow",
+    3.863,
+    0.006
+   ],
+   [
+    476.2,
+    "stop",
+    2.976,
+    0.149
+   ],
+   [
+    481.94,
+    "slow",
+    3.728,
+    0.0
+   ],
+   [
+    484.4,
+    "ok",
+    6.241,
+    0.09
+   ],
+   [
+    585.44,
+    "slow",
+    2.999,
+    0.002
+   ],
+   [
+    590.24,
+    "ok",
+    4.226,
+    0.0
+   ],
+   [
+    612.34,
+    "stop",
+    5.21,
+    0.332
+   ],
+   [
+    613.64,
+    "slow",
+    3.714,
+    0.012
+   ],
+   [
+    614.48,
+    "stop",
+    2.703,
+    0.124
+   ],
+   [
+    620.2,
+    "slow",
+    3.701,
+    0.0
+   ],
+   [
+    622.4,
+    "ok",
+    6.355,
+    0.113
+   ],
+   [
+    718.14,
+    "stop",
+    5.269,
+    0.337
+   ],
+   [
+    719.4,
+    "slow",
+    3.909,
+    0.005
+   ],
+   [
+    720.58,
+    "stop",
+    2.708,
+    0.127
+   ],
+   [
+    725.58,
+    "slow",
+    3.658,
+    0.001
+   ],
+   [
+    727.94,
+    "ok",
+    6.323,
+    0.08
+   ],
+   [
+    785.54,
+    "slow",
+    3.0,
+    0.0
+   ],
+   [
+    786.9,
+    "stop",
+    1.843,
+    0.0
+   ],
+   [
+    790.44,
+    "ok",
+    3.186,
+    0.0
+   ],
+   [
+    818.74,
+    "slow",
+    4.826,
+    0.105
+   ],
+   [
+    827.5,
+    "ok",
+    6.125,
+    0.074
+   ],
+   [
+    852.74,
+    "slow",
+    2.975,
+    0.033
+   ],
+   [
+    854.08,
+    "stop",
+    1.835,
+    0.007
+   ],
+   [
+    857.54,
+    "ok",
+    3.101,
+    0.0
+   ],
+   [
+    888.04,
+    "slow",
+    2.993,
+    0.0
+   ],
+   [
+    892.7,
+    "ok",
+    4.171,
+    0.0
+   ],
+   [
+    917.14,
+    "stop",
+    5.273,
+    0.341
+   ],
+   [
+    918.34,
+    "ok",
+    4.011,
+    0.005
+   ],
+   [
+    919.14,
+    "slow",
+    3.225,
+    0.032
+   ],
+   [
+    919.74,
+    "stop",
+    2.623,
+    0.121
+   ],
+   [
+    924.18,
+    "slow",
+    3.528,
+    0.0
+   ],
+   [
+    926.38,
+    "ok",
+    5.99,
+    0.064
+   ],
+   [
+    961.04,
+    "slow",
+    2.963,
+    0.004
+   ],
+   [
+    962.28,
+    "stop",
+    1.851,
+    0.002
+   ],
+   [
+    965.84,
+    "ok",
+    3.13,
+    0.002
+   ],
+   [
+    1019.94,
+    "stop",
+    5.318,
+    0.339
+   ],
+   [
+    1021.2,
+    "slow",
+    4.081,
+    0.033
+   ],
+   [
+    1022.64,
+    "stop",
+    2.769,
+    0.129
+   ],
+   [
+    1026.2,
+    "slow",
+    3.337,
+    0.001
+   ],
+   [
+    1029.04,
+    "ok",
+    6.365,
+    0.123
+   ],
+   [
+    1131.9,
+    "stop",
+    5.162,
+    0.327
+   ],
+   [
+    1133.14,
+    "ok",
+    5.059,
+    0.01
+   ],
+   [
+    1151.6,
+    "stop",
+    5.367,
+    0.343
+   ],
+   [
+    1152.9,
+    "slow",
+    4.437,
+    0.024
+   ],
+   [
+    1159.94,
+    "ok",
+    5.952,
+    0.097
+   ],
+   [
+    1299.84,
+    "slow",
+    2.985,
+    0.03
+   ],
+   [
+    1303.9,
+    "ok",
+    4.096,
+    0.002
+   ],
+   [
+    1366.1,
+    "slow",
+    2.984,
+    0.004
+   ],
+   [
+    1367.7,
+    "stop",
+    1.854,
+    0.0
+   ],
+   [
+    1370.44,
+    "slow",
+    3.003,
+    0.0
+   ],
+   [
+    1371.8,
+    "ok",
+    4.313,
+    0.0
+   ],
+   [
+    1429.84,
+    "stop",
+    5.093,
+    0.329
+   ],
+   [
+    1431.2,
+    "slow",
+    3.669,
+    0.003
+   ],
+   [
+    1432.0,
+    "stop",
+    2.814,
+    0.133
+   ],
+   [
+    1436.8,
+    "slow",
+    3.54,
+    0.001
+   ],
+   [
+    1439.24,
+    "ok",
+    6.367,
+    0.124
+   ],
+   [
+    1454.0,
+    "stop",
+    5.492,
+    0.349
+   ],
+   [
+    1455.2,
+    "slow",
+    4.674,
+    0.027
+   ],
+   [
+    1462.14,
+    "ok",
+    5.873,
+    0.128
+   ],
+   [
+    1484.0,
+    "stop",
+    5.747,
+    0.375
+   ],
+   [
+    1485.24,
+    "slow",
+    4.404,
+    0.002
+   ],
+   [
+    1486.7,
+    "stop",
+    2.912,
+    0.151
+   ],
+   [
+    1491.2,
+    "slow",
+    3.455,
+    0.023
+   ],
+   [
+    1493.74,
+    "ok",
+    6.342,
+    0.143
+   ],
+   [
+    1685.24,
+    "stop",
+    5.386,
+    0.343
+   ],
+   [
+    1686.44,
+    "ok",
+    5.257,
+    0.009
+   ],
+   [
+    1725.3,
+    "stop",
+    5.227,
+    0.332
+   ],
+   [
+    1726.5,
+    "ok",
+    5.082,
+    0.043
+   ],
+   [
+    1767.18,
+    "slow",
+    2.965,
+    0.002
+   ],
+   [
+    1769.04,
+    "stop",
+    1.848,
+    0.002
+   ],
+   [
+    1771.24,
+    "slow",
+    2.907,
+    0.0
+   ],
+   [
+    1772.74,
+    "ok",
+    4.307,
+    0.0
+   ],
+   [
+    1785.2,
+    "stop",
+    5.15,
+    0.326
+   ],
+   [
+    1786.44,
+    "slow",
+    4.091,
+    0.01
+   ],
+   [
+    1793.3,
+    "ok",
+    6.188,
+    0.127
+   ],
+   [
+    1850.8,
+    "stop",
+    5.596,
+    0.36
+   ],
+   [
+    1852.1,
+    "slow",
+    4.355,
+    0.016
+   ],
+   [
+    1853.94,
+    "stop",
+    2.769,
+    0.133
+   ],
+   [
+    1858.2,
+    "slow",
+    3.451,
+    0.0
+   ],
+   [
+    1861.2,
+    "ok",
+    6.104,
+    0.114
+   ],
+   [
+    1890.78,
+    "stop",
+    5.401,
+    0.347
+   ],
+   [
+    1891.98,
+    "slow",
+    4.068,
+    0.029
+   ],
+   [
+    1893.3,
+    "stop",
+    2.54,
+    0.121
+   ],
+   [
+    1898.84,
+    "slow",
+    3.774,
+    0.0
+   ],
+   [
+    1901.04,
+    "ok",
+    6.442,
+    0.132
+   ],
+   [
+    2229.14,
+    "stop",
+    5.498,
+    0.348
+   ],
+   [
+    2230.4,
+    "slow",
+    4.608,
+    0.01
+   ],
+   [
+    2237.1,
+    "ok",
+    5.899,
+    0.112
+   ],
+   [
+    2306.14,
+    "stop",
+    5.538,
+    0.353
+   ],
+   [
+    2307.34,
+    "ok",
+    5.207,
+    0.013
+   ],
+   [
+    2308.14,
+    "stop",
+    5.137,
+    0.325
+   ],
+   [
+    2309.4,
+    "ok",
+    5.448,
+    0.006
+   ],
+   [
+    2326.8,
+    "stop",
+    5.725,
+    0.368
+   ],
+   [
+    2328.0,
+    "ok",
+    5.128,
+    0.024
+   ],
+   [
+    2329.0,
+    "stop",
+    4.857,
+    0.31
+   ],
+   [
+    2330.24,
+    "slow",
+    4.782,
+    0.003
+   ],
+   [
+    2332.9,
+    "ok",
+    5.654,
+    0.121
+   ],
+   [
+    2358.5,
+    "stop",
+    5.293,
+    0.337
+   ],
+   [
+    2359.7,
+    "slow",
+    4.153,
+    0.043
+   ],
+   [
+    2361.5,
+    "stop",
+    2.743,
+    0.129
+   ],
+   [
+    2364.24,
+    "slow",
+    3.163,
+    0.001
+   ],
+   [
+    2367.34,
+    "ok",
+    6.285,
+    0.104
+   ],
+   [
+    2405.04,
+    "stop",
+    5.435,
+    0.348
+   ],
+   [
+    2406.3,
+    "slow",
+    4.027,
+    0.003
+   ],
+   [
+    2407.28,
+    "stop",
+    2.897,
+    0.14
+   ],
+   [
+    2412.64,
+    "slow",
+    3.631,
+    0.001
+   ],
+   [
+    2414.94,
+    "ok",
+    6.382,
+    0.104
+   ],
+   [
+    2424.64,
+    "slow",
+    2.943,
+    0.042
+   ],
+   [
+    2425.7,
+    "stop",
+    1.844,
+    0.028
+   ],
+   [
+    2430.04,
+    "ok",
+    3.269,
+    0.001
+   ],
+   [
+    2464.1,
+    "stop",
+    5.488,
+    0.357
+   ],
+   [
+    2465.34,
+    "slow",
+    4.218,
+    0.015
+   ],
+   [
+    2466.8,
+    "stop",
+    2.887,
+    0.139
+   ],
+   [
+    2470.6,
+    "slow",
+    3.341,
+    0.0
+   ],
+   [
+    2473.4,
+    "ok",
+    6.312,
+    0.131
+   ],
+   [
+    2503.1,
+    "stop",
+    5.204,
+    0.33
+   ],
+   [
+    2504.34,
+    "slow",
+    3.943,
+    0.012
+   ],
+   [
+    2505.84,
+    "stop",
+    2.545,
+    0.115
+   ],
+   [
+    2510.84,
+    "slow",
+    3.684,
+    0.0
+   ],
+   [
+    2513.4,
+    "ok",
+    6.145,
+    0.116
+   ],
+   [
+    2527.8,
+    "slow",
+    4.369,
+    0.193
+   ],
+   [
+    2528.94,
+    "ok",
+    5.213,
+    0.1
+   ],
+   [
+    2566.6,
+    "stop",
+    5.675,
+    0.366
+   ],
+   [
+    2567.84,
+    "slow",
+    4.297,
+    0.023
+   ],
+   [
+    2569.14,
+    "stop",
+    2.755,
+    0.131
+   ],
+   [
+    2574.6,
+    "slow",
+    3.668,
+    0.0
+   ],
+   [
+    2576.9,
+    "ok",
+    6.448,
+    0.112
+   ],
+   [
+    2600.74,
+    "stop",
+    5.357,
+    0.346
+   ],
+   [
+    2602.0,
+    "slow",
+    4.04,
+    0.008
+   ],
+   [
+    2603.14,
+    "stop",
+    2.883,
+    0.144
+   ],
+   [
+    2608.94,
+    "slow",
+    3.723,
+    0.0
+   ],
+   [
+    2611.4,
+    "ok",
+    6.17,
+    0.128
+   ],
+   [
+    2623.64,
+    "stop",
+    5.398,
+    0.345
+   ],
+   [
+    2624.9,
+    "slow",
+    3.99,
+    0.002
+   ],
+   [
+    2625.9,
+    "stop",
+    2.872,
+    0.142
+   ],
+   [
+    2631.1,
+    "slow",
+    3.616,
+    0.001
+   ],
+   [
+    2633.44,
+    "ok",
+    6.39,
+    0.091
+   ],
+   [
+    2677.28,
+    "slow",
+    2.982,
+    0.008
+   ],
+   [
+    2678.74,
+    "stop",
+    1.84,
+    0.001
+   ],
+   [
+    2681.84,
+    "ok",
+    3.001,
+    0.0
+   ],
+   [
+    2688.5,
+    "slow",
+    4.854,
+    0.255
+   ],
+   [
+    2688.64,
+    "stop",
+    4.726,
+    0.291
+   ],
+   [
+    2689.8,
+    "slow",
+    3.629,
+    0.01
+   ],
+   [
+    2691.1,
+    "stop",
+    2.683,
+    0.123
+   ],
+   [
+    2694.9,
+    "slow",
+    3.429,
+    0.001
+   ],
+   [
+    2697.94,
+    "ok",
+    6.118,
+    0.125
+   ],
+   [
+    2731.94,
+    "stop",
+    5.421,
+    0.344
+   ],
+   [
+    2733.2,
+    "slow",
+    4.173,
+    0.008
+   ],
+   [
+    2735.3,
+    "stop",
+    2.395,
+    0.097
+   ],
+   [
+    2738.54,
+    "slow",
+    3.407,
+    0.0
+   ],
+   [
+    2741.2,
+    "ok",
+    6.297,
+    0.093
+   ],
+   [
+    2774.1,
+    "stop",
+    5.356,
+    0.342
+   ],
+   [
+    2775.3,
+    "slow",
+    4.229,
+    0.026
+   ],
+   [
+    2777.24,
+    "stop",
+    2.745,
+    0.127
+   ],
+   [
+    2781.04,
+    "slow",
+    3.405,
+    0.0
+   ],
+   [
+    2784.1,
+    "ok",
+    6.077,
+    0.13
+   ],
+   [
+    2790.8,
+    "slow",
+    2.956,
+    0.046
+   ],
+   [
+    2791.8,
+    "stop",
+    1.867,
+    0.01
+   ],
+   [
+    2796.3,
+    "ok",
+    3.291,
+    0.0
+   ],
+   [
+    2797.5,
+    "slow",
+    4.56,
+    0.151
+   ],
+   [
+    2799.04,
+    "ok",
+    6.222,
+    0.127
+   ],
+   [
+    2837.24,
+    "stop",
+    5.37,
+    0.343
+   ],
+   [
+    2838.44,
+    "slow",
+    4.736,
+    0.016
+   ],
+   [
+    2842.94,
+    "ok",
+    5.906,
+    0.119
+   ],
+   [
+    2872.0,
+    "stop",
+    5.482,
+    0.349
+   ],
+   [
+    2873.24,
+    "slow",
+    4.564,
+    0.004
+   ],
+   [
+    2880.0,
+    "ok",
+    5.456,
+    0.09
+   ],
+   [
+    2892.8,
+    "stop",
+    5.524,
+    0.354
+   ],
+   [
+    2894.0,
+    "ok",
+    5.026,
+    0.014
+   ],
+   [
+    2894.8,
+    "stop",
+    4.861,
+    0.314
+   ],
+   [
+    2896.14,
+    "ok",
+    5.037,
+    0.009
+   ]
+  ],
+  "arm_max_change_not_ok_rad": 0.034207306880306376,
+  "arm_max_change_at": {
+   "t": 1366.15,
+   "joint": "arm_waist",
+   "state": "slow"
+  },
+  "arm_violations": [],
+  "geofence_source": "/geofence",
+  "outside_geofence_s": 0.0,
+  "outside_geofence": [],
+  "drift": {
+   "samples": 2985,
+   "mean_m": 0.002958242110159631,
+   "max_m": 0.026446319226461814,
+   "last_m": 0.0004127249584971396
+  },
+  "world_model": {
+   "items": [
+    {
+     "id": "wm_000",
+     "scene_id": "trash_06",
+     "object_class": "trash",
+     "material": "metal",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_001",
+     "scene_id": "trash_10",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_002",
+     "scene_id": "trash_00",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 3,
+     "skip_reason": "unreachable"
+    },
+    {
+     "id": "wm_003",
+     "scene_id": "trash_02",
+     "object_class": "trash",
+     "material": "metal",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_004",
+     "scene_id": "trash_07",
+     "object_class": "trash",
+     "material": "pet",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_005",
+     "scene_id": "distractor_01",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_006",
+     "scene_id": "distractor_05",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_007",
+     "scene_id": "trash_05",
+     "object_class": "trash",
+     "material": "pet",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_008",
+     "scene_id": "trash_11",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_009",
+     "scene_id": "distractor_00",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_010",
+     "scene_id": "distractor_08",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_011",
+     "scene_id": "distractor_07",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_012",
+     "scene_id": "distractor_04",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_013",
+     "scene_id": "distractor_10",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_014",
+     "scene_id": "distractor_02",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_015",
+     "scene_id": "trash_06",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_016",
+     "scene_id": "trash_10",
+     "object_class": "trash",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_017",
+     "scene_id": "distractor_09",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_018",
+     "scene_id": "trash_08",
+     "object_class": "trash",
+     "material": "glass",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_019",
+     "scene_id": "trash_04",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_020",
+     "scene_id": "trash_09",
+     "object_class": "trash",
+     "material": "pet",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_021",
+     "scene_id": "trash_03",
+     "object_class": "trash",
+     "material": "glass",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_022",
+     "scene_id": "trash_12",
+     "object_class": "trash",
+     "material": "glass",
+     "bin_id": "recyclable",
+     "status": 2,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_023",
+     "scene_id": "distractor_03",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_024",
+     "scene_id": "distractor_06",
+     "object_class": "distractor",
+     "material": "",
+     "bin_id": "",
+     "status": 0,
+     "skip_reason": ""
+    },
+    {
+     "id": "wm_025",
+     "scene_id": "trash_01",
+     "object_class": "trash",
+     "material": "residual",
+     "bin_id": "residual",
+     "status": 2,
+     "skip_reason": ""
+    }
+   ],
+   "coverage": 1.0,
+   "duplicates": 2,
+   "duplicate_ids": {
+    "trash_06": 1,
+    "trash_10": 1
+   }
+  },
+  "wm_ids": {
+   "wm_000": "trash_06",
+   "wm_001": "trash_10",
+   "wm_002": "trash_00",
+   "wm_003": "trash_02",
+   "wm_004": "trash_07",
+   "wm_005": "distractor_01",
+   "wm_006": "distractor_05",
+   "wm_007": "trash_05",
+   "wm_008": "trash_11",
+   "wm_009": "distractor_00",
+   "wm_010": "distractor_08",
+   "wm_011": "distractor_07",
+   "wm_012": "distractor_04",
+   "wm_013": "distractor_10",
+   "wm_014": "distractor_02",
+   "wm_015": "trash_06",
+   "wm_016": "trash_10",
+   "wm_017": "distractor_09",
+   "wm_018": "trash_08",
+   "wm_019": "trash_04",
+   "wm_020": "trash_09",
+   "wm_021": "trash_03",
+   "wm_022": "trash_12",
+   "wm_023": "distractor_03",
+   "wm_024": "distractor_06",
+   "wm_025": "trash_01"
+  },
+  "objects_t": 3000.106,
+  "objects": {
+   "trash_00": [
+    16.2961,
+    12.9164,
+    0.1378
+   ],
+   "trash_01": [
+    1.839,
+    15.3465,
+    0.193
+   ],
+   "trash_02": [
+    1.7421,
+    14.1288,
+    0.2142
+   ],
+   "trash_03": [
+    1.5684,
+    14.1852,
+    0.2065
+   ],
+   "trash_04": [
+    1.5949,
+    15.4305,
+    0.2401
+   ],
+   "trash_05": [
+    1.6311,
+    14.0549,
+    0.1917
+   ],
+   "trash_06": [
+    1.674,
+    14.2126,
+    0.205
+   ],
+   "trash_07": [
+    1.475,
+    14.211,
+    0.1917
+   ],
+   "trash_08": [
+    1.6229,
+    14.2258,
+    0.24
+   ],
+   "trash_09": [
+    1.8561,
+    14.0792,
+    0.1788
+   ],
+   "trash_10": [
+    1.7143,
+    15.4045,
+    0.1879
+   ],
+   "trash_11": [
+    1.5537,
+    15.3856,
+    0.2069
+   ],
+   "trash_12": [
+    1.6331,
+    13.979,
+    0.1892
+   ],
+   "distractor_00": [
+    8.022,
+    9.183,
+    0.0653
+   ],
+   "distractor_01": [
+    12.741,
+    7.297,
+    0.06
+   ],
+   "distractor_02": [
+    6.184,
+    10.026,
+    0.1211
+   ],
+   "distractor_03": [
+    23.785,
+    13.201,
+    0.1801
+   ],
+   "distractor_04": [
+    15.99,
+    6.176,
+    0.04
+   ],
+   "distractor_05": [
+    16.307,
+    10.349,
+    0.0995
+   ],
+   "distractor_06": [
+    23.571,
+    16.601,
+    0.2701
+   ],
+   "distractor_07": [
+    18.108,
+    10.275,
+    0.0951
+   ],
+   "distractor_08": [
+    14.583,
+    7.648,
+    0.07
+   ],
+   "distractor_09": [
+    21.143,
+    8.604,
+    0.04
+   ],
+   "distractor_10": [
+    1.444,
+    7.151,
+    0.04
+   ]
+  },
+  "objects_robot": [
+   2.5143233468996913,
+   13.588525579343203,
+   0.4307459826176875,
+   2.691392994961678
+  ]
+ },
+ "infra_attempts": []
+}
