@@ -80,7 +80,7 @@ def generate_launch_description():
         DeclareLaunchArgument('navigation', default_value='nav2'),
         DeclareLaunchArgument('grasp_mode', default_value='attach'),
         DeclareLaunchArgument('run_id', default_value='', description='event log name (default: time + seed)'),
-        DeclareLaunchArgument('locomotion', default_value='legubiao',
+        DeclareLaunchArgument('locomotion', default_value='legubiao_robot_lab',
                               description='walking controller (sim.launch.py); the task adapts its small moves'),
         DeclareLaunchArgument('clock_topic', default_value='',
                               description='clock topic for all nodes (sim.launch.py: /sim/clock_throttled)'),

@@ -40,7 +40,7 @@ on their own Gazebo partition / ROS domain (`scene_env.sh`: `GZ_PARTITION=a1b`,
 | `hold_test.py [--minutes 5]` | stand still with no command, log tilt / roll / pitch every 30 sim s, stop at a fall; with `GOTO=` of `turn_walk_test.sh` to stand at a given spot |
 | `cancel_test.py [--mode cancel\|hold_ref] [--item trash_06]` | arm moves stopped mid-way (bare goal cancel, or a goal to the controller reference as grasping's `safety_stop: hold_reference` does), the arm rule (`bench.yaml` `arm_change_rad` / `arm_window_s`) measured from the stop; `--item` attaches a scene object first; with `TOOL=` of `turn_walk_test.sh` |
 
-`LOCO=legubiao_rl` (environment) selects the HIMLoco controller for `scene_up.sh`, `rtf_measure.sh`, `nav_walk_test.sh` and `turn_walk_test.sh` (default `legubiao`, the basic controller).
+`LOCO=<name>` (environment; e.g. `legubiao_rl` for HIMLoco, `legubiao` for the basic controller) selects the controller for `scene_up.sh`, `rtf_measure.sh`, `nav_walk_test.sh` and `turn_walk_test.sh` (default `legubiao_robot_lab`, from the launch files).
 
 Full-run recipe: `notes/logs/A2.md`, "A2b".
 

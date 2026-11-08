@@ -52,7 +52,7 @@ LEG_CONTROLLER_REMAPS = ('-r odom:=/locomotion/controller_odom',
                          '-r /control_input:=/locomotion/control_input',
                          '-r /tf:=/locomotion/controller_tf')
 # locomotion:= -> leg controller (config/gazebo_controllers.yaml)
-LEG_CONTROLLERS = {'legubiao': 'basic_quadruped_controller',     # model-based trot (default)
+LEG_CONTROLLERS = {'legubiao': 'basic_quadruped_controller',     # model-based trot
                    'legubiao_rl': 'rl_quadruped_controller',     # learned policy (HIMLoco)
                    'legubiao_robot_lab': 'rl_robot_lab_controller',   # learned policy (robot_lab)
                    'legubiao_tuned': 'basic_tuned_controller'}   # basic with set joint gains (B4)
@@ -158,9 +158,9 @@ def generate_launch_description():
                               description='robot variant: custom (wide jaws, large basket; default) | '
                                           'stock (WidowX gripper, small basket). Empty = from the scene '
                                           'manifest, else custom'),
-        DeclareLaunchArgument('locomotion', default_value='legubiao',
-                              description='leg controller: legubiao (basic, default) | legubiao_rl (HIMLoco policy) | '
-                                          'legubiao_robot_lab (robot_lab policy) | legubiao_tuned (basic, tuned gains)'),
+        DeclareLaunchArgument('locomotion', default_value='legubiao_robot_lab',
+                              description='leg controller: legubiao (basic) | legubiao_rl (HIMLoco policy) | '
+                                          'legubiao_robot_lab (robot_lab policy, default) | legubiao_tuned (basic, tuned gains)'),
         DeclareLaunchArgument('x', default_value='0.0'),
         DeclareLaunchArgument('y', default_value='0.0'),
         DeclareLaunchArgument('z', default_value='0.45'),

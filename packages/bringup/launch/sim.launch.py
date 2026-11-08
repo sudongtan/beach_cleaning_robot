@@ -73,8 +73,8 @@ def generate_launch_description():
         DeclareLaunchArgument('basket_load_kg', default_value='0.0'),
         DeclareLaunchArgument('variant', default_value='',
                               description='custom | stock robot; empty = from the scene manifest, else custom'),
-        DeclareLaunchArgument('locomotion', default_value='legubiao',
-                              description='legubiao (basic controller) | legubiao_rl (HIMLoco policy) | legubiao_robot_lab (robot_lab policy) | '
+        DeclareLaunchArgument('locomotion', default_value='legubiao_robot_lab',
+                              description='legubiao (basic controller) | legubiao_rl (HIMLoco policy) | legubiao_robot_lab (robot_lab policy, default) | '
                                           'legubiao_tuned (basic, tuned gains)'),
         DeclareLaunchArgument('rviz', default_value='false', description='RViz with robot, TF, camera images'),
         DeclareLaunchArgument('skeleton', default_value='false',
