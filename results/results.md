@@ -32,6 +32,7 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | `b2_bins` | 2026-11-04 | c5dfba7 | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 2, fell 5, stall 3 | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (85/91) simulated attach | 0.14 (0.00–0.37) | 5 / 3 / 0 | 135 (0–367) | 13 | 0.82 (0.25–1.00) | 1 | 0.04 | 1.00 (85/85) | 0.002 (0.037) | n/a (ground truth) |
 | `b3_nav` | 2026-11-05 | 974f56f | gazebo | loco legubiao / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 3, fell 7 | 39/110 | 1.00 (39/39) | 0 | 0 | 0.93 (81/87) simulated attach | 0.13 (0.00–0.35) | 7 / 0 / 0 | 169 (0–409) | 15 | 0.76 (0.24–1.00) | 0 | 0.04 | 1.00 (81/81) | 0.003 (0.052) | n/a (ground truth) |
 | `b4_robot_lab` | 2026-11-07 | f18c224 | gazebo | loco legubiao_robot_lab / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 9, stall 1 | 79/110 | 1.00 (79/79) | 0 | 0 | 0.84 (115/137) simulated attach | 0.22 (0.08–0.32) | 0 / 2 / 0 | 313 (42–372) | 26 | 0.99 (0.88–1.00) | 1 | 0.02 | 1.00 (115/115) | 0.003 (0.031) | n/a (ground truth) |
+| `b4_robot_lab_flip` | 2026-11-08 | 12c818a | gazebo | loco legubiao_robot_lab / loc gt / perc gt / cls gt / grasp attach | 3600 s sim / 200 min wall / stall 600 s | done 7, stall 3 | 75/110 | 1.00 (75/75) | 0 | 0 | 0.87 (104/120) simulated attach | 0.24 (0.09–0.34) | 0 / 3 / 0 | 251 (36–438) | 22 | 0.96 (0.78–1.00) | 0 | 0.02 | 1.00 (104/104) | 0.003 (0.029) | n/a (ground truth) |
 <!-- summary rows above this line -->
 
 ### Row `baseline`: per seed
@@ -108,3 +109,18 @@ Columns (per-run values; "mean (min–max)" over the 10 runs unless it says sum)
 | 7 | done | 2446 | 125 | 13/13 | 1.00 | 0 | 0 | 15/16 | – (max 5°) | 0 | 368 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.03 | 0.021 | 0 |
 | 8 | done | 2089 | 106 | 10/11 | 1.00 | 0 | 0 | 13/19 | – (max 5°) | 0 | 340 | 3 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
 | 9 | done | 2178 | 92 | 6/8 | 1.00 | 0 | 0 | 9/12 | – (max 4°) | 0 | 341 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.02 | 0.033 | 0 |
+
+### Row `b4_robot_lab_flip`: per seed
+
+| Seed | End | Sim s | Wall min | Collected | Sorting acc. | Contam. | False pickups | Grasp | Fall (t, tilt) | Stuck | Distance (m) | Dup. | Coverage | Safety viol. (person / arm / geofence) | Min person d. (m) | Arm change since not ok (rad) | Infra retries |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | stall | 1400 | 78 | 6/12 | 1.00 | 0 | 0 | 10/10 | – (max 7°) | 1 | 64 | 2 | 0.98 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 1 | done | 3025 | 155 | 8/13 | 1.00 | 0 | 0 | 16/16 | – (max 12°) | 0 | 438 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.08 | 0.025 | 0 |
+| 2 | stall | 1373 | 81 | 2/15 | 1.00 | 0 | 0 | 7/7 | – (max 9°) | 1 | 36 | 1 | 0.78 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 3 | done | 1684 | 126 | 8/9 | 1.00 | 0 | 0 | 8/10 | – (max 5°) | 0 | 275 | 3 | 1.00 | 0 (0 / 0 / 0) | 0.31 | 0.020 | 0 |
+| 4 | stall | 1387 | 74 | 7/13 | 1.00 | 0 | 0 | 10/14 | – (max 6°) | 1 | 64 | 2 | 0.81 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 5 | done | 1870 | 102 | 8/8 | 1.00 | 0 | 0 | 9/9 | – (max 5°) | 0 | 294 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.03 | 0.036 | 0 |
+| 6 | done | 1834 | 92 | 7/8 | 1.00 | 0 | 0 | 9/12 | – (max 6°) | 0 | 321 | 3 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 7 | done | 2288 | 143 | 13/13 | 1.00 | 0 | 0 | 14/17 | – (max 5°) | 0 | 331 | 3 | 1.00 | 0 (0 / 0 / 0) | 0.02 | 0.033 | 0 |
+| 8 | done | 2252 | 115 | 10/11 | 1.00 | 0 | 0 | 13/17 | – (max 5°) | 0 | 387 | 2 | 1.00 | 0 (0 / 0 / 0) | – | 0.000 | 0 |
+| 9 | done | 1943 | 111 | 6/8 | 1.00 | 0 | 0 | 8/8 | – (max 5°) | 0 | 298 | 2 | 1.00 | 0 (0 / 0 / 0) | 0.14 | 0.034 | 0 |
