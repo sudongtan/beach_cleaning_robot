@@ -31,7 +31,7 @@ from vision_msgs.msg import Detection3DArray
 
 from mapping.grid import inside_polygon
 from perception.logic import Fov
-from world_model.model import COMPARTMENTS, Coverage, WorldModel
+from world_model.model import COMPARTMENTS, Coverage, DetectionQueue, WorldModel
 
 
 def rotation(q):
@@ -69,6 +69,8 @@ class WorldModelNode(Node):
         self.wm = WorldModel(cfg['dedup_radius_m'], cfg['max_items_per_compartment'],
                              limits['basket_load_max_kg'], cfg['default_item_mass_kg'], masses)
         self.ignore_near_gripper = cfg['ignore_near_gripper_m']
+        self.queue = DetectionQueue(cfg['detection_tf_wait_s'])
+        self.last_counts = 0.0
 
         sys.path.insert(0, str(repo / 'sim' / 'common'))
         import terrain as terrain_mod
@@ -93,6 +95,7 @@ class WorldModelNode(Node):
         self.create_subscription(Detection3DArray, '/detections', self.on_detections, 10)
         self.create_service(UpdateItem, '/world_model/update_item', self.on_update)
         self.create_timer(0.5, self.tick)
+        self.create_timer(0.05, self.flush)
 
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
@@ -110,10 +113,23 @@ class WorldModelNode(Node):
     def on_detections(self, msg):
         if not msg.detections:
             return
+        self.queue.add(msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9, msg)
+        self.flush()
+
+    def flush(self):
+        if self.queue.pending:
+            self.queue.process(self.now(), self.use_detections)
+        if self.now() - self.last_counts >= 60.0:
+            self.last_counts = self.now()
+            q = self.queue
+            self.get_logger().info(f'detection messages: {q.first_try} at once, {q.after_wait} after waiting '
+                                   f'for the transform, {q.dropped} dropped')
+
+    def use_detections(self, msg):
         # the robot's pose when the camera saw them, not the latest (A2b run 3: phantom items)
-        to_map = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
+        to_map = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp, warn=False)
         if to_map is None:
-            return
+            return False
         # the arm's TFs often lag the camera's: without a fallback the held item became a new item
         # (A2b: phantoms next to every picked item, then picks of the item already in the basket)
         tcp = (self.lookup(msg.header.frame_id, self.tcp_frame, msg.header.stamp, warn=False)
@@ -135,6 +151,7 @@ class WorldModelNode(Node):
             yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
             size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
             self.wm.add_detection(self.now(), hyp.class_id, p.x, p.y, p.z, hyp.score, d.id, yaw, size)
+        return True
 
     def on_update(self, req, res):
         res.success, res.message = self.wm.update(req.id, req.status, req.material, req.bin_id, req.skip_reason)
