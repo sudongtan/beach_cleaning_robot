@@ -1,0 +1,13 @@
+# Leg odometry for the walking controllers without one (robot_lab, HIMLoco; C1.1).
+leg_odometry:
+  ros__parameters:
+    odom_frame: odom
+    base_frame: base_link
+    contact: weighted          # weighted | effort | height
+    force_threshold_n: 40.0    # N, vertical ground force below which a foot counts for nothing
+                               # (picked on the first half of a seed 5 bag, notes/logs/C1-C4.md)
+    height_margin_m: 0.02      # contact: height, within this of the lowest foot
+    sample_hz: 200.0           # kinematics rate; /joint_states comes at ~330 Hz
+    publish_hz: 50.0           # /leg_odom, the mean of the samples since the last message
+    twist_covariance_diag: [0.1, 0.1, 0.1, 0.1, 0.1, 0.05]
+    no_stance_covariance_factor: 100.0  # no foot on the ground since the last message
