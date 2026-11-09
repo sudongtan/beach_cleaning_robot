@@ -51,7 +51,13 @@ The trade-offs that shaped the project, each with the evidence behind it and the
 - **Choice:** [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) `basic_quadruped_controller`, pinned, with two small patches.
 - **Evidence:** with the full payload it walked straight with 0.2° drift over 10 s. CHAMP drifted 12–32°, and another controller in the same repo rolled over after turns.
 - **Second implementation:** the pretrained HIMLoco policy didn't fall in our tests, but doesn't move at the slow speeds needed to approach an item. Its training zeroes commands below 0.2 m/s. It stays selectable (`locomotion:=legubiao_rl`), not the default.
-- **Cost:** the blind gait falls now and then. The benchmark counts every fall, and most fixes so far remove the triggers (sideways step between the bins, every distractor an obstacle, no turn-in-place at goals).
+- **Cost:** the blind gait fell in 5 to 10 of the 10 runs of every row up to B3. The fixes before B4 removed the triggers (sideways step between the bins, every distractor an obstacle, no turn-in-place at goals).
+
+### A pretrained policy as the default since B4
+- **Choice:** the pretrained `robot_lab` Go2 policy from the same controller repo (`locomotion:=legubiao_robot_lab`, CPU libtorch) replaced the basic controller as the default. The basic controller stays selectable (`locomotion:=legubiao`).
+- **Evidence:** 0 falls in the 20 runs of its two benchmark rows, against 7 of 10 in the row before, and 75 of 110 items collected instead of 39, with 0 safety violations in the final row.
+- **Alternatives:** HIMLoco doesn't move at slow speeds. Tuned gains of the basic controller fell in 2 of 5 screening runs and picked too slowly. OCS2 wasn't tried (a large build, and `robot_lab` passed first).
+- **Cost:** it wasn't trained with the arm's weight or very slow commands, so small moves go through speed maps calibrated on one flat, dry-sand scene. 3 of 10 runs in the final row end stuck beside a bin, cause still open.
 
 ## Simulation and benchmark
 

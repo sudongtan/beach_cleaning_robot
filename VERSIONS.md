@@ -43,7 +43,7 @@ Recorded 2026-10-12 on the dev machine (native, no container).
 
 | Library | Version | Why |
 |---|---|---|
-| libtorch (CPU, cxx11 ABI) | 2.5.0+cpu, `https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.0%2Bcpu.zip` (sha256 `848ae52a422bf0bf94fd2ba2b048bb6c3e416f385cef390640760bd0baf7a40e`), unzipped to `~/libtorch` | `rl_quadruped_controller` (`locomotion:=legubiao_rl`, HIMLoco policy, A2b). Build with `Torch_DIR=~/libtorch`; at run time `gazebo.launch.py` adds `$Torch_DIR/lib` (default `~/libtorch/lib`) to Gazebo's `LD_LIBRARY_PATH` |
+| libtorch (CPU, cxx11 ABI) | 2.5.0+cpu, `https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.0%2Bcpu.zip` (sha256 `848ae52a422bf0bf94fd2ba2b048bb6c3e416f385cef390640760bd0baf7a40e`), unzipped to `~/libtorch` | `rl_quadruped_controller` (`locomotion:=legubiao_robot_lab`, the default since B4; `locomotion:=legubiao_rl`, HIMLoco policy, A2b). Build with `Torch_DIR=~/libtorch`; at run time `gazebo.launch.py` adds `$Torch_DIR/lib` (default `~/libtorch/lib`) to Gazebo's `LD_LIBRARY_PATH` |
 
 ## Runtime downloads
 
