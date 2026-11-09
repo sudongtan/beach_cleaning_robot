@@ -47,8 +47,9 @@ def test_different_class_is_a_different_item():
 def test_detection_merges_into_the_nearest_item():
     m = wm()
     a = m.add_detection(0, 'trash', 5.0, 3.0, 0, 1)
-    b = m.add_detection(0, 'trash', 5.5, 3.0, 0, 1)
-    assert m.add_detection(1, 'trash', 5.4, 3.0, 0, 1) == b and m.items[a].times_seen == 1
+    x = 5.0 + CFG['dedup_radius_m'] + 0.05
+    b = m.add_detection(0, 'trash', x, 3.0, 0, 1)
+    assert m.add_detection(1, 'trash', x - 0.1, 3.0, 0, 1) == b and m.items[a].times_seen == 1
 
 
 def test_collected_item_no_longer_matches():
