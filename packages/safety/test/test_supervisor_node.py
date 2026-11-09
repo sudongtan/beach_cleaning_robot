@@ -95,6 +95,31 @@ def test_person_approach_and_estop():
         rclpy.try_shutdown()
 
 
+def test_robot_pose_in_odom_and_map():
+    rclpy.init()
+    try:
+        sup = SupervisorNode(parameter_overrides=[Parameter(k, value=v) for k, v in PARAMS.items()])
+        fake = rclpy.create_node('fake_tf')
+        tfs = []
+        for parent, child, x in (('map', 'odom', 5.0), ('odom', 'base_link', 1.0)):
+            tf = TransformStamped()
+            tf.header.frame_id, tf.child_frame_id = parent, child
+            tf.transform.translation.x = x
+            tf.transform.rotation.w = 1.0
+            tfs.append(tf)
+        StaticTransformBroadcaster(fake).sendTransform(tfs)
+        ex = SingleThreadedExecutor()
+        ex.add_node(sup)
+        ex.add_node(fake)
+        end = time.monotonic() + 3.0
+        while time.monotonic() < end and (sup.robot_pose() is None or sup.robot_pose('odom') is None):
+            ex.spin_once(timeout_sec=0.02)
+        assert sup.robot_pose('odom')[:2] == pytest.approx((1.0, 0.0))
+        assert sup.robot_pose()[:2] == pytest.approx((6.0, 0.0))
+    finally:
+        rclpy.try_shutdown()
+
+
 def test_to_frame_rotated_robot():
     """Robot at map (2, 0) facing +y; a person at map (2, 1) is 1 m straight ahead of it."""
     import math

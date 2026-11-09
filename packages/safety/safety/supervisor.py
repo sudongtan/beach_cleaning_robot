@@ -10,8 +10,8 @@ the approach speed K of ISO 13855): stop when the person is within
   stop_distance + extra + K * (reaction + T_stop(v)) + v * reaction + v^2 / (2 decel),
 T_stop(v) = max(0, v - still) / decel, so the robot is at rest (below `still`) before a person
 walking at K reaches stop_distance (decision 2026-11-04). v is the speed the robot would have
-at the level: the larger of the speed measured from the pose over speed_window_s and the
-/cmd_vel_nav speed (scaled by slow_factor for slow). So slow is allowed beyond the threshold
+at the level: the larger of the speed measured from the smooth odom pose over speed_window_s
+(times speed_scale: leg odometry under-reads) and the /cmd_vel_nav speed (scaled by slow_factor for slow). So slow is allowed beyond the threshold
 at the slow speed, ok beyond slow_distance and the threshold at full speed; the levels don't
 depend on the supervisor's own output (no stop / slow oscillation).
 Leaving stop or slow needs the person beyond the threshold + release_margin for
@@ -47,6 +47,7 @@ class Params:
     still_speed_mps: float = 0.0
     separation_extra_m: float = 0.0
     speed_window_s: float = 0.5
+    speed_scale: float = 1.0
 
     @classmethod
     def from_dict(cls, d):
@@ -66,17 +67,19 @@ class Supervisor:
         self.clear_since = None    # since when the person has been far enough to step down
         self.fence = None          # [(x, y)] in map
         self.pose = None           # (x, y, yaw) of base_link in map, None = unknown
-        self.track = []            # [(t, x, y)] over speed_window_s, for the measured speed
+        self.track = []            # [(t, x, y)] in odom over speed_window_s, for the measured speed
 
     def on_geofence(self, polygon):
         self.fence = [tuple(p) for p in polygon] if len(polygon) >= 3 else None
 
-    def on_pose(self, pose, t=None):
-        """Current robot pose, or None when it isn't known (or too old); t: its time (for the speed)."""
+    def on_pose(self, pose, t=None, odom=None):
+        """Current robot pose, or None when it isn't known (or too old); t: its time (for the speed);
+        odom: (x, y) in the odom frame for the speed, which GNSS corrections don't move (default: the pose)."""
         self.pose = pose
         if pose is None or t is None:
             return
-        self.track.append((t, pose[0], pose[1]))
+        x, y = odom if odom is not None else pose[:2]
+        self.track.append((t, x, y))
         while len(self.track) > 2 and t - self.track[1][0] >= self.p.speed_window_s:
             self.track.pop(0)
 
@@ -85,7 +88,7 @@ class Supervisor:
         if len(self.track) >= 2:
             (t0, x0, y0), (t1, x1, y1) = self.track[0], self.track[-1]
             if t1 - t0 > 1e-6:
-                return math.hypot(x1 - x0, y1 - y0) / (t1 - t0)
+                return self.p.speed_scale * math.hypot(x1 - x0, y1 - y0) / (t1 - t0)
         return 0.0
 
     def limits(self, t):
