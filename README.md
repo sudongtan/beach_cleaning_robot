@@ -44,10 +44,10 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **B2** Both bins from one spot | One sideways step between the bins instead of a walk | ✅ done (row `b2_bins`) |
 | **B3** Navigation stalls | Get to a spot with room to turn before each Nav2 goal | ✅ done (row `b3_nav`) |
 | **B4** Walking controller | A controller that falls less, picked by a fall test | ✅ done (row `b4_robot_lab_flip`) |
-| **C1** Localization | EKF over noisy GNSS, leg odometry and IMU | 🟡 built, benchmark pending |
-| **C2** Trash visuals | Textured, realistic trash meshes | 🟡 built, render check pending |
-| **C3** Perception | Text-prompted detector (YOLOE) + depth | 🟡 in progress |
-| **C4** Classifier | Zero-shot material classifier | ⬜ planned |
+| **C1** Localization | EKF over noisy GNSS, leg odometry and IMU | 🟡 built, first row has arm-rule violations, re-run in progress |
+| **C2** Trash visuals | Textured, realistic trash meshes | ✅ done (1.45 % frame-rate cost, no row) |
+| **C3** Perception | Text-prompted detector (YOLOE) + depth | 🟡 built, currently fails its detection and frame-rate checks |
+| **C4** Classifier | Zero-shot material classifier, compared with an own colour-based one | 🟡 built, narrowly fails its contamination check |
 | **C5** Grasping | Look → plan → move → verify, picks by contact physics | ⬜ planned |
 | **D0** Isaac port | Same pipeline in NVIDIA Isaac Sim, changes only in the simulator layer | ⬜ optional |
 | **D1** Gazebo vs Isaac | Same benchmark in both simulators | ⬜ optional |
@@ -56,7 +56,7 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 
 **Part B: make the robot better, still on ground truth.** Each upgrade fixes one failure seen in the benchmark and adds one row, judged against the row before. B1 fixed where items are released over a bin, B2 removed the risky walk between the bins, and B3 removed the navigation stalls: from 17 to 39 collected items, three scenes finished completely. Falls of the walking controller then ended most runs, so B4 replaced it with a learned policy (`robot_lab`), calibrated for the task's small moves: no falls in the final row, 75 collected items and seven scenes finished. Three of the ten runs now end stuck beside a bin, and the cause is still open.
 
-**Part C: replace ground truth with real components.** One component at a time: localization, then perception, classification and finally physics-based grasping. Each row is expected to be equal or worse than the ground-truth rows and shows what making that component real costs. C1–C3 are partly built on branches.
+**Part C: replace ground truth with real components.** One component at a time: localization, then perception, classification and finally physics-based grasping. Each row is expected to be equal or worse than the ground-truth rows and shows what making that component real costs. C2 is done. C1, C3 and C4 are built on branches, and none has passed its checks yet: the first localization row broke the arm safety rule 5 times, and the detector finds under 3 % of nearby trash.
 
 **Part D: Isaac Sim (optional).** A port to Isaac Sim that touches only the simulator layer, and a Gazebo-vs-Isaac comparison on the same benchmark.
 

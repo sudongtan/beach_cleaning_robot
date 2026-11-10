@@ -76,4 +76,4 @@ The trade-offs that shaped the project, each with the evidence behind it and the
 
 ### Grounding models instead of training
 - **Choice:** detection with a pretrained, text-prompted open-vocabulary model (YOLOE) on the CPU, with no training data pipeline, compared with a classical depth segmentation of our own. Detection precision, recall and mAP go into the benchmark row.
-- **Risks checked first:** CPU latency next to Gazebo, and whether a model trained on real photos finds procedural trash. That is why realistic trash visuals come before the detector.
+- **Risks checked first:** CPU latency next to Gazebo, and whether a model trained on real photos finds procedural trash. That is why realistic trash visuals come before the detector. Both risks came true: see C3 in [progress.md](progress.md).

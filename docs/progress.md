@@ -12,7 +12,7 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 |---|---|---|
 | Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) (pinned, two small patches) running the pretrained `robot_lab` policy (B4, see [B4](#b4-walking-controller-done-row-b4_robot_lab_flip)); fall detection makes the legs go passive. The basic model-based controller stays selectable (`locomotion:=legubiao`) | Later: an own Isaac Lab RL policy, trained with slow commands and the arm's weight |
 | Robot | Go2 + Interbotix WidowX 250 6DOF + custom wide jaws (2–15 cm) + 34 × 30 cm basket, own xacro | — |
-| World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), procedural meshes | C2: textured trash meshes before the detector |
+| World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), textured procedural meshes (C2) | — |
 | Localization | Ground-truth pose published as `/odom`, `/odom/global` and TFs | C1: dual EKF + `navsat_transform` over noisy GNSS, leg odometry and IMU |
 | Mapping | Static traversability grid from the terrain (steep slopes and water are blocked) | — |
 | Perception | Ground-truth detections from the simulator | C3: a pretrained open-vocabulary model prompted with text (YOLOE), with no training, plus depth for 3D position; compared with a classical segmentation of our own |
@@ -111,7 +111,7 @@ It also stands 9 cm lower and about 6° tilted with the arm and basket, which it
 
 Each step swaps one ground-truth baseline for a real component. A row is expected to be equal or worse than the ground-truth row: it reports what making that component real costs, judged by a component check with a pass rule, by safety, and by the gap to the row before.
 
-### C1 Localization (implemented, benchmark pending)
+### C1 Localization (implemented, re-running its benchmark)
 
 Dual EKF (`robot_localization` + `navsat_transform`) over noisy GNSS, leg odometry and IMU, plus an own EKF for comparison that also estimates the leg odometry's scale online. Tuned offline on a recorded run: map error RMS 0.22 m (`robot_localization`) and 0.17 m (own EKF). Findings on the way:
 
@@ -120,17 +120,21 @@ Dual EKF (`robot_localization` + `navsat_transform`) over noisy GNSS, leg odomet
 - `navsat_transform`'s very first output was in UTM coordinates instead of local ones, a 190 km jump that took minutes to decay. Fixed with a Mahalanobis rejection gate.
 - The geofence margin was widened from 0.3 to 0.5 m to cover the localization error.
 
-### C2 Realistic trash visuals (implemented, no row)
+First benchmark row, `c1_ekf`: 7 runs finished, 3 stalled, no falls, 87 of 110 items collected, mean localization error 0.157 m (max 0.611 m). It also broke the arm safety rule 5 times, so it does not count as clean. Part of the cause was the supervisor reading the robot's speed from the corrected map pose, which jumps with GNSS fixes. The speed now comes from leg odometry, and the benchmark is being re-run.
 
-UV-mapped meshes with invented, brand-free labels, caps, lids and transparent PET and glass, so the detector in C3 has something realistic to see. The visual bounds match the collision boxes within 2 mm. Still to check: the rendering cost in Gazebo.
+### C2 Realistic trash visuals (done, no row)
 
-### C3 Perception (in progress)
+UV-mapped meshes with invented, brand-free labels, caps, lids and transparent PET and glass, so the detector in C3 has something realistic to see. The visual bounds match the collision boxes within 2 mm. The rendering cost in Gazebo is 1.45 % of the real-time factor, within the 5 % limit.
+
+### C3 Perception (built, failing its checks)
 
 YOLOE, a pretrained open-vocabulary detector prompted with text, exported to OpenVINO for the CPU, with no training. Its masks plus the depth image give each item's 3D centre, size and yaw. A classical segmentation of our own (sand plane fit + blobs above it) is the comparison.
 
-### C4 Classifier (planned)
+Both checks fail so far, so there is no benchmark row. Running the `n` model next to the full stack costs 18.5 % of the real-time factor standing and 11.4 % walking, and the `s` model 28 % and 20 %, against a limit of 10 %. Within 4 m the models find 0.7 % (`n`), 1.7 % (`s`) and 2.7 % (`m`) of the trash, against a target of 70 %, and they miss plainly visible bottles. Other prompts and lower confidence thresholds are being tried.
 
-A zero-shot classifier on close-up crops of the held item, reported as a confusion matrix and a contamination rate.
+### C4 Classifier (built, narrowly failing its check)
+
+A zero-shot classifier (MobileCLIP-S2 through OpenCLIP) on close-up crops of the held item, compared with an own classifier on colour features and nearest centroids. On 48 held-out crops, 13.0 % (own) and 12.0 % (MobileCLIP) of the items reaching the recyclable bin were wrong, against a limit of 10 %, one item too many in each case. No benchmark row yet.
 
 ### C5 Perception + grasping pipeline (planned)
 
@@ -145,4 +149,4 @@ The last and hardest step: picks by contact physics instead of the simulated att
 
 - **Cross-phase tests.** Unit tests check that the parts fit together physically: the gripper fits every item, the arm reaches every compartment position and both bins, and the arm's sweep clears the bin wall. They were added after a run where the folded arm hit a bin and levered the robot over.
 - **Debugging in a slow simulation.** The simulation runs at about 0.4× real time on the laptop CPU. A full scene takes about 15 simulated minutes, or 40 wall-clock minutes. Problems found in Gazebo runs and fixed include wall-clock timeouts that fired too early at that speed, "phantom" items from a gripper TF that lagged behind the camera, falls caused by walking with the arm raised, and the robot being unable to back away from a bin under Nav2. Each fix is backed by a regression test.
-- **339 unit and node tests** (`make test`) run against a fake simulator, without Gazebo.
+- **439 unit and node tests** (`make test`) run against a fake simulator, without Gazebo.
