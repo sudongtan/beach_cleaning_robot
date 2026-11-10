@@ -732,12 +732,21 @@ class Task:
     def bin_step(self, snap):
         """Straight sideways from the place pose of at_bin to that of step_to, heading held (no turn
         and no back-out next to the bins), then the bin's final approach and PLACE. No progress
-        -> back out and let Nav2 walk (as bin_placement `walk`)."""
+        -> back out and let Nav2 walk (as bin_placement `walk`). With back_band_m the step never sends
+        a backward part with a sideways one (robot_lab stands at those, C1 log h3–h3d): up to
+        back_band_m past the pose is left to the bin's final approach, beyond it the step backs
+        straight."""
         fa = self.cfg['final_approach']
         robot, (bx, by, _, byaw), _ = self.bin_target(snap, self.step_to)
         d = self.cfg['bin_place_distance_m']
         x, y = to_robot(robot, bx + d * math.cos(byaw), by + d * math.sin(byaw))
         heading = wrap(byaw + math.pi - robot[2])
+        band = self.cfg['bin_step']['back_band_m']
+        back = band > 0.0 and x < -band
+        vx_x = x                                # backing aims at the pose itself, so it gets into the band
+        if band > 0.0 and x < 0.0:
+            x = min(0.0, x + band)
+            vx_x = vx_x if back else 0.0
         dist = math.hypot(x, y)
         if dist <= fa['tolerance_m']:
             self.stop()
@@ -755,8 +764,14 @@ class Task:
             self.leave_since = snap.t
             return self.go('PLACE', snap, sub='leave')
         clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
-        self.move(snap, clip(fa['gain'] * x, fa['max_vx']), clip(fa['gain'] * y, self.cfg['bin_step']['max_vy']),
-                  clip(fa['gain'] * heading, fa['max_wz']))
+        vx = clip(fa['gain'] * vx_x, fa['max_vx'])
+        vy = 0.0 if back else clip(fa['gain'] * y, self.cfg['bin_step']['max_vy'])
+        if band > 0.0:                          # the smoother ramps each axis: let the old one reach 0 first
+            if vx < 0.0 and abs(self.cmd[1]) > 1e-9:
+                vx = 0.0
+            if vy != 0.0 and self.cmd[0] < -1e-9:
+                vy = 0.0
+        self.move(snap, vx, vy, clip(fa['gain'] * heading, fa['max_wz']))
 
     def leave_bin(self, snap):
         """Back straight out until base_link is bin_standoff_m from the bin centre, then GO_TO_BIN

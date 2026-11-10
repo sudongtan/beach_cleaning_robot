@@ -627,6 +627,38 @@ def test_step_without_progress_backs_out_and_walks():
     assert w.nav_from_bin == 0
 
 
+def robot_lab_bin_step(band):
+    """Fake robot_lab (C1 log h3-h3d): stands at a backward part with a sideways one, drifts forward
+    0.04 m/s stepping sideways. Returns the world and the commands sent during the step."""
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    t = make(w, PATH, cfg=dict(CFG, bin_step=dict(CFG['bin_step'], back_band_m=band)))
+    real_step, sent = w.step, []
+
+    def step():
+        if t.state == 'PLACE' and t.sub == 'step':
+            vx, vy, wz = w.cmd
+            sent.append(w.cmd)
+            if vx < -0.005 and abs(vy) > 0.005:
+                w.cmd = (0.0, 0.0, wz)
+            elif abs(vy) > 0.01:
+                w.cmd = (vx + 0.04, vy, wz)
+        real_step()
+    w.step = step
+    run(t, w)
+    return w, t, sent
+
+
+def test_bin_step_sends_no_back_sideways_command():
+    assert CFG['bin_step']['back_band_m'] > 0.0
+    w, t, sent = robot_lab_bin_step(0.0)                                  # B2: steers back while stepping
+    assert phases(w) == ['place', 'bin_step', 'bin_step_failed', 'place']
+    w, t, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'])
+    assert t.state == 'DONE' and statuses(w)['b'] == (PLACED, 'residual')
+    assert phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
+    assert sent and not [c for c in sent if c[0] < -1e-9 and abs(c[1]) > 1e-9]
+    assert [c for c in sent if c[0] < -1e-9]                              # it did back straight
+
+
 def test_safety_pause_during_the_step_stops_the_robot_and_is_not_no_progress():
     w = FakeWorld(TWO_BINS, TWO_MATS)
     t = make(w, PATH)
