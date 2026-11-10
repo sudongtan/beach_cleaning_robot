@@ -11,6 +11,8 @@
 # footprint_radius: radius of the circle the generator keeps clear around the
 #            object (no overlaps).
 # color: RGBA used for the visual mesh (no textures in A1).
+# visuals (trash, B5): [{mesh, texture} | {mesh, color RGBA}] drawn instead of mesh/color when the
+#            simulator supports it: textured prints and see-through bodies; sizes unchanged.
 
 classes:          # class / label id used by the Label system and by Isaac semantics
   background: 0
@@ -40,6 +42,9 @@ trash:
     mass: 0.025
     mesh: meshes/pet_bottle_500.obj
     color: [0.75, 0.88, 0.95, 0.6]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/pet_bottle_500_body.obj, color: [0.80, 0.90, 0.97, 0.35]}
+      - {mesh: meshes/pet_bottle_500_print.obj, texture: textures/pet_bottle_500.png}
     collision:
       - {type: box, size: [0.21, 0.065, 0.065], pose: [0, 0, 0.0325, 0, 0, 0]}
     footprint_radius: 0.12
@@ -49,6 +54,8 @@ trash:
     mass: 0.015
     mesh: meshes/can_330.obj
     color: [0.80, 0.10, 0.10, 1.0]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/can_330_print.obj, texture: textures/can_330.png}
     collision:
       - {type: box, size: [0.115, 0.066, 0.066], pose: [0, 0, 0.033, 0, 0, 0]}
     footprint_radius: 0.08
@@ -58,6 +65,8 @@ trash:
     mass: 0.05
     mesh: meshes/food_tin.obj
     color: [0.72, 0.72, 0.75, 1.0]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/food_tin_print.obj, texture: textures/food_tin.png}
     collision:
       - {type: box, size: [0.11, 0.075, 0.075], pose: [0, 0, 0.0375, 0, 0, 0]}
     footprint_radius: 0.08
@@ -67,6 +76,9 @@ trash:
     mass: 0.20
     mesh: meshes/glass_bottle_330.obj
     color: [0.25, 0.45, 0.15, 0.8]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/glass_bottle_330_body.obj, color: [0.25, 0.50, 0.18, 0.75]}
+      - {mesh: meshes/glass_bottle_330_print.obj, texture: textures/glass_bottle_330.png}
     collision:
       - {type: box, size: [0.23, 0.06, 0.06], pose: [0, 0, 0.03, 0, 0, 0]}
     footprint_radius: 0.13
@@ -76,6 +88,9 @@ trash:
     mass: 0.114
     mesh: meshes/glass_jar.obj
     color: [0.85, 0.90, 0.92, 0.6]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/glass_jar_body.obj, color: [0.88, 0.93, 0.95, 0.40]}
+      - {mesh: meshes/glass_jar_print.obj, texture: textures/glass_jar.png}
     collision:
       - {type: box, size: [0.067, 0.067, 0.07], pose: [0, 0, 0.035, 0, 0, 0]}
     footprint_radius: 0.06
@@ -85,6 +100,8 @@ trash:
     mass: 0.01
     mesh: meshes/poly_cup.obj
     color: [0.97, 0.97, 0.95, 1.0]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/poly_cup_print.obj, texture: textures/poly_cup.png}
     collision:   # 4 oz cup: 6.2 cm top, 4.6 cm base, 6.0 cm tall
       - {type: box, size: [0.062, 0.062, 0.06], pose: [0, 0, 0.03, 0, 0, 0]}
     footprint_radius: 0.06
@@ -94,6 +111,8 @@ trash:
     mass: 0.02
     mesh: meshes/cigarette_pack.obj
     color: [0.90, 0.85, 0.20, 1.0]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/cigarette_pack_print.obj, texture: textures/cigarette_pack.png}
     collision:
       - {type: box, size: [0.088, 0.055, 0.022], pose: [0, 0, 0.011, 0, 0, 0]}
     footprint_radius: 0.07
@@ -103,6 +122,8 @@ trash:
     mass: 0.03
     mesh: meshes/food_container.obj
     color: [0.95, 0.60, 0.30, 1.0]
+    visuals:                 # B5: what the cameras see (sim/common/trash_visuals.py); mesh/color: fallback
+      - {mesh: meshes/food_container_print.obj, texture: textures/food_container.png}
     collision:
       - {type: box, size: [0.18, 0.12, 0.05], pose: [0, 0, 0.025, 0, 0, 0]}
     footprint_radius: 0.13

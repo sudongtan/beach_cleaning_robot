@@ -113,13 +113,19 @@ def object_model(world, name, spec, pose, z, class_id, static, visual_dz=0.0):
         c = sub(link, 'collision', name=f'collision_{k}')
         sub(c, 'pose', fmt(*map(float, prim['pose'])))
         geometry(c, prim)
-    v = sub(link, 'visual', name='visual')
-    sub(v, 'pose', fmt(0.0, 0.0, float(visual_dz), 0.0, 0.0, 0.0))
-    mesh = sub(sub(v, 'geometry'), 'mesh')
-    sub(mesh, 'uri', (COMMON / spec['mesh']).as_uri())
-    material(v, spec['color'])
-    if spec['color'][3] < 1.0:
-        sub(v, 'transparency', fmt(1.0 - float(spec['color'][3])))
+    # B5: textured prints and see-through bodies where objects.yaml lists `visuals`, else mesh + colour
+    for k, vis in enumerate(spec.get('visuals') or [{'mesh': spec['mesh'], 'color': spec['color']}]):
+        v = sub(link, 'visual', name='visual' if k == 0 else f'visual_{k}')
+        sub(v, 'pose', fmt(0.0, 0.0, float(visual_dz), 0.0, 0.0, 0.0))
+        mesh = sub(sub(v, 'geometry'), 'mesh')
+        sub(mesh, 'uri', (COMMON / vis['mesh']).as_uri())
+        if 'texture' in vis:
+            mat = material(v, [1.0, 1.0, 1.0, 1.0])     # white: the albedo map gives the colour
+            sub(sub(sub(mat, 'pbr'), 'metal'), 'albedo_map', (COMMON / vis['texture']).as_uri())
+            continue
+        material(v, vis['color'])
+        if vis['color'][3] < 1.0:
+            sub(v, 'transparency', fmt(1.0 - float(vis['color'][3])))
     label(m, class_id)
     return m
 
