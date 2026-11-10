@@ -63,7 +63,8 @@ def launch_setup(context):
     nodes += [
         Node(package='world_model', executable='world_model', output='screen', parameters=[scene]),
         Node(package='safety', executable='supervisor', name='safety_supervisor', output='screen',
-             parameters=[safety_cfg, common]),
+             parameters=[safety_cfg, common,
+                         {'speed_scale': 1.0} if cfg['localization'] == 'ground_truth' else {}]),
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('navigation'), 'launch', 'navigation.launch.py'))),
         Node(package='grasping', executable='grasping', output='screen',

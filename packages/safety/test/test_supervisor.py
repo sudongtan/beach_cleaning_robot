@@ -1,5 +1,6 @@
 """Every safety rule (the evidence for "zero safety violations"). Thresholds from config/safety.yaml."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -204,8 +205,22 @@ def test_moving_robot_stops_where_a_standing_one_slows():
     s2, t2 = released()
     for k in range(12):                    # ... but stop for one measured walking at 0.3 m/s
         s2.on_pose((20.0 + 0.3 * 0.05 * k, 15.0, 0.0), t2 + 0.05 * k)
-    assert s2.speed() == pytest.approx(0.3)
+    assert s2.speed() == pytest.approx(0.3 * P.speed_scale)
     assert run(s2, t2 + 0.55, t2 + 0.6, people=[d])[0] == STOP
+
+
+def test_speed_comes_from_odom_so_map_corrections_dont_stop_the_robot():
+    s, t = released()
+    for k in range(12):                    # GNSS corrections move the map pose, the robot stands
+        s.on_pose((20.0 + (-1) ** k * 0.2, 15.0, 0.0), t + 0.05 * k, (3.0, 4.0))
+    assert s.speed() == pytest.approx(0.0)
+
+
+def test_speed_scale_raises_the_measured_speed():
+    s = Supervisor(replace(P, speed_scale=1.1))
+    for k in range(12):
+        s.on_pose((20.0 + 0.3 * 0.05 * k, 15.0, 0.0), 100.0 + 0.05 * k)
+    assert s.speed() == pytest.approx(0.33)
 
 
 # --- geofence ---------------------------------------------------------------------------------

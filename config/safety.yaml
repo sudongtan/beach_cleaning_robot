@@ -14,7 +14,10 @@ safety_supervisor:
     robot_decel_mps2: 0.15     # measured: 0.108 -> 0.052 m/s in 0.38 s after a stop (notes/logs/A3.md)
     still_speed_mps: 0.05      # "at rest" (benchmark: ground-truth speed over 0.5 s)
     separation_extra_m: 0.2    # C + uncertainty: the person's size, pose and measurement errors
-    speed_window_s: 0.5        # measured robot speed over this window (TF map -> base_link)
+    speed_window_s: 0.5        # measured robot speed over this window (TF odom -> base_link: GNSS corrections
+                               # don't move it, decision 2026-11-09)
+    speed_scale: 1.10          # leg odometry under-reads the speed: measured ratio 1.075, rounded up
+                               # (notes/logs/C1-C4.md); skeleton.launch.py sets 1.0 for ground-truth localization
     slow_factor: 0.3           # velocity scale while slow (linear and angular)
     release_margin_m: 0.3      # leave slow/stop only beyond the threshold + this margin ...
     release_hold_s: 1.0        # ... for at least this long (no flicker)

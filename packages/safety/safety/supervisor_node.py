@@ -45,6 +45,7 @@ class SupervisorNode(Node):
         self.sup = Supervisor(Params.from_dict(values))
         self.base_frame = self.declare_parameter('base_frame', 'base_link').value
         self.map_frame = self.declare_parameter('map_frame', 'map').value
+        self.odom_frame = self.declare_parameter('odom_frame', 'odom').value
         self.pose_timeout = self.declare_parameter('pose_timeout_s', 0.5).value
         rate = self.declare_parameter('rate_hz', 20.0).value
 
@@ -85,10 +86,10 @@ class SupervisorNode(Node):
     def on_geofence(self, msg):
         self.sup.on_geofence([(p.x, p.y) for p in msg.polygon.points])
 
-    def robot_pose(self):
-        """(x, y, yaw) of base_link in map from TF, or None if missing or older than pose_timeout_s."""
+    def robot_pose(self, frame=None):
+        """(x, y, yaw) of base_link in frame (default map) from TF, or None if missing or older than pose_timeout_s."""
         try:
-            tf = self.tf_buffer.lookup_transform(self.map_frame, self.base_frame, Time())
+            tf = self.tf_buffer.lookup_transform(frame or self.map_frame, self.base_frame, Time())
         except TransformException:
             return None
         stamp = tf.header.stamp.sec + tf.header.stamp.nanosec * 1e-9
@@ -98,7 +99,8 @@ class SupervisorNode(Node):
         return t.x, t.y, math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
 
     def tick(self):
-        self.sup.on_pose(self.robot_pose(), self.now())
+        odom = self.robot_pose(self.odom_frame)
+        self.sup.on_pose(self.robot_pose(), self.now(), odom[:2] if odom else None)
         state, (vx, vy, wz) = self.sup.step(self.now())
         cmd = Twist()
         cmd.linear.x, cmd.linear.y, cmd.angular.z = vx, vy, wz
