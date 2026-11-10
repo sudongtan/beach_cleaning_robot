@@ -71,6 +71,9 @@ task:
     escape:
       trail_step_m: 0.05         # the own moves are recorded as poses this far apart
       max_m: 2.0                 # move at most this far in all (then Nav2 tries anyway)
+      # max_m is summed on this pose: `odom` (smooth) or `map` (B3 baseline). With the EKF the map pose adds up
+      # 2.18 m per 10 s standing still (truth 0.05, devesc s1), so `map` ended every escape after about 9 s
+      travel_frame: odom
       # 1. retrace the own moves (newest first, each pose's heading); 2. else straight along the current heading,
       # forward or back, to the nearest turn-free pose within straight_max_m with the outline clear all the way;
       # 3. else (e.g. b2_bins seed 8, Nav2 itself stopped in a corridor) turn on the spot to the nearest heading

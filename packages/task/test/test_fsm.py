@@ -834,6 +834,37 @@ def test_escape_ends_when_the_controller_does_not_move():
     assert t.state == 'DONE'
 
 
+def jitter_map_pose(w, amp):
+    """The map pose jumps by +-amp every tick (the EKF's GNSS corrections); odom holds the true pose."""
+    real, n = w.snapshot, [0]
+
+    def snapshot():
+        snap = real()
+        n[0] += 1
+        x, y, yaw = snap.robot
+        snap.local_robot = (x, y, yaw)
+        snap.robot = (x + amp * (-1) ** n[0], y, yaw)
+        return snap
+    w.snapshot = snapshot
+
+
+def escape_moved(frame, amp):
+    w, t, _ = escape_run(cfg=dict(CFG, escape=dict(CFG['escape'], travel_frame=frame)))
+    jitter_map_pose(w, amp)
+    run(t, w)
+    done = [r for r in w.log_records if r['event'] == 'escape_done']
+    assert done and done[0]['turn_free']
+    return done[0]['moved_m']
+
+
+def test_escape_distance_ignores_map_pose_jitter():
+    """devesc s1: standing still the EKF map pose adds up 2.18 m per 10 s, so max_m ended every escape after 9 s.
+    `odom` (the default) measures what was walked; the jitter barely changes it. `map` counts it."""
+    assert CFG['escape']['travel_frame'] == 'odom'
+    assert escape_moved('odom', 0.02) == pytest.approx(escape_moved('odom', 0.0), abs=0.05)
+    assert escape_moved('map', 0.02) > 1.5 * escape_moved('odom', 0.02)
+
+
 def test_escape_turning_on_the_spot_is_progress():
     w, t, _ = escape_run()
     e = Escape(t, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))

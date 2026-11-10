@@ -242,10 +242,17 @@ class Task:
         if self.cfg['nav_start'] == 'escape' and self.footprint and not self.turn_free(snap.robot):
             self.io.log({'t': round(snap.t, 2), 'event': 'escape', 'robot': [round(v, 3) for v in snap.robot],
                          'trail': len(self.trail)})
-            self.pending = Escape(self, (x, y, yaw), snap.robot)
+            self.pending = Escape(self, (x, y, yaw), self.travel_pose(snap))
             return
         self.trail = []
         self.pending = self.io.nav_to(x, y, yaw)
+
+    def travel_pose(self, snap):
+        """Pose the escape measures its distance on (escape travel_frame): the map pose jumps with every
+        GNSS correction, summing its steps counts that jitter as distance walked."""
+        if self.cfg['escape']['travel_frame'] == 'odom' and snap.local_robot is not None:
+            return snap.local_robot
+        return snap.robot
 
     def outline_clear(self, pose):
         """Is the footprint's outline at pose (x, y, yaw), grown by outline_margin_m, on free map cells
@@ -301,7 +308,7 @@ class Task:
             self.stop()
             self.best_since = e.since = snap.t
             return
-        e.track(snap.robot)
+        e.track(self.travel_pose(snap))
         free = self.turn_free(snap.robot)
         while self.trail and self.reached(snap.robot, self.trail[-1]):
             self.trail.pop()
