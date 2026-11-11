@@ -192,6 +192,34 @@ def test_arm_rule():
     assert len(rec.arm_viol.items) == 1
 
 
+def test_arm_trace_around_a_change_away_from_ok():
+    """C1 item 24: joints + controller reference from trace_pre_s before to trace_post_s after the change."""
+    names = RCFG['arm_joints']
+    rec = Recording(RCFG, 1.5)
+    rec.on_safety('ok')
+    rec.on_arm_reference(dict(zip(names, [0.1] * 6)))
+    for k in range(320):                               # 0.01 s samples, slow from t 1.5
+        t = 0.01 * k
+        if k == 150:
+            rec.sim_t = t
+            rec.on_safety('slow')
+        if k == 170:
+            rec.sim_t = t
+            rec.on_safety('stop')
+        rec.on_joints(t, dict(zip(names, [t] * 6)))
+    assert rec.trace is None and len(rec.traces_done) == 1
+    tr = rec.traces_done[0]
+    assert tr['t_change'] == pytest.approx(1.5) and tr['state'] == 'slow'
+    assert [c[1] for c in tr['changes']] == ['slow', 'stop']
+    ts = [s[0] for s in tr['samples']]
+    assert ts[0] == pytest.approx(1.5 - RCFG['trace_pre_s'], abs=0.011)
+    assert ts[-1] == pytest.approx(1.5 + RCFG['trace_post_s'], abs=0.011)
+    assert tr['samples'][0][2] == [0.1] * 6           # the reference rides along
+    rec.on_safety('ok')
+    rec.on_safety('slow')                              # a new trace opens after ok
+    assert rec.trace is not None
+
+
 def test_arm_slow_creep_is_reported_not_counted():
     """b2 reading: 0.038 rad over 5 s (A3 dev scene: held arm in slow) is no violation, but the
     change since the state switch is reported."""

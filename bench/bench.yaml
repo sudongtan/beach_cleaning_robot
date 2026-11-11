@@ -49,6 +49,11 @@ recorder:
   drift_every_s: 1.0            # localization drift sample interval (sim)
   joints_every: 10             # decode every 10th /joint_states message (~47 Hz of ~470)
   arm_joints: [arm_waist, arm_shoulder, arm_elbow, arm_forearm_roll, arm_wrist_angle, arm_wrist_rotate]
+  # arm traces (C1 item 24): decoded joints + controller reference from trace_pre_s before to trace_post_s
+  # after each change away from ok (sim), at most trace_max per run, in <log dir>/recorder_arm_traces.jsonl
+  trace_pre_s: 1.0
+  trace_post_s: 1.5
+  trace_max: 200
 
 metrics:
   # bin inner box (sim/common/objects.yaml: outer 0.60 x 0.45 x 0.50 m, 2 cm walls)

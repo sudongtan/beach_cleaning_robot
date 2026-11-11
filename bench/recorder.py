@@ -26,6 +26,8 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import String
 from vision_msgs.msg import Detection3DArray
 
+from control_msgs.msg import JointTrajectoryControllerState
+
 from beach_interfaces.msg import WorldModel
 
 REPO = Path(__file__).resolve().parents[1]
@@ -60,6 +62,10 @@ class Recorder(Node):
         # joints_every-th message (the arm rule compares with the pose when the state left ok)
         self.joints_every, self.joints_n = bench['recorder']['joints_every'], 0
         sub(JointState, '/joint_states', self.on_joints, 50, raw=True)
+        self.ref_n = 0                                 # the controller state comes at its update rate too
+        sub(JointTrajectoryControllerState, '/arm_controller/controller_state', self.on_arm_state, 50, raw=True)
+        self.traces_out = self.out.with_name(self.out.stem + '_arm_traces.jsonl')
+        self.traces_written = 0
         sub(PolygonStamped, '/geofence', lambda m: self.rec.on_geofence([[p.x, p.y] for p in m.polygon.points]),
             LATCHED)
         sub(WorldModel, '/world_model', self.on_world_model, 5)
@@ -86,6 +92,13 @@ class Recorder(Node):
         m = deserialize_message(raw, JointState)
         self.rec.on_joints(stamp(m.header), dict(zip(m.name, m.position)))
 
+    def on_arm_state(self, raw):
+        self.ref_n += 1
+        if self.ref_n % self.joints_every:
+            return
+        m = deserialize_message(raw, JointTrajectoryControllerState)
+        self.rec.on_arm_reference(dict(zip(m.joint_names, m.reference.positions)))
+
     def on_world_model(self, m):
         now = time.monotonic()
         if now < self.wm_next:                         # the coverage grid is big; 1 Hz is plenty
@@ -103,6 +116,13 @@ class Recorder(Node):
     def flush(self, final=False):
         with self.lock:
             snap = self.rec.snapshot(time.time(), final)
+            done = self.rec.traces_done[self.traces_written:]
+            self.traces_written = len(self.rec.traces_done)
+            if final and self.rec.trace is not None:      # the run ended inside a trace
+                done.append(self.rec.trace)
+            if done:
+                with open(self.traces_out, 'a') as f:
+                    f.writelines(json.dumps(tr) + '\n' for tr in done)
             tmp = self.out.with_suffix('.tmp')
             tmp.write_text(json.dumps(snap))
             os.replace(tmp, self.out)

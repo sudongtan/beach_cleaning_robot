@@ -102,6 +102,12 @@ class Recording:
         self.arm_max_at = None                        # {'t', 'joint', 'state'} of that maximum
         self.arm_viol = Episodes(cfg['episode_gap_s'])
         self.arm_window = deque()                     # (t, q) of the last arm_window_s while not ok
+        # C1 item 24: arm joints + controller reference from trace_pre_s before to trace_post_s after each
+        # change away from ok, for the cause of an arm violation (the bench kept only the violation's window)
+        self.arm_ctrl_ref = None                      # latest /arm_controller/controller_state reference
+        self.arm_ring = deque()                       # [t, q, ref] of the last trace_pre_s
+        self.trace = None                             # the open trace
+        self.traces_done = []                         # closed traces, taken by the recorder node
         self.outside = Episodes(cfg['episode_gap_s'])
         self.outside_s = 0.0
         self.drift = {'n': 0, 'sum': 0.0, 'max': 0.0, 'last': None, 'samples': []}
@@ -173,7 +179,34 @@ class Recording:
             elif self.safety in ('ok', None):
                 self.arm_ref = self.arm
                 self.arm_window.clear()
+                if self.trace is None and self.safety == 'ok' and len(self.traces_done) < self.cfg['trace_max']:
+                    self.trace = {'t_change': self.sim_t, 'state': state, 'task': self.task_state,
+                                  'person_d': self.transitions[-1][2], 'samples': list(self.arm_ring), 'changes': []}
+            if self.trace is not None:
+                self.trace['changes'].append([self.sim_t, state])
         self.safety = state
+
+    def on_arm_reference(self, positions):
+        """positions: {joint name: rad} of the arm controller's reference (what the joints are told to be at)."""
+        names = self.cfg['arm_joints']
+        if all(n in positions for n in names):
+            self.arm_ctrl_ref = [positions[n] for n in names]
+
+    def record_trace(self, t):
+        r = lambda v: None if v is None else [round(x, 4) for x in v]   # noqa: E731
+        sample = [round(t, 3), r(self.arm), r(self.arm_ctrl_ref)]
+        self.arm_ring.append(sample)
+        while self.arm_ring and t - self.arm_ring[0][0] > self.cfg['trace_pre_s']:
+            self.arm_ring.popleft()
+        if self.trace is None:
+            return
+        if self.trace['t_change'] is None:                # no pose yet (sim_t unset): the first sample after
+            self.trace['t_change'] = t
+        if t - self.trace['t_change'] > self.cfg['trace_post_s']:
+            self.traces_done.append(self.trace)
+            self.trace = None
+        else:
+            self.trace['samples'].append(sample)
 
     def on_joints(self, t, positions):
         """positions: {joint name: rad}. Arm rule (b2 reading, decision 2026-11-04): a joint changes by
@@ -183,6 +216,7 @@ class Recording:
         if not all(n in positions for n in names):
             return
         self.arm = [positions[n] for n in names]
+        self.record_trace(t)
         if self.safety == 'ok' or self.safety is None:
             self.arm_window.clear()
             return
