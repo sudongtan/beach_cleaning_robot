@@ -38,7 +38,7 @@ class Fakes:
 
     def __init__(self, node):
         self.n = node
-        self.arm_goals, self.cancelled, self.sim_calls = [], 0, []
+        self.arm_goals, self.arm_secs, self.cancelled, self.sim_calls = [], [], 0, []
         self.fail_goal = None                       # number of the arm goal that fails (1 = first)
         cb = ReentrantCallbackGroup()
         for name in ('arm_controller', 'gripper_controller'):
@@ -52,7 +52,9 @@ class Fakes:
     def execute(self, name):
         def cb(goal_handle):
             if name == 'arm_controller':
-                self.arm_goals.append(list(goal_handle.request.trajectory.points[0].positions))
+                p = goal_handle.request.trajectory.points[0]
+                self.arm_goals.append(list(p.positions))
+                self.arm_secs.append(p.time_from_start.sec + p.time_from_start.nanosec * 1e-9)
             end = time.monotonic() + 0.3
             while time.monotonic() < end:
                 if goal_handle.is_cancel_requested:
@@ -198,6 +200,32 @@ def test_stop_holds_the_controller_reference(system):
     th.join(timeout=30.0)
     running.clear()
     assert result['r'].success, result['r'].message
+
+
+def test_moves_are_stretched_to_the_joint_speed_cap(system):
+    """max_joint_speed_radps: a move from the controller reference takes at least max |dq| / cap."""
+    grasping, node, fakes = system
+    vmax, base = grasping.cfg['max_joint_speed_radps'], grasping.cfg['move_time_s']
+    assert vmax > 0
+    pub = node.create_publisher(JointTrajectoryControllerState, '/arm_controller/controller_state', 10)
+    msg = JointTrajectoryControllerState(joint_names=list(ARM))
+    msg.reference.positions = [0.0] * len(ARM)              # every move starts at zero (fake)
+    running = threading.Event()
+    running.set()
+
+    def publish():
+        while running.is_set():
+            pub.publish(msg)
+            time.sleep(0.02)
+    threading.Thread(target=publish, daemon=True).start()
+    time.sleep(0.3)
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', pick_goal())
+    running.clear()
+    assert r.success, r.message
+    for q, secs in zip(fakes.arm_goals, fakes.arm_secs):
+        assert secs == pytest.approx(max(base, max(abs(v) for v in q) / vmax), abs=1e-6)
+    assert max(fakes.arm_secs) > base                      # at least one move was stretched
 
 
 def test_unreachable_pick_is_refused(system):

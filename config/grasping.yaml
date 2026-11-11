@@ -47,7 +47,11 @@ grasping:
   # IK chose a flipped pose (waist 3.14); every move to it swung the arm half a turn with the item
   # attached and tipped the robot over (A2b a2b_bin4).
   release_joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, 1.0]
-  move_time_s: 2.5              # duration of each arm move
+  move_time_s: 2.5              # duration of each arm move (at least; see max_joint_speed_radps)
+  # C1 item 24: a move stopped for safety keeps going ~0.03 rad per 1 rad/s of joint speed (devtrace: stop
+  # latency + the hold spline starting at the measured velocity); with 2.5 s per move big swings ran at
+  # 1-1.7 rad/s against the 0.03 rad arm rule. Longer moves keep every joint at or below this (0 = off).
+  max_joint_speed_radps: 0.5
   finger_time_s: 1.0
   # How a running arm move stops when /safety/state leaves ok: hold_reference preempts it with a goal to
   # the controller's reference position at that instant (reached after stop_hold_s); cancel cancels the

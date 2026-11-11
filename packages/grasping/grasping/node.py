@@ -134,6 +134,12 @@ class RosIo:
         self._wait(handle.cancel_goal_async(), 2.0)
 
     def move_arm(self, q, secs):
+        # the goal has positions only, so the controller moves each joint at |dq| / secs; stretch the move
+        # so that no joint is faster than max_joint_speed_radps (from the controller reference, if fresh)
+        vmax = self.n.cfg['max_joint_speed_radps']
+        ref, stamp = self.n.arm_reference
+        if vmax > 0 and time.monotonic() - stamp < 1.0 and all(j in ref for j in ARM):
+            secs = max(secs, max(abs(float(p) - ref[j]) for j, p in zip(ARM, q)) / vmax)
         return self._trajectory(self.n.arm_client, ARM, q, secs, watch_safety=True)
 
     def fingers(self, value, secs):
