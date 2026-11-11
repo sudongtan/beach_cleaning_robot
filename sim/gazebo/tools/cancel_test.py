@@ -188,6 +188,8 @@ def main():
             h = send(q, a.move_s)
             spin(f * a.move_s)
             tc = now()
+            lags = [abs(st['ref'][j] - q) for j, q in zip(ARM, st['q'])]    # reference - measured at the stop
+            lag = (max(lags), ARM[lags.index(max(lags))])
             if a.mode == 'cancel':
                 rclpy.spin_until_future_complete(n, h.cancel_goal_async(), timeout_sec=5.0)
             else:
@@ -197,7 +199,8 @@ def main():
             status = h.get_result_async()          # timeout: a cancel racing the goal's end can leave no result
             rclpy.spin_until_future_complete(n, status, timeout_sec=10.0)
             code = status.result().status if status.done() else 'no result'
-            print(f'{name} {a.mode} at {f:.1f}: change {ch:.4f} rad ({j}), deviation {dev:.4f}, '
+            print(f'{name} {a.mode} at {f:.2f}: change {ch:.4f} rad ({j}), deviation {dev:.4f}, '
+                  f'lag at stop {lag[0]:.4f} ({lag[1]}), '
                   f'{"canceled" if code == GoalStatus.STATUS_CANCELED else "status " + str(code)}', flush=True)
             if ch > worst[0]:
                 worst = (ch, f'{name}@{f:.1f}')
