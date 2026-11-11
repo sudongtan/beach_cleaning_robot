@@ -627,11 +627,12 @@ def test_step_without_progress_backs_out_and_walks():
     assert w.nav_from_bin == 0
 
 
-def robot_lab_bin_step(band):
+def robot_lab_bin_step(band, no_forward=None):
     """Fake robot_lab (C1 log h3-h3d): stands at a backward part with a sideways one, drifts forward
     0.04 m/s stepping sideways. Returns the world and the commands sent during the step."""
     w = FakeWorld(TWO_BINS, TWO_MATS)
-    t = make(w, PATH, cfg=dict(CFG, bin_step=dict(CFG['bin_step'], back_band_m=band)))
+    nf = CFG['bin_step']['no_forward'] if no_forward is None else no_forward
+    t = make(w, PATH, cfg=dict(CFG, bin_step=dict(CFG['bin_step'], back_band_m=band, no_forward=nf)))
     real_step, sent = w.step, []
 
     def step():
@@ -650,13 +651,24 @@ def robot_lab_bin_step(band):
 
 def test_bin_step_sends_no_back_sideways_command():
     assert CFG['bin_step']['back_band_m'] > 0.0
-    w, t, sent = robot_lab_bin_step(0.0)                                  # B2: steers back while stepping
+    w, t, sent = robot_lab_bin_step(0.0, no_forward=False)                # B2: steers back while stepping
     assert phases(w) == ['place', 'bin_step', 'bin_step_failed', 'place']
     w, t, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'])
     assert t.state == 'DONE' and statuses(w)['b'] == (PLACED, 'residual')
     assert phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
     assert sent and not [c for c in sent if c[0] < -1e-9 and abs(c[1]) > 1e-9]
     assert [c for c in sent if c[0] < -1e-9]                              # it did back straight
+
+
+def test_bin_step_sends_no_forward_command():
+    """devref: the step started with +0.08 forward (min speed) and the sideways drift took the robot
+    0.13 m nearer the bins; with no_forward short of the pose is left to the final approach."""
+    assert CFG['bin_step']['no_forward']
+    w, t, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'])
+    assert phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
+    assert sent and max(c[0] for c in sent) <= 0.0
+    _, _, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'], no_forward=False)
+    assert max(c[0] for c in sent) > 0.0                                   # as B2: it steers forward too
 
 
 def test_safety_pause_during_the_step_stops_the_robot_and_is_not_no_progress():

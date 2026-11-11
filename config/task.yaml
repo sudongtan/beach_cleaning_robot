@@ -36,7 +36,11 @@ task:
       # robot_lab stands at a backward part with a sideways one (the step's (-0.02, -0.10) moved 1 of 3,
       # front-right and pure back 3/3; C1 log h3-h3d) and drifts forward stepping sideways: up to this far
       # past the place pose is left to the final approach, beyond it the step backs straight. 0 = off (B2)
-      back_band_m: 0.08
+      # (0.08 until devref: with the drift and the trunk's sway the robot came to 0.74 m from the bin line)
+      back_band_m: 0.04
+      # no forward command in the step (short of the pose is left to the final approach): it started each step with
+      # +0.08 (min speed) and walked the arm towards the near wall (devref, devband2). false = as B2
+      no_forward: true
     bin_leave_timeout_s: 20.0    # after placing, back straight out to bin_standoff_m (Nav2 won't start facing
                                  # the bin); give up after this long and let Nav2 try anyway
     final_approach:              # APPROACH step 2: small /cmd_vel_nav steps until the item is in reach

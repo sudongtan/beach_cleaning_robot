@@ -754,6 +754,8 @@ class Task:
         if band > 0.0 and x < 0.0:
             x = min(0.0, x + band)
             vx_x = vx_x if back else 0.0
+        if self.cfg['bin_step']['no_forward'] and x > 0.0:
+            x, vx_x = 0.0, 0.0                  # short of the pose: the final approach closes it
         dist = math.hypot(x, y)
         if dist <= fa['tolerance_m']:
             self.stop()
