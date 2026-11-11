@@ -107,6 +107,11 @@ task:
     # averaged map positions and the scene's bin poses (`map`, baseline A3-B3). With ground-truth
     # localization map = odom, so both give the same targets.
     close_range: odom
+    # C1: a bin's pose for its final approach, PLACE, the bin step and leaving: `freshest` = derived from the most
+    # recently seen bin (the layout is known; odom drifts while the robot walks away and back: devband2 s0 stepped
+    # to a residual seen ~470 s before, aimed 0.16 m into the bin row and caught the arm on the recyclable bin);
+    # `own` = the bin's own latest detection (B4 baseline)
+    bin_reference: freshest
     close_range_max_age_s:       # older detections aren't used (odom drifts with the distance walked)
       item: 60.0                 # the item leaves the camera's view in the last ~0.3 m of the final approach
       bin: 600.0                 # the robot stands at the bins while placing (a few minutes)

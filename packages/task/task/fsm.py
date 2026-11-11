@@ -58,6 +58,7 @@ class Snapshot:
     local_robot: tuple = None       # (x, y, yaw) in odom
     local_items: dict = field(default_factory=dict)   # item id -> (x, y, z, yaw) in odom
     local_bins: dict = field(default_factory=dict)    # bin id -> (x, y, rim_z, yaw) in odom
+    local_bins_seen: dict = field(default_factory=dict)   # bin id -> sim time of that detection
 
 
 @dataclass
@@ -376,8 +377,14 @@ class Task:
     def bin_target(self, snap, bin_id):
         """(robot pose, (x, y, rim, yaw), frame) of a bin for its final approach, PLACE, the step and
         leaving: its latest detection in odom, else derived from another bin's (the layout is known),
-        else the scene's map pose."""
+        else the scene's map pose. With bin_reference `freshest` a bin seen longer ago than another is
+        derived from the other's detection (odom drifts while the robot walks away and back)."""
         if self.cfg['close_range'] == 'odom' and snap.local_robot is not None:
+            seen = snap.local_bins_seen
+            if self.cfg['bin_reference'] == 'freshest' and seen:
+                ref = max((b for b in snap.local_bins if b in seen and b in self.bins), key=seen.get, default=None)
+                if ref is not None and ref != bin_id and seen[ref] > seen.get(bin_id, -math.inf):
+                    return snap.local_robot, relative_bin(self.bins[ref], snap.local_bins[ref], self.bins[bin_id]), 'odom'
             if bin_id in snap.local_bins:
                 return snap.local_robot, snap.local_bins[bin_id], 'odom'
             for b, local in snap.local_bins.items():

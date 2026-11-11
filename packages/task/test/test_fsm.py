@@ -995,6 +995,27 @@ def test_bin_seen_gives_the_other_bin_by_the_layout():
     assert math.isclose(z, 0.3 + BINS['residual'][2] - rz) and math.isclose(yaw, ryaw + math.pi / 2)
 
 
+def test_bin_seen_long_ago_follows_the_fresher_bin():
+    """Both bins detected, the residual one long ago (odom has drifted since): with bin_reference
+    `freshest` its pose follows the recyclable one's fresh detection, with `own` it is the old one."""
+    w = FakeWorld({}, {})
+    snap = w.snapshot()
+    snap.local_robot = (0.0, 0.0, 0.0)
+    rx, ry, rz, ryaw = BINS['recyclable']
+    stale = (BINS['residual'][0] + 0.16, BINS['residual'][1], BINS['residual'][2], BINS['residual'][3])
+    snap.local_bins = {'recyclable': BINS['recyclable'], 'residual': stale}
+    snap.local_bins_seen = {'recyclable': 770.0, 'residual': 300.0}
+    _, pose, _ = make(w, PATH).bin_target(snap, 'residual')
+    assert all(math.isclose(a, b, abs_tol=1e-9) for a, b in zip(pose, BINS['residual']))
+    _, pose, _ = make(w, PATH).bin_target(snap, 'recyclable')         # the fresh one is its own
+    assert pose == BINS['recyclable']
+    _, pose, _ = make(w, PATH, cfg={**CFG, 'bin_reference': 'own'}).bin_target(snap, 'residual')
+    assert pose == stale
+    snap.local_bins_seen = {'recyclable': 300.0, 'residual': 770.0}
+    _, pose, _ = make(w, PATH).bin_target(snap, 'residual')
+    assert pose == stale
+
+
 def test_full_run_with_a_moving_map_estimate():
     """The whole cycle with the map estimate off by 0.4 m: everything collected and placed."""
     w = EstimateWorld(ITEMS, MATS)

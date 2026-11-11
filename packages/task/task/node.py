@@ -319,16 +319,17 @@ class TaskNode(Node):
                     self.local_items[iid] = (t, (o.position.x, o.position.y, o.position.z, yaw))
 
     def local_view(self, now):
-        """(robot pose in odom, fresh item tracks, fresh bin tracks) for the snapshot."""
+        """(robot pose in odom, fresh item tracks, fresh bin tracks, their detection times) for the snapshot."""
         if self.fsm_cfg['close_range'] != 'odom':
-            return None, {}, {}
+            return None, {}, {}, {}
         T = self.odom_hist.at()
         if T is None:
-            return None, {}, {}
+            return None, {}, {}, {}
         age = self.fsm_cfg['close_range_max_age_s']
         items = {k: v for k, (t, v) in self.local_items.items() if now - t <= age['item']}
         bins = {k: v for k, (t, v) in self.local_bins.items() if now - t <= age['bin']}
-        return (float(T[0, 3]), float(T[1, 3]), math.atan2(T[1, 0], T[0, 0])), items, bins
+        seen = {k: t for k, (t, _) in self.local_bins.items() if k in bins}
+        return (float(T[0, 3]), float(T[1, 3]), math.atan2(T[1, 0], T[0, 0])), items, bins, seen
 
     def on_world_model(self, msg):
         with self.lock:
@@ -431,10 +432,10 @@ class TaskNode(Node):
             self.started = True
             self.log({'event': 'servers_ready'})
         with self.lock:
-            local_robot, local_items, local_bins = self.local_view(self.now())
+            local_robot, local_items, local_bins, local_bins_seen = self.local_view(self.now())
             snap = Snapshot(self.now(), self.robot, dict(self.items),
                             {k: list(v) for k, v in self.compartments.items()}, self.load, self.safety == 'ok',
-                            self.tilt, local_robot, local_items, local_bins)
+                            self.tilt, local_robot, local_items, local_bins, local_bins_seen)
         self.task.tick(snap)
         state = f'{self.task.state} {self.task.item}'.strip()
         if state != self.last_state:
