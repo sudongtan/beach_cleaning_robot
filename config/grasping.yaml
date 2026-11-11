@@ -51,7 +51,7 @@ grasping:
   # C1 item 24: a move stopped for safety keeps going ~0.03 rad per 1 rad/s of joint speed (devtrace: stop
   # latency + the hold spline starting at the measured velocity); with 2.5 s per move big swings ran at
   # 1-1.7 rad/s against the 0.03 rad arm rule. Longer moves keep every joint at or below this (0 = off).
-  max_joint_speed_radps: 0.5
+  max_joint_speed_radps: 0.3     # devcap (0.5): 0.024 rad after a stop, ~0.045 rad per rad/s
   finger_time_s: 1.0
   # How a running arm move stops when /safety/state leaves ok: hold_reference preempts it with a goal to
   # the controller's reference position at that instant (reached after stop_hold_s); cancel cancels the
