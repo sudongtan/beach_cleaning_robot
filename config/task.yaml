@@ -27,6 +27,12 @@ task:
     # robot_lab creeps towards the bin while the arm places (devpose s3: 0.805 -> 0.70 m over 3 places, then
     # the stowed gripper hooked on the rim and held the robot at the bin). false = one approach per bin (B4)
     reapproach_before_place: true
+    # C1: the bin final approach's settle accepts a mean distance at most this far short of bin_place_distance_m
+    # (long side unchanged: tolerance 0.03 + settle_band_m). The symmetric window let PLACE start at 0.80-0.83
+    # (devreap, devreap2: the task's own estimate was right within 1 cm) and the arm's rest <-> up move hit the
+    # near wall below 0.84 m. Both window ends are checked by sim/common/tests/test_cross_phase.py.
+    # null = symmetric (B4)
+    bin_settle_short_m: 0.02
     # From one bin to the other (they stand side by side; A3: 3 of 7 falls on the walk between them):
     # `step` = straight sideways (vy, heading held) from one place pose to the other, then PLACE;
     # `walk` = back out to bin_standoff_m, then a Nav2 goal (baseline A3). The arm can't reach into

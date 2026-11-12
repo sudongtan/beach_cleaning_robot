@@ -616,11 +616,12 @@ class Task:
                 self.nav_fails = 0
                 self.go('GO_TO_BIN', snap)
 
-    def settle(self, snap, ex, ey, tol_x, tol_y):
+    def settle(self, snap, ex, ey, tol_x, tol_y, short_x=None):
         """Final approach stop: None = move on (not in the window, or the settle failed), False = standing,
         True = settled. Starts when the error is within (tol_x, tol_y); then stands settle_s and accepts if
         the *mean* error over that time is within the window + settle_band_m: robot_lab's trunk sways
-        3-4 cm at zero command, which the mean averages out and an instantaneous window doesn't (B4)."""
+        3-4 cm at zero command, which the mean averages out and an instantaneous window doesn't (B4).
+        short_x: if set, the mean x error may be at most this negative (short of the target) instead."""
         fa = self.cfg['final_approach']
         if self.settle_since is None:
             if abs(ex) > tol_x or abs(ey) > tol_y:
@@ -632,7 +633,8 @@ class Task:
             return False
         self.settle_since = None
         b = fa['settle_band_m']
-        return True if abs(s[0] / s[2]) <= tol_x + b and abs(s[1] / s[2]) <= tol_y + b else None
+        lo = -(tol_x + b) if short_x is None else -short_x
+        return True if lo <= s[0] / s[2] <= tol_x + b and abs(s[1] / s[2]) <= tol_y + b else None
 
     def bin_final_approach(self, snap):
         """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
@@ -640,7 +642,7 @@ class Task:
         robot, (bx, by, _, _), frame = self.bin_target(snap, self.at_bin)
         x, y = to_robot(robot, bx, by)
         err = x - self.cfg['bin_place_distance_m']
-        settled = self.settle(snap, err, y, 0.03, 0.05)
+        settled = self.settle(snap, err, y, 0.03, 0.05, self.cfg.get('bin_settle_short_m'))
         if settled is not None:
             self.stop()
             if settled:

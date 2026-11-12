@@ -234,6 +234,31 @@ def test_arm_moves_at_the_bin_clear_its_wall(body_height, rim):
                     f'{name}: {f} at {p.round(3)} hits the bin wall (x {wall:.3f}, rim {rim:.3f}) at s={s:.2f}'
 
 
+FA = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']['final_approach']
+
+
+def settle_window():
+    """(shortest, longest) place distance the bin final approach's settle accepts (task fsm.settle)."""
+    d, long_ = TASK['bin_place_distance_m'], 0.03 + FA['settle_band_m']
+    short = TASK.get('bin_settle_short_m')
+    return d - (long_ if short is None else short), d + long_
+
+
+@pytest.mark.parametrize('end', [0, 1])
+def test_settle_window_ends_reach_and_clear_the_wall(end, monkeypatch):
+    """C1: PLACE starts anywhere in the settle window (devreap: at 0.80 m the arm's rest <-> up move hit the
+    near wall), so both checks above must hold at its ends too."""
+    monkeypatch.setitem(TASK, 'bin_place_distance_m', settle_window()[end])
+    scene_rim_offsets.cache_clear()
+    try:
+        for body_height, rim in RIM_CASES:
+            test_jaw_tips_reach_over_the_bin(body_height, rim)
+            test_arm_moves_at_the_bin_clear_its_wall(body_height, rim)
+    finally:
+        monkeypatch.undo()
+        scene_rim_offsets.cache_clear()
+
+
 def footprint():
     """Nav2's robot footprint polygon (base_link), from the local costmap parameters."""
     p = yaml.safe_load(open(REPO / 'packages' / 'navigation' / 'config' / 'nav2_params.yaml'))

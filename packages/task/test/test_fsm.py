@@ -340,6 +340,17 @@ def test_settle_accepts_only_a_mean_error_inside_the_band():
     assert r is True
 
 
+@pytest.mark.parametrize('short_x,accepted', [(None, True), (0.02, False)])
+def test_settle_short_side(short_x, accepted):
+    """bin_settle_short_m (C1): a mean 0.04 short of the target passes the symmetric window, not short_x 0.02."""
+    fa = CFG['final_approach']
+    t = make(FakeWorld({}, {}), PATH)
+    snap = lambda s: Snapshot(s, (0.0, 0.0, 0.0), {}, {}, 0.0, True)       # noqa: E731
+    for k in range(int(fa['settle_s'] / DT) + 1):                            # sways -0.02 .. -0.06: mean -0.04
+        r = t.settle(snap(k * DT), -0.02 - (0.04 if k % 2 else 0.0), 0.0, 0.03, 0.03, short_x)
+    assert r is (True if accepted else None)
+
+
 def test_no_progress_times_out():
     cfg = dict(CFG, item_timeout_s=5.0)
     w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
