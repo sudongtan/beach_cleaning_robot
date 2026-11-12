@@ -54,6 +54,9 @@ recorder:
   trace_pre_s: 1.0
   trace_post_s: 1.5
   trace_max: 200
+  # pose track (C1 bin-side stall): [t, true x, y, yaw, EKF x, y, task state, max |arm q - reference|] every
+  # this many sim s in <log dir>/recorder_poses.jsonl; 0 = off
+  pose_track_every_s: 1.0
 
 metrics:
   # bin inner box (sim/common/objects.yaml: outer 0.60 x 0.45 x 0.50 m, 2 cm walls)

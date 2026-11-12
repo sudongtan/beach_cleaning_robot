@@ -112,6 +112,9 @@ class Recording:
         self.outside_s = 0.0
         self.drift = {'n': 0, 'sum': 0.0, 'max': 0.0, 'last': None, 'samples': []}
         self.drift_next = None
+        # C1 bin-side stall: [t, true x, y, yaw, EKF x, y, task state, max |arm q - controller reference|]
+        # every pose_track_every_s (0 = off), taken by the recorder node like the arm traces
+        self.pose_track, self.pose_track_next = [], None
         self.odom_global = None                       # (t, x, y)
         self.task_state, self.task_changes = '', 0
         self.wm = None                                # last world model summary
@@ -162,6 +165,7 @@ class Recording:
             self.outside.add(t, robot=[round(x, 3), round(y, 3)])
         self.check_person(t)
         self.sample_drift(t)
+        self.sample_pose(t)
 
     def on_cmd(self, vx, vy, wz):
         self.cmd = (vx, vy, wz)
@@ -317,6 +321,17 @@ class Recording:
         d['max'] = max(d['max'], e)
         d['last'] = e
         d['samples'].append(round(e, 3))           # for the p95 (B4); ~1 Hz, a few thousand per run
+
+    def sample_pose(self, t):
+        every = self.cfg.get('pose_track_every_s', 0)
+        if not every or (self.pose_track_next is not None and t < self.pose_track_next):
+            return
+        self.pose_track_next = t + every
+        x, y, _, yaw = self.pose
+        ekf = [None, None] if self.odom_global is None else [round(v, 3) for v in self.odom_global[1:]]
+        arm = (None if self.arm is None or self.arm_ctrl_ref is None
+               else round(max(abs(a - b) for a, b in zip(self.arm, self.arm_ctrl_ref)), 3))
+        self.pose_track.append([round(t, 2), round(x, 3), round(y, 3), round(yaw, 3), *ekf, self.task_state, arm])
 
     def snapshot(self, wall, final=False):
         d = self.drift

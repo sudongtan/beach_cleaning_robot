@@ -66,6 +66,8 @@ class Recorder(Node):
         sub(JointTrajectoryControllerState, '/arm_controller/controller_state', self.on_arm_state, 50, raw=True)
         self.traces_out = self.out.with_name(self.out.stem + '_arm_traces.jsonl')
         self.traces_written = 0
+        self.poses_out = self.out.with_name(self.out.stem + '_poses.jsonl')
+        self.poses_written = 0
         sub(PolygonStamped, '/geofence', lambda m: self.rec.on_geofence([[p.x, p.y] for p in m.polygon.points]),
             LATCHED)
         sub(WorldModel, '/world_model', self.on_world_model, 5)
@@ -123,6 +125,11 @@ class Recorder(Node):
             if done:
                 with open(self.traces_out, 'a') as f:
                     f.writelines(json.dumps(tr) + '\n' for tr in done)
+            poses = self.rec.pose_track[self.poses_written:]
+            self.poses_written = len(self.rec.pose_track)
+            if poses:
+                with open(self.poses_out, 'a') as f:
+                    f.writelines(json.dumps(p) + '\n' for p in poses)
             tmp = self.out.with_suffix('.tmp')
             tmp.write_text(json.dumps(snap))
             os.replace(tmp, self.out)

@@ -220,6 +220,25 @@ def test_arm_trace_around_a_change_away_from_ok():
     assert rec.trace is not None
 
 
+def test_pose_track():
+    """C1 bin-side stall: true pose, EKF position, task state and the arm's gap to its reference, ~1 Hz."""
+    names = RCFG['arm_joints']
+    rec = Recording(RCFG, 1.5)
+    rec.on_task('PLACE', wall=0)
+    rec.on_arm_reference(dict(zip(names, [0.1] * 6)))
+    rec.on_joints(0.0, dict(zip(names, [0.1, 0.1, 0.4, 0.1, 0.1, 0.1])))
+    rec.on_pose(0.0, (2.0, 14.0, 0.3), (0, 0, 0, 1), wall=0)           # no EKF yet
+    rec.on_odom_global(0.5, 2.1, 14.05)
+    walk(rec, 0.5, 2.5, 2.0, 0.1, y=14.0)
+    every = RCFG['pose_track_every_s']
+    assert len(rec.pose_track) == int(2.5 / every) + 1
+    assert rec.pose_track[0] == [0.0, 2.0, 14.0, 0.0, None, None, 'PLACE', 0.3]
+    assert rec.pose_track[1][4:6] == [2.1, 14.05]
+    rec2 = Recording({**RCFG, 'pose_track_every_s': 0}, 1.5)
+    walk(rec2, 0.0, 2.0, 2.0, 0.1)
+    assert rec2.pose_track == []
+
+
 def test_arm_slow_creep_is_reported_not_counted():
     """b2 reading: 0.038 rad over 5 s (A3 dev scene: held arm in slow) is no violation, but the
     change since the state switch is reported."""
