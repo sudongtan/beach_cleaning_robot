@@ -496,6 +496,33 @@ def test_first_bin_fails_then_the_robot_walks_to_the_second():
     assert placed_from['b'][1] == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
 
 
+@pytest.mark.parametrize('reapproach', [True, False])
+def test_reapproach_before_each_place_undoes_the_creep(reapproach):
+    """devpose s3: robot_lab crept 0.805 -> 0.70 m towards the bin over 3 places and the stowed gripper
+    hooked on the rim. Two recyclable items (a, c); each place lets the robot creep 0.1 m in."""
+    w = FakeWorld(ITEMS, MATS)
+    t = make(w, PATH, cfg={**CFG, 'reapproach_before_place': reapproach})
+    placed_from = []
+    real_place = w.place
+
+    def place(target, iid, bin_id, pose, frame='map'):
+        if target == 'bin':
+            placed_from.append((iid, w.bin_dist(bin_id)))
+            bx, by, _, _ = BINS[bin_id]
+            d = w.bin_dist(bin_id)
+            w.robot[0] -= 0.1 * (w.robot[0] - bx) / d
+            w.robot[1] -= 0.1 * (w.robot[1] - by) / d
+        return real_place(target, iid, bin_id, pose)
+    w.place = place
+    run(t, w)
+    assert t.state == 'DONE' and w.known['a'].status == PLACED and w.known['c'].status == PLACED
+    recyclable = [d for iid, d in placed_from if iid in 'ac']
+    assert len(recyclable) == 2
+    assert recyclable[0] == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
+    expected = CFG['bin_place_distance_m'] - (0.0 if reapproach else 0.1)
+    assert recyclable[1] == pytest.approx(expected, abs=0.04)
+
+
 def test_robot_backs_out_of_the_bin_before_navigating():
     """A2b a2b_bin2: facing the bin at the place distance, Nav2 saw 'collision ahead' and never moved."""
     w = FakeWorld(ITEMS, MATS)

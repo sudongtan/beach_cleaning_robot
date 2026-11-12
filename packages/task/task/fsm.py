@@ -710,12 +710,21 @@ class Task:
         else:
             self.attempts[self.item] = self.attempts.get(self.item, 0) + 1
             if self.attempts[self.item] < self.cfg['grasp_retries']:
-                return                                  # retry the same item
+                return self.reapproach_bin(snap)        # retry the same item
         self.unload = [u for u in self.unload if u[1] != self.item]
         if not ok:
             self.stuck.add(self.item)
             self.io.log({'t': round(snap.t, 2), 'event': 'left_in_basket', 'items': [self.item]})
         self.item = ''
+        self.reapproach_bin(snap)
+
+    def reapproach_bin(self, snap):
+        """With reapproach_before_place: another place at this bin starts with its final approach again
+        (forward or back): robot_lab creeps towards the bin while the arm places (devpose s3: 0.805 ->
+        0.70 m over 3 places, the stowed gripper then hooked on the rim)."""
+        if self.cfg['reapproach_before_place'] and any(b == self.at_bin for b, _ in self.unload):
+            self.best_dist, self.settle_since = None, None
+            self.go('GO_TO_BIN', snap, sub='final')
 
     def bin_beside(self, snap):
         """With bin_placement `step`: the next bin still to unload into, if it stands beside at_bin

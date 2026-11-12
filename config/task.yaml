@@ -23,6 +23,10 @@ task:
     # so the near wall (0.30 m from the centre) must be >= 0.57 m ahead (A2b: at 0.7 m the arm hit
     # the bin and tipped the robot over). Checked by sim/common/tests/test_cross_phase.py.
     bin_place_distance_m: 0.87
+    # C1: every further place at the same bin starts with the bin's final approach again (it backs up too):
+    # robot_lab creeps towards the bin while the arm places (devpose s3: 0.805 -> 0.70 m over 3 places, then
+    # the stowed gripper hooked on the rim and held the robot at the bin). false = one approach per bin (B4)
+    reapproach_before_place: true
     # From one bin to the other (they stand side by side; A3: 3 of 7 falls on the walk between them):
     # `step` = straight sideways (vy, heading held) from one place pose to the other, then PLACE;
     # `walk` = back out to bin_standoff_m, then a Nav2 goal (baseline A3). The arm can't reach into
