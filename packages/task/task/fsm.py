@@ -637,13 +637,17 @@ class Task:
     def bin_final_approach(self, snap):
         """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
         fa = self.cfg['final_approach']
-        robot, (bx, by, _, _), _ = self.bin_target(snap, self.at_bin)
+        robot, (bx, by, _, _), frame = self.bin_target(snap, self.at_bin)
         x, y = to_robot(robot, bx, by)
         err = x - self.cfg['bin_place_distance_m']
         settled = self.settle(snap, err, y, 0.03, 0.05)
         if settled is not None:
             self.stop()
             if settled:
+                # C1 (devreap): the bin as the task sees it when the arm starts, against the recorder's true pose
+                self.io.log({'t': round(snap.t, 2), 'event': 'bin_settled', 'bin': self.at_bin, 'x': round(x, 3),
+                             'y': round(y, 3), 'frame': frame,
+                             'seen_age': {b: round(snap.t - s, 1) for b, s in snap.local_bins_seen.items()}})
                 self.best_dist, self.bin_approach_fails = None, 0
                 self.go('PLACE', snap)
             return
