@@ -16,6 +16,17 @@ if [ $# -lt 2 ]; then
     echo "usage: $0 OUT SEED [SEED ...]" >&2
     exit 2
 fi
+# vast.ai ssh sessions don't inherit the container's environment (create --env): take the
+# Isaac flags the instance was created with from PID 1, only where the shell lacks them.
+INIT_ENVIRON=${INIT_ENVIRON:-/proc/1/environ}
+for v in ACCEPT_EULA PRIVACY_CONSENT OMNI_KIT_ALLOW_ROOT NVIDIA_DRIVER_CAPABILITIES; do
+    if [ -z "${!v:-}" ] && [ -r "$INIT_ENVIRON" ]; then
+        val=$(tr '\0' '\n' < "$INIT_ENVIRON" | sed -n "s/^$v=//p" | head -1)
+        [ -n "$val" ] && export "$v=$val"
+    fi
+done
+if [ "${ENV_ONLY:-0}" = 1 ]; then env | grep -E '^(ACCEPT_EULA|PRIVACY_CONSENT|OMNI_KIT_ALLOW_ROOT|NVIDIA_DRIVER_CAPABILITIES)=' | sort; exit 0; fi
+
 OUT=$(realpath -m "$1"); shift
 SEEDS=("$@")
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
