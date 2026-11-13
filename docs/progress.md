@@ -145,6 +145,8 @@ The last and hardest step: picks by contact physics instead of the simulated att
 - **D0 Port:** run the same pipeline in NVIDIA Isaac Sim with zero changes outside `sim/` and `sim_bridge_isaac`.
 - **D1 Comparison:** the same benchmark in Gazebo and Isaac, side by side.
 
+D0 runs in parallel with Part C, starting with the scenes built as USD files and a first render check in Isaac. D1 waits until Part C is done, so the comparison uses the final pipeline.
+
 ## Engineering notes
 
 - **Cross-phase tests.** Unit tests check that the parts fit together physically: the gripper fits every item, the arm reaches every compartment position and both bins, and the arm's sweep clears the bin wall. They were added after a run where the folded arm hit a bin and levered the robot over.
