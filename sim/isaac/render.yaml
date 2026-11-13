@@ -46,4 +46,7 @@ render_check:
   min_std: 3.0                        # image std (0-255): below = uniform
   physics_seconds: 2.0                # play the timeline this long for the trash rest check
   max_trash_move_m: 0.02
-  log_patterns: [error, triangle mesh, convexHull, failed to resolve]
+  captures: 2                         # per camera; the last one is checked
+  log_patterns: [error, triangle mesh, convexHull, failed to resolve]   # recorded in checks.json
+  fail_log_patterns: [triangle mesh, convexHull, failed to resolve]     # a match fails the check
+  max_physics_updates: 2000           # guard: app updates while waiting for physics_seconds
