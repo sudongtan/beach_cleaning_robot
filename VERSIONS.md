@@ -71,4 +71,4 @@ from `sim/isaac/requirements-mac.txt` (`notes/briefs/D0_prep.md` §1).
 | numpy / Pillow / PyYAML / pytest | 1.26.4 / 10.2.0 / 6.0.1 / 7.4.4 | same as the laptop, so the scene generator gives the same numbers |
 | usd-core | 26.11 (newest on 2026-11-13) | `sim/isaac/load_scene.py`; pin to Isaac 6.2's OpenUSD after GPU session 1 |
 | Isaac Sim container | `nvcr.io/nvidia/isaac-sim:6.2.0` (Kit SDK 110.4.0) | not run yet; OpenUSD version and GPU host driver recorded after GPU session 1 |
-| Blender | not installed | optional preview (`notes/briefs/D0_prep.md` §4) |
+| Blender | 5.3.0 (hash 02f0899d78e3, 2026-11-10; `brew install --cask blender`, the cask listed 5.2.3) | `sim/isaac/tools/blender_preview.py`: Cycles on Metal (Apple M1 Pro GPU) |

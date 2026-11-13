@@ -39,3 +39,5 @@ results/b5/gz.log
 
 # D0 prep: generated USD scenes (sim/isaac/load_scene.py)
 sim/isaac/scenes/generated/
+# Blender preview frames (sim/isaac/tools/blender_preview.py); the contact sheet is kept
+results/d0_prep/blender/
