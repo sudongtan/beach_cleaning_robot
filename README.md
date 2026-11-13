@@ -2,7 +2,7 @@
 
 **A simulated Unitree Go2 quadruped with an arm that is meant to search a beach, pick up litter, sort it by material and empty it into the right bin, with no human in the loop. Every part runs in ROS 2 and Gazebo Harmonic on a laptop CPU.**
 
-> 🚧 **Work in progress (as of 2026-11-09).** The whole loop runs on its own, unattended, but every component still reads the simulator's ground truth and grasps use a simulated attach. The latest benchmark row (`b4_robot_lab_flip`) collected 75 of 110 items, all in the correct bin, and finished seven of ten scenes with no falls and no safety violations; the other three runs got stuck beside a bin. See [Progress](#progress).
+> 🚧 **Work in progress (as of 2026-11-13).** The whole loop runs on its own, unattended. Parts A and B are done on ground truth: the best row (`b4_robot_lab_flip`) collected 75 of 110 items, all in the correct bin, with no falls and no safety violations. Part C has started replacing ground truth with real components. The realistic trash visuals are done. Localization (EKF) runs the full loop but doesn't have a clean benchmark row yet, because the arm safety rule still trips at the bins. Grasps still use a simulated attach. See [Progress](#progress).
 
 <p align="center">
   <img src="results/a1/checks/camera_rgb.png" width="45%" alt="Head-camera view of the generated beach: sand ripples, dunes and the lifeguard tower">
@@ -44,7 +44,7 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **B2** Both bins from one spot | One sideways step between the bins instead of a walk | ✅ done (row `b2_bins`) |
 | **B3** Navigation stalls | Get to a spot with room to turn before each Nav2 goal | ✅ done (row `b3_nav`) |
 | **B4** Walking controller | A controller that falls less, picked by a fall test | ✅ done (row `b4_robot_lab_flip`) |
-| **C1** Localization | EKF over noisy GNSS, leg odometry and IMU | 🟡 built, first row has arm-rule violations, re-run in progress |
+| **C1** Localization | EKF over noisy GNSS, leg odometry and IMU | 🟡 built and running the full loop; fixing arm-rule violations at the bins before a clean row |
 | **C2** Trash visuals | Textured, realistic trash meshes | ✅ done (1.45 % frame-rate cost, no row) |
 | **C3** Perception | Text-prompted detector (YOLOE) + depth | 🟡 built, currently fails its detection and frame-rate checks |
 | **C4** Classifier | Zero-shot material classifier, compared with an own colour-based one | 🟡 built, narrowly fails its contamination check |
@@ -56,9 +56,18 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 
 **Part B: make the robot better, still on ground truth.** Each upgrade fixes one failure seen in the benchmark and adds one row, judged against the row before. B1 fixed where items are released over a bin, B2 removed the risky walk between the bins, and B3 removed the navigation stalls: from 17 to 39 collected items, three scenes finished completely. Falls of the walking controller then ended most runs, so B4 replaced it with a learned policy (`robot_lab`), calibrated for the task's small moves: no falls in the final row, 75 collected items and seven scenes finished. Three of the ten runs now end stuck beside a bin, and the cause is still open.
 
-**Part C: replace ground truth with real components.** One component at a time: localization, then perception, classification and finally physics-based grasping. Each row is expected to be equal or worse than the ground-truth rows and shows what making that component real costs. C2 is done. C1, C3 and C4 are built on branches, and none has passed its checks yet: the first localization row broke the arm safety rule 5 times, and the detector finds under 3 % of nearby trash.
+**Part C: replace ground truth with real components.** One component at a time: localization, then perception, classification and finally physics-based grasping. Each row is expected to be equal or worse than the ground-truth rows and shows what making that component real costs. C2 is done. C1, C3 and C4 are built on branches, and none has passed its checks yet. The detector finds under 3 % of nearby trash, and the material classifier lets one item too many into the recyclable bin.
 
-**Part D: Isaac Sim (optional).** A port to Isaac Sim that touches only the simulator layer, and a Gazebo-vs-Isaac comparison on the same benchmark.
+C1 (localization) gets furthest. Its first row collected 87 of 110 items, more than the ground-truth row, with no falls and a mean position error of 0.16 m, but it broke the arm safety rule 5 times. The rule: no arm joint may move more than 0.03 rad within half a second while a person is near. Each re-run stops at its first violation, and each stop has exposed one more cause:
+
+1. The supervisor read the robot's speed from the EKF map pose, which jumps with each GNSS fix. It now uses leg odometry.
+2. An arm move stopped for safety coasts on, about 0.045 rad for every rad/s of joint speed. Arm joints are now capped at 0.3 rad/s.
+3. The learned walking policy creeps towards the bin while the arm works. After a few places in a row, the folded gripper hooked on the rim and the bin pushed the arm. The robot now re-approaches the bin before each place, and it starts a place only if it isn't too close.
+4. Navigation accepts any heading at the bins, so the robot often placed from up to 0.6 m to the side of the bin. From there the arm can catch the corner of the bin's wall. The final approach now ends straight in front of the bin and facing it. A geometry test checks the arm's whole path against every bin wall for that window, and a dev run of the fix is in progress.
+
+The last re-run had three clean scenes before it stopped on the fourth.
+
+**Part D: Isaac Sim (optional).** A port to Isaac Sim that touches only the simulator layer, and a Gazebo-vs-Isaac comparison on the same benchmark. The port can run alongside Part C; the comparison waits for the final pipeline.
 
 Details for every phase (component table, integration runs, what each row showed, the controller tests): **[docs/progress.md](docs/progress.md)**.
 
