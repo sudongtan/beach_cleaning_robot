@@ -1,0 +1,102 @@
+{
+  "usd": "/workspace/beach/sim/isaac/scenes/generated/scene_5.usda",
+  "cameras": [
+    "top",
+    "oblique",
+    "robot_eye"
+  ],
+  "images": {
+    "top": {
+      "shape": [
+        960,
+        1280,
+        3
+      ],
+      "mean": 215.233,
+      "std": 29.03,
+      "not_black": true,
+      "not_uniform": true,
+      "ok": true,
+      "file": "rgb/top/rgb_0001.png",
+      "expected_shape": [
+        960,
+        1280,
+        3
+      ]
+    },
+    "oblique": {
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "mean": 196.334,
+      "std": 26.07,
+      "not_black": true,
+      "not_uniform": true,
+      "ok": true,
+      "file": "rgb/oblique/rgb_0001.png",
+      "expected_shape": [
+        720,
+        1280,
+        3
+      ]
+    },
+    "robot_eye": {
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "mean": 213.888,
+      "std": 22.916,
+      "not_black": true,
+      "not_uniform": true,
+      "ok": true,
+      "file": "rgb/robot_eye/rgb_0001.png",
+      "expected_shape": [
+        480,
+        640,
+        3
+      ]
+    }
+  },
+  "physics": {
+    "moves_m": {
+      "trash_00": 0.00537,
+      "trash_01": 0.00529,
+      "trash_02": 0.00694,
+      "trash_03": 0.01024,
+      "trash_04": 0.00761,
+      "trash_05": 0.0,
+      "trash_06": 0.0,
+      "trash_07": 0.0
+    },
+    "max_move_m": 0.01024,
+    "missing": [],
+    "rests": true,
+    "updated": true,
+    "sim_seconds": 2.0167
+  },
+  "kit_log": "/isaac-sim/kit/logs/Kit/Isaac-Sim Python/6.2/kit_20261113_235542.log",
+  "log_matches": {
+    "[Error]": {
+      "count": 0,
+      "lines": []
+    },
+    "triangle mesh": {
+      "count": 0,
+      "lines": []
+    },
+    "convexHull": {
+      "count": 0,
+      "lines": []
+    },
+    "failed to resolve": {
+      "count": 0,
+      "lines": []
+    }
+  },
+  "ok": true,
+  "failures": []
+}

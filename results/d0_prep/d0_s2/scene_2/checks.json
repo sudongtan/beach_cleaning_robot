@@ -1,0 +1,109 @@
+{
+  "usd": "/workspace/beach/sim/isaac/scenes/generated/scene_2.usda",
+  "cameras": [
+    "top",
+    "oblique",
+    "robot_eye"
+  ],
+  "images": {
+    "top": {
+      "shape": [
+        960,
+        1280,
+        3
+      ],
+      "mean": 214.494,
+      "std": 29.481,
+      "not_black": true,
+      "not_uniform": true,
+      "ok": true,
+      "file": "rgb/top/rgb_0001.png",
+      "expected_shape": [
+        960,
+        1280,
+        3
+      ]
+    },
+    "oblique": {
+      "shape": [
+        720,
+        1280,
+        3
+      ],
+      "mean": 195.886,
+      "std": 26.056,
+      "not_black": true,
+      "not_uniform": true,
+      "ok": true,
+      "file": "rgb/oblique/rgb_0001.png",
+      "expected_shape": [
+        720,
+        1280,
+        3
+      ]
+    },
+    "robot_eye": {
+      "shape": [
+        480,
+        640,
+        3
+      ],
+      "mean": 214.166,
+      "std": 25.158,
+      "not_black": true,
+      "not_uniform": true,
+      "ok": true,
+      "file": "rgb/robot_eye/rgb_0001.png",
+      "expected_shape": [
+        480,
+        640,
+        3
+      ]
+    }
+  },
+  "physics": {
+    "moves_m": {
+      "trash_00": 0.0,
+      "trash_01": 0.00701,
+      "trash_02": 0.0,
+      "trash_03": 0.0,
+      "trash_04": 0.01459,
+      "trash_05": 0.0,
+      "trash_06": 0.0,
+      "trash_07": 0.00826,
+      "trash_08": 0.00813,
+      "trash_09": 0.0,
+      "trash_10": 0.00707,
+      "trash_11": 0.0,
+      "trash_12": 0.00664,
+      "trash_13": 0.0,
+      "trash_14": 0.0
+    },
+    "max_move_m": 0.01459,
+    "missing": [],
+    "rests": true,
+    "updated": true,
+    "sim_seconds": 2.0167
+  },
+  "kit_log": "/isaac-sim/kit/logs/Kit/Isaac-Sim Python/6.2/kit_20261113_235427.log",
+  "log_matches": {
+    "[Error]": {
+      "count": 0,
+      "lines": []
+    },
+    "triangle mesh": {
+      "count": 0,
+      "lines": []
+    },
+    "convexHull": {
+      "count": 0,
+      "lines": []
+    },
+    "failed to resolve": {
+      "count": 0,
+      "lines": []
+    }
+  },
+  "ok": true,
+  "failures": []
+}

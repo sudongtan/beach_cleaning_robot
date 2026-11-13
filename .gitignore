@@ -41,3 +41,12 @@ results/b5/gz.log
 sim/isaac/scenes/generated/
 # Blender preview frames (sim/isaac/tools/blender_preview.py); the contact sheet is kept
 results/d0_prep/blender/
+# D0 prep GPU session outputs: full images, Kit logs, NVIDIA example, tarballs (kept on the Mac);
+# checks.json / timing.json / host facts and the contact sheets are committed
+results/d0_prep/*.tar.gz
+results/d0_prep/d0_s*/kit_logs/
+results/d0_prep/d0_s*/nvidia_example/
+results/d0_prep/d0_s*/scene_*/rgb/
+results/d0_prep/d0_s*/session.log
+results/d0_prep/d0_s*/compat.txt
+results/d0_prep/d0_s*/.done/

@@ -1,0 +1,15 @@
+{
+  "app_start_s": 19.099,
+  "stage_open_s": 0.373,
+  "warmup_s": 0.521,
+  "captures_s": [
+    1.012,
+    0.603
+  ],
+  "first_frame_s": 21.173,
+  "write_wait_s": 0.095,
+  "physics_wall_s": 1.32,
+  "physics_sim_s": 2.0167,
+  "physics_updates": 121,
+  "total_s": 23.334
+}

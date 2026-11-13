@@ -1,0 +1,34 @@
+date_utc: 2026-11-13T23:44:44Z
+hostname: 15a831f6e11e
+Fri Nov 13 23:44:44 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.99.02              Driver Version: 595.99.02      CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        On  |   00000000:41:00.0 Off |                  Off |
+| 30%   34C    P8             26W /  450W |       1MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+name, driver_version, memory.total [MiB]
+NVIDIA GeForce RTX 4090, 595.99.02, 24564 MiB
+               total        used        free      shared  buff/cache   available
+Mem:             125          41          29           0          56          84
+Swap:              7           0           7
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         100G   75M  100G   1% /
+overlay         100G   75M  100G   1% /
+nproc: 32
+isaac VERSION: 6.2.0-rc.14+release.52805.02189a84.gl
+NVIDIA_VISIBLE_DEVICES=all
+NVIDIA_DRIVER_CAPABILITIES=all
