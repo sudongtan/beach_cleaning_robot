@@ -33,6 +33,16 @@ task:
     # near wall below 0.84 m. Both window ends are checked by sim/common/tests/test_cross_phase.py.
     # null = symmetric (B4)
     bin_settle_short_m: 0.02
+    # C1: the bin final approach ends on the bin's axis: base_link bin_place_distance_m out along the bin's x (not
+    # just that far from its centre), within lateral_tol_m of the axis (mean + settle_band_m) and heading_tol_rad of
+    # facing along it. Nav2 accepts any heading at the standoff (nav2_params yaw_goal_tolerance) and the approach
+    # that steered at the centre placed up to 0.62 m off the axis (c1_win: every residual place); at 0.80 m along
+    # the axis and 0.32 m to the side the arm hooked the near wall's corner (c1_win s3). Tolerances: half the
+    # off-axis envelope in sim/common/tests/test_cross_phase.py, and their corrections (gain 0.8) above robot_lab's
+    # dead band. null = steer at the centre (B4)
+    bin_axis:
+      lateral_tol_m: 0.10
+      heading_tol_rad: 0.15
     # From one bin to the other (they stand side by side; A3: 3 of 7 falls on the walk between them):
     # `step` = straight sideways (vy, heading held) from one place pose to the other, then PLACE;
     # `walk` = back out to bin_standoff_m, then a Nav2 goal (baseline A3). The arm can't reach into

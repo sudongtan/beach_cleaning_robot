@@ -402,6 +402,49 @@ def test_bin_approach_ends_at_the_place_distance():
     assert w.cmd == (0.0, 0.0, 0.0)
 
 
+@pytest.mark.parametrize('on_axis', [True, False])
+def test_bin_approach_from_an_off_axis_standoff_ends_on_the_axis(on_axis):
+    """c1_win s3: Nav2 accepts any heading at the standoff (arrived 0.18 m to the side, 1.03 rad off), and the
+    approach that steers at the bin centre placed 0.32 m off the bin's axis. bin_axis ends on the axis."""
+    cfg = CFG if on_axis else {**CFG, 'bin_axis': None}
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    real_nav = w.nav_to
+
+    def nav_to(x, y, yaw):
+        h = real_nav(x, y, yaw)
+        if math.hypot(x - BINS['recyclable'][0], y - BINS['recyclable'][1]) < CFG['bin_standoff_m'] + 0.01:
+            w.robot = [x - 0.1, y - 0.18, yaw - 1.03]
+        return h
+    w.nav_to = nav_to
+    t = make(w, [], cfg=cfg)
+    while t.state != 'PLACE' and w.tick_no < 10000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.state == 'PLACE'
+    bx, by, _, _ = BINS['recyclable']                            # bin yaw 0: its axis is +x
+    along, lateral, heading = w.robot[0] - bx, w.robot[1] - by, math.atan2(math.sin(w.robot[2] - math.pi),
+                                                                           math.cos(w.robot[2] - math.pi))
+    if on_axis:
+        tol = CFG['final_approach']['settle_band_m']
+        assert along == pytest.approx(CFG['bin_place_distance_m'], abs=0.03 + tol)
+        assert abs(lateral) <= CFG['bin_axis']['lateral_tol_m'] + tol
+        assert abs(heading) <= CFG['bin_axis']['heading_tol_rad']
+    else:                                                        # facing the centre, from the side
+        assert math.hypot(along, lateral) == pytest.approx(CFG['bin_place_distance_m'], abs=0.06)
+        assert abs(heading) > CFG['bin_axis']['heading_tol_rad']
+
+
+def test_settle_heading():
+    """bin_axis (C1): a mean heading error beyond tol_h fails the settle, one inside passes."""
+    fa = CFG['final_approach']
+    snap = lambda s: Snapshot(s, (0.0, 0.0, 0.0), {}, {}, 0.0, True)       # noqa: E731
+    for eh, accepted in ((0.10, True), (0.14, None)):
+        t = make(FakeWorld({}, {}), PATH)
+        for k in range(int(fa['settle_s'] / DT) + 1):                        # sways 0.08 .. eh + (eh - 0.08)
+            r = t.settle(snap(k * DT), 0.0, 0.0, 0.03, 0.03, None, 0.08 + (2 * (eh - 0.08) if k % 2 else 0.0), 0.12)
+        assert r is accepted
+
+
 def test_items_outside_the_allowed_area_are_never_targeted():
     items = dict(ITEMS, e={'cls': 'trash', 'x': 20.0, 'y': 11.0})         # seen, but in a forbidden area
     w = FakeWorld(items, dict(MATS, e='pet'))

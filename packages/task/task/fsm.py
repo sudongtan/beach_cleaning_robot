@@ -616,48 +616,65 @@ class Task:
                 self.nav_fails = 0
                 self.go('GO_TO_BIN', snap)
 
-    def settle(self, snap, ex, ey, tol_x, tol_y, short_x=None):
+    def settle(self, snap, ex, ey, tol_x, tol_y, short_x=None, eh=0.0, tol_h=math.inf):
         """Final approach stop: None = move on (not in the window, or the settle failed), False = standing,
         True = settled. Starts when the error is within (tol_x, tol_y); then stands settle_s and accepts if
         the *mean* error over that time is within the window + settle_band_m: robot_lab's trunk sways
         3-4 cm at zero command, which the mean averages out and an instantaneous window doesn't (B4).
-        short_x: if set, the mean x error may be at most this negative (short of the target) instead."""
+        short_x: if set, the mean x error may be at most this negative (short of the target) instead.
+        eh, tol_h: a heading error (rad) that must be within tol_h at the start and on the mean too."""
         fa = self.cfg['final_approach']
         if self.settle_since is None:
-            if abs(ex) > tol_x or abs(ey) > tol_y:
+            if abs(ex) > tol_x or abs(ey) > tol_y or abs(eh) > tol_h:
                 return None
-            self.settle_since, self.settle_sum = snap.t, [0.0, 0.0, 0]
+            self.settle_since, self.settle_sum = snap.t, [0.0, 0.0, 0, 0.0]
         s = self.settle_sum
-        s[0], s[1], s[2] = s[0] + ex, s[1] + ey, s[2] + 1
+        s[0], s[1], s[2], s[3] = s[0] + ex, s[1] + ey, s[2] + 1, s[3] + eh
         if snap.t - self.settle_since < fa['settle_s']:
             return False
         self.settle_since = None
         b = fa['settle_band_m']
         lo = -(tol_x + b) if short_x is None else -short_x
-        return True if lo <= s[0] / s[2] <= tol_x + b and abs(s[1] / s[2]) <= tol_y + b else None
+        return True if (lo <= s[0] / s[2] <= tol_x + b and abs(s[1] / s[2]) <= tol_y + b
+                        and abs(s[3] / s[2]) <= tol_h) else None
 
     def bin_final_approach(self, snap):
-        """Straight in towards the bin until base_link is bin_place_distance_m from its centre."""
+        """Straight in towards the bin until base_link is bin_place_distance_m from its centre; with bin_axis,
+        to the pose that far out on the bin's axis, facing the bin."""
         fa = self.cfg['final_approach']
-        robot, (bx, by, _, _), frame = self.bin_target(snap, self.at_bin)
+        robot, (bx, by, _, byaw), frame = self.bin_target(snap, self.at_bin)
         x, y = to_robot(robot, bx, by)
-        err = x - self.cfg['bin_place_distance_m']
-        settled = self.settle(snap, err, y, 0.03, 0.05, self.cfg.get('bin_settle_short_m'))
+        d, axis = self.cfg['bin_place_distance_m'], self.cfg.get('bin_axis')
+        if axis:
+            # robot in the bin frame (x along the bin's axis towards the robot): along-axis error, lateral, heading
+            c, s_ = math.cos(byaw), math.sin(byaw)
+            err = c * (robot[0] - bx) + s_ * (robot[1] - by) - d
+            ey = -s_ * (robot[0] - bx) + c * (robot[1] - by)
+            eh = wrap(byaw + math.pi - robot[2])
+            settled = self.settle(snap, err, ey, 0.03, axis['lateral_tol_m'], self.cfg.get('bin_settle_short_m'),
+                                  eh, axis['heading_tol_rad'])
+        else:
+            err, ey, eh = x - d, y, 0.0
+            settled = self.settle(snap, err, y, 0.03, 0.05, self.cfg.get('bin_settle_short_m'))
         if settled is not None:
             self.stop()
             if settled:
                 # C1 (devreap): the bin as the task sees it when the arm starts, against the recorder's true pose
                 self.io.log({'t': round(snap.t, 2), 'event': 'bin_settled', 'bin': self.at_bin, 'x': round(x, 3),
                              'y': round(y, 3), 'frame': frame,
-                             'seen_age': {b: round(snap.t - s, 1) for b, s in snap.local_bins_seen.items()}})
+                             'seen_age': {b: round(snap.t - s, 1) for b, s in snap.local_bins_seen.items()},
+                             **({'along': round(err + d, 3), 'lateral': round(ey, 3), 'heading': round(eh, 3)}
+                                if axis else {})})
                 self.best_dist, self.bin_approach_fails = None, 0
                 self.go('PLACE', snap)
             return
         # no progress (a controller that doesn't make the small move): Nav2 to the standoff again,
-        # after nav_retries leave this bin's items in the basket
-        dist = math.hypot(err, y)
-        if self.best_dist is None or dist < self.best_dist - fa['progress_min_m']:
-            self.best_dist, self.best_since = dist, snap.t
+        # after nav_retries leave this bin's items in the basket. With bin_axis a turn towards the heading counts too.
+        dist, head = math.hypot(err, ey), abs(eh)
+        if self.best_dist is None:
+            self.best_dist, self.best_head, self.best_since = dist, head, snap.t
+        elif dist < self.best_dist - fa['progress_min_m'] or head < self.best_head - self.cfg['escape']['progress_min_rad']:
+            self.best_dist, self.best_head, self.best_since = min(dist, self.best_dist), min(head, self.best_head), snap.t
         elif snap.t - self.best_since > fa['progress_timeout_s']:
             self.stop()
             self.best_dist, self.settle_since = None, None
@@ -672,6 +689,10 @@ class Task:
             return self.go('GO_TO_BIN', snap)
         self.settle_since = None
         clip = lambda v, m: max(-m, min(m, v))         # noqa: E731
+        if axis:
+            px, py = to_robot(robot, bx + d * math.cos(byaw), by + d * math.sin(byaw))
+            return self.move(snap, clip(fa['gain'] * px, fa['max_vx']), clip(fa['gain'] * py, fa['max_vy']),
+                             clip(fa['gain'] * eh, fa['max_wz']))
         self.move(snap, clip(fa['gain'] * err, fa['max_vx']), clip(fa['gain'] * y, fa['max_vy']),
                   clip(fa['gain'] * math.atan2(y, x), fa['max_wz']))
 
