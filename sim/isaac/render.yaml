@@ -33,6 +33,11 @@ cameras:
     # FOV, resolution and clip from config/sensors.yaml.
     standing_height_m: 0.30           # approximate: check against a recorded run's trunk z
 
+# Stage time-code range: Isaac's timeline loops over a single frame without one (GPU session 1).
+stage:
+  time_codes_per_second: 60
+  seconds: 600                        # longer than any check or run on a static scene
+
 # Stage build limits (test 8). First guesses: change them if real numbers say so.
 build:
   max_seconds: 30
@@ -47,6 +52,6 @@ render_check:
   physics_seconds: 2.0                # play the timeline this long for the trash rest check
   max_trash_move_m: 0.02
   captures: 2                         # per camera; the last one is checked
-  log_patterns: [error, triangle mesh, convexHull, failed to resolve]   # recorded in checks.json
+  log_patterns: ['[Error]', triangle mesh, convexHull, failed to resolve]   # recorded in checks.json
   fail_log_patterns: [triangle mesh, convexHull, failed to resolve]     # a match fails the check
   max_physics_updates: 2000           # guard: app updates while waiting for physics_seconds

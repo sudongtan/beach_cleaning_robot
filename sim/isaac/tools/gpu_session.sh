@@ -165,14 +165,17 @@ for s in "${SEEDS[@]}"; do
     [ -f "$USD" ] || { echo "missing $USD"; FAILED+=("$s"); continue; }
     timeout 1800 "$PY" "$REPO/sim/isaac/render_check.py" --usd "$USD" --out "$OUT/scene_$s"
     rc=$?
-    stamp "seed $s exit code $rc"
-    if [ $rc -eq 0 ]; then mark "scene_$s"; else FAILED+=("$s"); fi
+    # The verdict comes from checks.json: SimulationApp.close() exits 0 itself (session 1).
+    "$PY" "$REPO/sim/isaac/render_checks.py" --verdict "$OUT/scene_$s/checks.json" 2>/dev/null
+    ok=$?
+    stamp "seed $s exit code $rc, checks.json $([ $ok -eq 0 ] && echo ok || echo FAILED)"
+    if [ $ok -eq 0 ]; then mark "scene_$s"; else FAILED+=("$s"); fi
 done
 
 # 7. Logs and tarball for download (always, also after failures)
 stamp "step 7: collect logs, tar"
 mkdir -p "$OUT/kit_logs"
-for d in "$HOME/.nvidia-omniverse/logs" "$ISAAC/.nvidia-omniverse/logs"; do
+for d in "$ISAAC/kit/logs" "$HOME/.nvidia-omniverse/logs" "$ISAAC/.nvidia-omniverse/logs"; do
     [ -d "$d" ] && cp -r "$d" "$OUT/kit_logs/$(echo "$d" | tr '/' '_')" 2>/dev/null
 done
 tar -czf "$OUT.tar.gz" -C "$(dirname "$OUT")" "$(basename "$OUT")"

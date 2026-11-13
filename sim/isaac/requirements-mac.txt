@@ -5,5 +5,5 @@ numpy==1.26.4
 Pillow==10.2.0
 PyYAML==6.0.1
 pytest==7.4.4
-# Newest on 2026-11-13; pin to Isaac Sim 6.2's bundled OpenUSD (or the nearest older release) after GPU session 1.
-usd-core==26.11
+# Isaac Sim 6.2's bundled OpenUSD is 0.25.11 (GPU session 1, 2026-11-13).
+usd-core==25.11

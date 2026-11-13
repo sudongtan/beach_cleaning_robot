@@ -101,14 +101,16 @@ def scan_log(text, patterns, max_lines=20):
     return out
 
 
-def newest_log(dirs, since=None):
-    """Newest *.log under the given folders (modified after `since`, epoch s), or None."""
+def newest_log(dirs, since=None, pattern='kit_*.log'):
+    """Newest Kit app log (kit_<date>.log) under the given folders, modified after `since`
+    (epoch s), or None. Only kit_*.log: other logs there (omni.replicator.extinfo.log, ...)
+    are newer but aren't the app's log (GPU session 1)."""
     best = None
     for d in dirs:
         d = Path(d).expanduser()
         if not d.is_dir():
             continue
-        for f in d.rglob('*.log'):
+        for f in d.rglob(pattern):
             m = f.stat().st_mtime
             if since is not None and m < since:
                 continue
@@ -118,6 +120,16 @@ def newest_log(dirs, since=None):
 
 
 # ---------------------------------------------------------------- verdict
+
+def verdict_from_file(path):
+    """0 if checks.json says ok, else 1. gpu_session.sh uses this, not the process exit code:
+    SimulationApp.close() ends the process with code 0 itself (GPU session 1)."""
+    import json
+    try:
+        return 0 if json.loads(Path(path).read_text()).get('ok') is True else 1
+    except (OSError, ValueError):
+        return 1
+
 
 def evaluate(images, motion, log_matches, fail_patterns):
     """Overall verdict. images: {camera: image_check dict or None (no image)}."""
@@ -142,3 +154,10 @@ def evaluate(images, motion, log_matches, fail_patterns):
         if n:
             failures.append(f"log: {n} line(s) with '{pat}'")
     return {'ok': not failures, 'failures': failures}
+
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) == 3 and sys.argv[1] == '--verdict':
+        sys.exit(verdict_from_file(sys.argv[2]))
+    sys.exit('usage: render_checks.py --verdict CHECKS_JSON')

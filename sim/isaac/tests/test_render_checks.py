@@ -76,9 +76,10 @@ def test_trash_motion():
 
 def test_scan_log():
     text = ('2026-11-14 [Info] fine\n[Error] [omni.physx] triangle mesh collision on dynamic body\n'
-            'Failed to resolve asset ../x.png\nconvexHull approximation used\n[Error] other\n')
+            'Failed to resolve asset ../x.png\nconvexHull approximation used\n[Error] other\n'
+            '[Info] errorCallback registered\n')       # 'error' in a word is not an error (session 1)
     m = rc.scan_log(text, CFG['log_patterns'])
-    assert m['error']['count'] == 2
+    assert m['[Error]']['count'] == 2
     assert m['triangle mesh']['count'] == 1
     assert m['convexHull']['count'] == 1
     assert m['failed to resolve']['count'] == 1
@@ -87,14 +88,34 @@ def test_scan_log():
 def test_newest_log(tmp_path):
     import os
     import time
-    a, b = tmp_path / 'Kit' / 'a.log', tmp_path / 'Kit' / 'b.log'
-    a.parent.mkdir()
-    a.write_text('a')
-    b.write_text('b')
+    d = tmp_path / 'Kit' / 'Isaac-Sim Python' / '6.2'
+    d.mkdir(parents=True)
+    a, b = d / 'kit_20261113_234501.log', d / 'kit_20261113_234725.log'
+    other = tmp_path / 'omni.replicator.extinfo.log'     # newer, but not the app log (session 1)
+    for f in (a, b, other):
+        f.write_text(f.name)
     now = time.time()
     os.utime(a, (now - 100, now - 100))
+    os.utime(b, (now - 50, now - 50))
     assert rc.newest_log([tmp_path, tmp_path / 'missing']) == b
     assert rc.newest_log([tmp_path], since=now + 10) is None
+
+
+def test_verdict_from_file(tmp_path):
+    """gpu_session.sh's pass/fail comes from checks.json (session 1: close() exits 0 itself)."""
+    import json
+    import subprocess
+    import sys
+    f = tmp_path / 'checks.json'
+    script = str(rc.__file__)
+    for content, code in ((json.dumps({'ok': True}), 0), (json.dumps({'ok': False}), 1),
+                          (json.dumps({}), 1), ('not json', 1)):
+        f.write_text(content)
+        assert rc.verdict_from_file(f) == code
+        assert subprocess.run([sys.executable, script, '--verdict', str(f)]).returncode == code
+    assert rc.verdict_from_file(tmp_path / 'missing.json') == 1
+    session = (ISAAC / 'tools' / 'gpu_session.sh').read_text()
+    assert 'render_checks.py" --verdict' in session
 
 
 def test_evaluate():

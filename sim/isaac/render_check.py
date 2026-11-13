@@ -42,7 +42,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import render_checks as rc  # noqa: E402
 
-LOG_DIRS = ['~/.nvidia-omniverse/logs', '/isaac-sim/.nvidia-omniverse/logs', '/root/.nvidia-omniverse/logs']
+LOG_DIRS = ['/isaac-sim/kit/logs', '~/.nvidia-omniverse/logs', '/isaac-sim/.nvidia-omniverse/logs']   # 6.2: kit/logs/Kit/<app>/6.2/kit_*.log
 
 
 def update(n=1):
@@ -168,7 +168,7 @@ def main():
     print(json.dumps({'ok': checks['ok'], 'failures': checks['failures'], 'timing': timing}, indent=2), flush=True)
     code = 0 if checks['ok'] else 1
     simulation_app.close()
-    os._exit(code)          # close() can end the process itself; never fall through with code 0
+    os._exit(code)          # close() ends the process with code 0 itself: gpu_session.sh reads checks.json
 
 
 if __name__ == '__main__':

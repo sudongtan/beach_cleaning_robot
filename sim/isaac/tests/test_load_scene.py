@@ -8,7 +8,7 @@ import re
 
 import numpy as np
 import pytest
-from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics, UsdShade, UsdUtils
+from pxr import Gf, Sdf, Usd, UsdGeom, UsdPhysics, UsdSemantics, UsdShade, UsdUtils
 
 from conftest import ALL_SEEDS, REPO, gazebo_scene, isaac_scene, open_stage
 
@@ -105,6 +105,32 @@ def test_same_static_and_collisions_as_gazebo(built, gazebo_sdf, seed):
         vis = prim.GetChild('visual_0')
         t = UsdGeom.Xformable(vis).GetLocalTransformation().ExtractTranslation()
         assert t[2] == pytest.approx(vz, abs=1e-4), name
+
+
+@pytest.mark.parametrize('seed', [0, 101])
+def test_time_code_range(built, configs, seed):
+    """GPU session 1: without a time-code range Isaac's timeline loops over one frame and its
+    clock stays at 0 (the physics check then never ends)."""
+    _, render, _ = configs
+    stage = open_stage(built(seed)[0])
+    tcps = stage.GetTimeCodesPerSecond()
+    assert tcps == render['stage']['time_codes_per_second']
+    span_s = (stage.GetEndTimeCode() - stage.GetStartTimeCode()) / tcps
+    assert span_s >= 10 * render['render_check']['physics_seconds']
+    assert stage.GetFramesPerSecond() == tcps
+
+
+@pytest.mark.parametrize('seed', [0, 101])
+def test_semantic_labels(built, configs, scene_of, seed):
+    """UsdSemantics LabelsAPI 'class' on every object (Isaac 6.2, session 1), none on the environment."""
+    stage = open_stage(built(seed)[0])
+    for name, p in scene_prims(stage).items():
+        labels = UsdSemantics.LabelsAPI(p, 'class')
+        if name in ('terrain', 'wet_zone', 'water'):
+            assert not p.HasAPI(UsdSemantics.LabelsAPI, 'class'), name
+            continue
+        assert p.HasAPI(UsdSemantics.LabelsAPI, 'class'), name
+        assert list(labels.GetLabelsAttr().Get()) == [p.GetCustomDataByKey('beach:class')], name
 
 
 def test_class_labels(built, configs, scene_of):
@@ -437,9 +463,22 @@ def test_usd_validation(built, seed):
     validators = [reg.GetOrLoadValidatorByName(m.name) for m in reg.GetAllValidatorMetadata()]
     assert validators
     stage = open_stage(built(seed)[0])
-    errors = UsdValidation.ValidationContext(validators).Validate(stage)
-    bad = [f'{e.GetName()}: {e.GetMessage()}' for e in errors
-           if e.GetType() == UsdValidation.ValidationErrorType.Error]
+    from pxr import Tf
+    bad, skipped = [], []
+    for v in validators:      # one at a time: a broken validator mustn't hide the others
+        try:
+            errors = UsdValidation.ValidationContext([v]).Validate(stage)
+        except Tf.ErrorException as e:
+            # usd-core 25.11's wheel (pinned to Isaac 6.2's USD) lacks shaderDefs.usda, so the
+            # shader validators can't load; that's the package, not the stage.
+            if 'Could not find shader resource' in str(e):
+                skipped.append(v.GetMetadata().name)
+                continue
+            raise
+        bad += [f'{e.GetName()}: {e.GetMessage()}' for e in errors
+                if e.GetType() == UsdValidation.ValidationErrorType.Error]
+    print(f'validators: {len(validators) - len(skipped)} run, skipped (missing shaderDefs.usda): {skipped}')
+    assert len(skipped) <= 3, skipped
     assert not bad, '\n'.join(bad[:20])
 
 

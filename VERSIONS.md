@@ -69,6 +69,6 @@ from `sim/isaac/requirements-mac.txt` (`notes/briefs/D0_prep.md` §1).
 |---|---|---|
 | Python | 3.12.13 (uv-managed) | Isaac Sim 6.2 bundles 3.12; the laptop has 3.12.3 |
 | numpy / Pillow / PyYAML / pytest | 1.26.4 / 10.2.0 / 6.0.1 / 7.4.4 | same as the laptop, so the scene generator gives the same numbers |
-| usd-core | 26.11 (newest on 2026-11-13) | `sim/isaac/load_scene.py`; pin to Isaac 6.2's OpenUSD after GPU session 1 |
-| Isaac Sim container | `nvcr.io/nvidia/isaac-sim:6.2.0` (Kit SDK 110.4.0) | not run yet; OpenUSD version and GPU host driver recorded after GPU session 1 |
+| usd-core | 25.11 (= Isaac Sim 6.2's OpenUSD 0.25.11, GPU session 1; was 26.11) | `sim/isaac/load_scene.py`; the 25.11 wheel lacks `shaderDefs.usda`, so the `ShaderSdrCompliance` validator is skipped in the tests |
+| Isaac Sim container | `nvcr.io/nvidia/isaac-sim:6.2.0` (Kit SDK 110.4.0; `/isaac-sim/VERSION` = `6.2.0-rc.14+release.52805.02189a84.gl`), OpenUSD 0.25.11, Python 3.12.14 | GPU sessions 2026-11-13 on vast.ai: RTX 4090, driver 595.99.02 (`results/d0_prep/d0_s1/host.txt`) |
 | Blender | 5.3.0 (hash 02f0899d78e3, 2026-11-10; `brew install --cask blender`, the cask listed 5.2.3) | `sim/isaac/tools/blender_preview.py`: Cycles on Metal (Apple M1 Pro GPU) |

@@ -16,6 +16,7 @@ import pytest
 from PIL import Image
 from pxr import Gf, Usd, UsdGeom
 
+import render_checks as rc
 from conftest import ISAAC
 
 
@@ -38,6 +39,7 @@ def _install_stubs(monkeypatch, image_kind='normal', drop=0.004, open_ok=True):
 
         def close(self):
             state['calls'].append(('close',))
+            raise SystemExit(0)      # like Isaac's: close() ends the process with code 0 (session 1)
 
     isaacsim = types.ModuleType('isaacsim')
     isaacsim.SimulationApp = App
@@ -139,6 +141,8 @@ def _run(monkeypatch, usd, out):
     monkeypatch.setattr(sys, 'argv', ['render_check.py', '--usd', str(usd), '--out', str(out)])
     with pytest.raises(SystemExit):
         runpy.run_path(str(ISAAC / 'render_check.py'), run_name='__main__')
+    # the process exit code is meaningless (close() exits 0); the verdict is in checks.json
+    code['c'] = rc.verdict_from_file(out / 'checks.json')
     return code['c'], json.loads((out / 'checks.json').read_text()), json.loads((out / 'timing.json').read_text())
 
 
