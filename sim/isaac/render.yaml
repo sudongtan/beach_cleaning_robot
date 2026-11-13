@@ -1,0 +1,49 @@
+# Isaac scene and render-check settings (notes/briefs/D0_prep.md). Read by
+# sim/isaac/load_scene.py, render_check.py and the tests; never hard-code these.
+
+lights:
+  # Gazebo's sun colour and direction (sim/gazebo/load_scene.py). Intensities don't
+  # translate from Gazebo's units: first guesses, tune in GPU session 1.
+  sun:
+    direction: [-0.4, 0.3, -0.85]     # the direction the light travels (map frame)
+    color: [0.9, 0.88, 0.82]
+    intensity: 3000
+    angle_deg: 0.53                   # angular diameter of the sun
+  dome:
+    color: [0.62, 0.80, 0.95]         # Gazebo's sky / background colour
+    intensity: 500
+
+# Views the render check saves.
+cameras:
+  # `top` and `oblique` copy Gazebo's debug_cameras() (pose x y z roll pitch yaw in the
+  # map frame, Gazebo camera convention: +x forward, +z up). The tests check they match.
+  # `top`'s x, y are null: the centre of the scene area, as in Gazebo.
+  top:
+    pose: [null, null, 42.0, 0.0, 1.5707963267948966, 1.5707963267948966]
+    horizontal_fov_rad: 1.2
+    resolution: [1280, 960]
+    clip: [0.1, 150.0]
+  oblique:
+    pose: [-6.0, -4.0, 5.0, 0.0, 0.18, 0.6]
+    horizontal_fov_rad: 1.3
+    resolution: [1280, 720]
+    clip: [0.1, 150.0]
+  robot_eye:
+    # Trunk at robot_start, standing_height above the terrain, plus the xacro's camera_joint.
+    # FOV, resolution and clip from config/sensors.yaml.
+    standing_height_m: 0.30           # approximate: check against a recorded run's trunk z
+
+# Stage build limits (test 8). First guesses: change them if real numbers say so.
+build:
+  max_seconds: 30
+  max_megabytes: 100
+
+# GPU render check (render_check.py).
+render_check:
+  warmup_updates: 60                  # app updates before the first capture (shader compile)
+  rt_subframes: 32                    # Replicator subframes per capture
+  min_mean: 10.0                      # image mean over all RGB values (0-255): below = black
+  min_std: 3.0                        # image std (0-255): below = uniform
+  physics_seconds: 2.0                # play the timeline this long for the trash rest check
+  max_trash_move_m: 0.02
+  log_patterns: [error, triangle mesh, convexHull, failed to resolve]

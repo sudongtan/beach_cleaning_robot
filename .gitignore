@@ -36,3 +36,6 @@ results/videos/
 results/b5/frames/
 results/b5/visual_check.sdf
 results/b5/gz.log
+
+# D0 prep: generated USD scenes (sim/isaac/load_scene.py)
+sim/isaac/scenes/generated/

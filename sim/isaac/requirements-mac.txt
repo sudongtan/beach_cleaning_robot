@@ -1,0 +1,9 @@
+# D0 prep Mac venv (notes/briefs/D0_prep.md §1): uv venv --python 3.12 ~/venvs/beach_isaac
+#   uv pip install -r sim/isaac/requirements-mac.txt
+# numpy / Pillow / PyYAML / pytest match the laptop (VERSIONS.md), so the scene generator gives the same numbers.
+numpy==1.26.4
+Pillow==10.2.0
+PyYAML==6.0.1
+pytest==7.4.4
+# Newest on 2026-11-13; pin to Isaac Sim 6.2's bundled OpenUSD (or the nearest older release) after GPU session 1.
+usd-core==26.11
