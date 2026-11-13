@@ -59,3 +59,16 @@ Recorded 2026-10-12 on the dev machine (native, no container).
 | [Interbotix/interbotix_ros_manipulators](https://github.com/Interbotix/interbotix_ros_manipulators) | `01c557d65f781697c3a05bffebafbd3404e03eab` (2025-01-02) | jazzy | BSD-3-Clause. Only `interbotix_xsarm_descriptions` is built (WidowX 250 6DOF meshes); everything else gets COLCON_IGNORE. |
 
 Evaluated but not used: [khaledgabr77/unitree_go2_ros2](https://github.com/khaledgabr77/unitree_go2_ros2) `55ff151632a0220bf3ae0c0772392615d86da7a8` (2026-09-08), kept in `~/ros2_ws/src` with a COLCON_IGNORE.
+
+## D0 prep: Mac (Isaac scene builder, no ROS) and Isaac Sim
+
+Recorded 2026-11-13 on the user's Mac (Apple Silicon, macOS 26.6.2). Venv `~/venvs/beach_isaac` built with uv
+from `sim/isaac/requirements-mac.txt` (`notes/briefs/D0_prep.md` §1).
+
+| Component | Version | Why |
+|---|---|---|
+| Python | 3.12.13 (uv-managed) | Isaac Sim 6.2 bundles 3.12; the laptop has 3.12.3 |
+| numpy / Pillow / PyYAML / pytest | 1.26.4 / 10.2.0 / 6.0.1 / 7.4.4 | same as the laptop, so the scene generator gives the same numbers |
+| usd-core | 26.11 (newest on 2026-11-13) | `sim/isaac/load_scene.py`; pin to Isaac 6.2's OpenUSD after GPU session 1 |
+| Isaac Sim container | `nvcr.io/nvidia/isaac-sim:6.2.0` (Kit SDK 110.4.0) | not run yet; OpenUSD version and GPU host driver recorded after GPU session 1 |
+| Blender | not installed | optional preview (`notes/briefs/D0_prep.md` §4) |
