@@ -63,3 +63,9 @@ results/d0/*/kit_logs/
 results/d0/*/*/frames/
 results/d0/*.tgz
 results/d0/*/.done/
+results/d0/vid/
+results/d0/vid.tar
+results/d0/video_check/
+results/d0/dbg/
+results/d0/s[0-9]/
+results/d0/*/session.log

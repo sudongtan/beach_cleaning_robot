@@ -179,6 +179,7 @@ def main():
     ap.add_argument('--out', required=True)
     ap.add_argument('--gyro', choices=['api', 'fd'], default='api')
     ap.add_argument('--frames', action='store_true')
+    ap.add_argument('--capture-every', type=float, default=None, help='frame interval, s (default robot.yaml)')
     ap.add_argument('--cases', default='all', help='pick: all or comma-separated indices')
     ap.add_argument('--legs', choices=['policy', 'hold'], default='policy', help='pick: legs on the policy, or PD hold (diagnostic)')
     ap.add_argument('--held-collision', choices=['config', 'on', 'off'], default='config')
@@ -186,6 +187,7 @@ def main():
     out = Path(a.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     res = {'mode': a.mode, 'stage': a.stage, 'gyro': a.gyro, 'app_start_s': round(time.time() - T0, 2)}
+    every = None
     try:
         cfg = robot_model.load_robot_cfg()
         laptop = robot_model.laptop_dir(cfg)
@@ -193,6 +195,8 @@ def main():
         urdf = robot_model.Urdf(laptop / cfg['urdf_import']['urdf'])
         r = cfg['robot']
         policy, shaper, _ = walk.build_policy(laptop, cfg)
+        every = a.capture_every if a.capture_every else float(cfg['capture']['every_s'])
+        res['capture_every_s'] = every
         dt = 1.0 / float(cfg['policy']['physics_hz'])
         t = time.time()
         ok, stage = stage_utils.open_stage(str(Path(a.stage).resolve()))
@@ -229,7 +233,7 @@ def main():
         th = lambda x, y: float(terrain_mod.height_at(scene['terrain'], x, y))  # noqa: E731
         t = time.time()
         if a.mode == 'walk':
-            w = d0_runner.run_walk(io, cfg, policy, shaper, th, a.gyro, cfg['capture']['every_s'])
+            w = d0_runner.run_walk(io, cfg, policy, shaper, th, a.gyro, every)
             ok_, reasons, nums = d0_runner.judge_walk(w, meta['reference'], cfg['walk']['pass'])
             trace = w.pop('trace')
             np.save(out / 'trace.npy', np.asarray(trace))
@@ -250,7 +254,7 @@ def main():
                 io, cfg, policy, shaper, cases,
                 lambda b, p, m: robot_model.in_compartment(comp, b, p, m),
                 bar_to_tcp, body_to_base, float(stance['ground_z_in_base_link']), park, a.gyro,
-                cfg['capture']['every_s'], urdf.fixed_transform(r['gripper_link'], r['tips_link']),
+                every, urdf.fixed_transform(r['gripper_link'], r['tips_link']),
                 legs=a.legs, held_collides=hc)
             res['reset_errors'] = getattr(io, 'reset_errors', None)
             res.update(picks=results, ok=all(x['ok'] for x in results),

@@ -1,0 +1,52 @@
+{
+  "app_start_s": 38.05,
+  "urdf": "/workspace/d0_from_laptop/urdf/beach_robot_custom_pkg.urdf",
+  "enable": {
+    "isaacsim.asset.importer.urdf": true,
+    "isaacsim.robot.schema": true,
+    "omni.scene.optimizer.core": true
+  },
+  "config": {
+    "allow_self_collision": false,
+    "collision_from_visuals": false,
+    "collision_type": "Convex Hull",
+    "debug_mode": false,
+    "fix_base": false,
+    "joint_drive_type": "force",
+    "joint_target_type": "position",
+    "link_density": null,
+    "merge_fixed_joints": false,
+    "merge_mesh": false,
+    "override_joint_damping": null,
+    "override_joint_stiffness": null,
+    "robot_type": "Default",
+    "ros_package_paths": [
+      {
+        "name": "go2_description",
+        "path": "/workspace/d0_from_laptop/meshes/go2_description"
+      },
+      {
+        "name": "interbotix_xsarm_descriptions",
+        "path": "/workspace/d0_from_laptop/meshes/interbotix_xsarm_descriptions"
+      }
+    ],
+    "run_asset_transformer": true,
+    "run_multi_physics_conversion": true,
+    "urdf_path": "/workspace/d0_from_laptop/urdf/beach_robot_custom_pkg.urdf",
+    "usd_path": "/workspace/beach/sim/isaac/robots/generated"
+  },
+  "usd": "/workspace/beach/sim/isaac/robots/generated/beach_robot_custom_pkg/beach_robot_custom_pkg.usda",
+  "import_s": 8.71,
+  "files": [
+    "beach_robot_custom_pkg/beach_robot_custom_pkg.usda",
+    "beach_robot_custom_pkg/payloads/Physics/mujoco.usda",
+    "beach_robot_custom_pkg/payloads/Physics/physics.usda",
+    "beach_robot_custom_pkg/payloads/Physics/physx.usda",
+    "beach_robot_custom_pkg/payloads/base.usda",
+    "beach_robot_custom_pkg/payloads/geometries.usd",
+    "beach_robot_custom_pkg/payloads/instances.usda",
+    "beach_robot_custom_pkg/payloads/materials.usda",
+    "beach_robot_custom_pkg/payloads/robot.usda"
+  ],
+  "ok": true
+}

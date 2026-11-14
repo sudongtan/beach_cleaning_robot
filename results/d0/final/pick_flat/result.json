@@ -1,0 +1,424 @@
+{
+  "mode": "pick",
+  "stage": "/workspace/beach/sim/isaac/stages/generated/stage_flat_pick.usda",
+  "gyro": "api",
+  "app_start_s": 24.26,
+  "stage_open_s": 0.48,
+  "paths": {
+    "articulation_root": "/World/Robot/Geometry/base_link/base",
+    "body": "/World/Robot/Geometry/base_link/base/trunk",
+    "gripper": "/World/Robot/Geometry/base_link/base/trunk/arm_plate_link/arm_base_link/arm_shoulder_link/arm_upper_arm_link/arm_upper_forearm_link/arm_lower_forearm_link/arm_wrist_link/arm_gripper_link/arm_ee_arm_link/arm_gripper_bar_link"
+  },
+  "dof_names": [
+    "FR_hip_joint",
+    "FL_hip_joint",
+    "RR_hip_joint",
+    "RL_hip_joint",
+    "FR_thigh_joint",
+    "FL_thigh_joint",
+    "RR_thigh_joint",
+    "RL_thigh_joint",
+    "FR_calf_joint",
+    "FL_calf_joint",
+    "RR_calf_joint",
+    "RL_calf_joint",
+    "arm_waist",
+    "arm_shoulder",
+    "arm_elbow",
+    "arm_forearm_roll",
+    "arm_wrist_angle",
+    "arm_wrist_rotate",
+    "arm_left_finger",
+    "arm_right_finger"
+  ],
+  "dof_gains": {
+    "kp": [
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      300.0,
+      500.0,
+      150.0,
+      25.0,
+      30.0,
+      15.0,
+      250.0,
+      250.0
+    ],
+    "kd": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      10.0,
+      17.0,
+      5.0,
+      0.8500000238418579,
+      0.8999999761581421,
+      0.25,
+      8.0,
+      8.0
+    ]
+  },
+  "physics_dt_reported": 0.005,
+  "legs": "policy",
+  "held_collision": null,
+  "reset_errors": null,
+  "picks": [
+    {
+      "item": "pet_bottle_500",
+      "bin": "recyclable",
+      "spot": [
+        0.48,
+        0.0,
+        -0.269381
+      ],
+      "height_after_lift_m": 0.2087,
+      "lifted": true,
+      "final_base_link": [
+        -0.1266,
+        0.1088,
+        0.1375
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 4.03,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0023,
+      "ok": true,
+      "case": 0,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 3.5,
+        "open": 1.7,
+        "above": 1.7,
+        "descend": 1.7,
+        "close": 1.7,
+        "lift": 1.7,
+        "show": 1.7,
+        "above_spot": 4.0,
+        "lower": 3.5,
+        "rest": 2.4,
+        "after": 2.3
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "pet_bottle_500",
+      "bin": "recyclable",
+      "spot": [
+        0.42,
+        -0.08,
+        -0.269381
+      ],
+      "height_after_lift_m": 0.1936,
+      "lifted": true,
+      "final_base_link": [
+        -0.1275,
+        0.0502,
+        0.1375
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 3.51,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0214,
+      "ok": true,
+      "case": 1,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 3.3,
+        "open": 2.2,
+        "above": 2.2,
+        "descend": 1.6,
+        "close": 1.5,
+        "lift": 1.6,
+        "show": 1.9,
+        "above_spot": 3.5,
+        "lower": 2.4,
+        "rest": 2.1,
+        "after": 1.9
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "pet_bottle_500",
+      "bin": "recyclable",
+      "spot": [
+        0.56,
+        0.08,
+        -0.269381
+      ],
+      "height_after_lift_m": 0.2094,
+      "lifted": true,
+      "final_base_link": [
+        -0.105,
+        0.0932,
+        0.1375
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 3.41,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0286,
+      "ok": true,
+      "case": 2,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 2.9,
+        "open": 2.5,
+        "above": 2.5,
+        "descend": 3.1,
+        "close": 3.1,
+        "lift": 3.4,
+        "show": 3.2,
+        "above_spot": 3.3,
+        "lower": 2.4,
+        "rest": 2.5,
+        "after": 2.5
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "can_330",
+      "bin": "recyclable",
+      "spot": [
+        0.48,
+        0.0,
+        -0.268881
+      ],
+      "height_after_lift_m": 0.1996,
+      "lifted": true,
+      "final_base_link": [
+        -0.119,
+        0.1092,
+        0.138
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 3.53,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0126,
+      "ok": true,
+      "case": 3,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 3.4,
+        "open": 2.1,
+        "above": 2.1,
+        "descend": 2.0,
+        "close": 1.9,
+        "lift": 2.0,
+        "show": 2.1,
+        "above_spot": 3.5,
+        "lower": 2.7,
+        "rest": 2.1,
+        "after": 1.9
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "can_330",
+      "bin": "recyclable",
+      "spot": [
+        0.42,
+        -0.08,
+        -0.268881
+      ],
+      "height_after_lift_m": 0.2133,
+      "lifted": true,
+      "final_base_link": [
+        -0.1043,
+        0.1084,
+        0.138
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 3.48,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.026,
+      "ok": true,
+      "case": 4,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 3.4,
+        "open": 2.5,
+        "above": 2.5,
+        "descend": 2.0,
+        "close": 2.0,
+        "lift": 2.1,
+        "show": 2.1,
+        "above_spot": 3.5,
+        "lower": 3.3,
+        "rest": 2.4,
+        "after": 2.3
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "can_330",
+      "bin": "recyclable",
+      "spot": [
+        0.56,
+        0.08,
+        -0.268881
+      ],
+      "height_after_lift_m": 0.1967,
+      "lifted": true,
+      "final_base_link": [
+        -0.1166,
+        0.0409,
+        0.138
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 3.36,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0154,
+      "ok": true,
+      "case": 5,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 3.2,
+        "open": 1.9,
+        "above": 2.1,
+        "descend": 2.1,
+        "close": 2.1,
+        "lift": 2.2,
+        "show": 2.2,
+        "above_spot": 3.4,
+        "lower": 2.4,
+        "rest": 2.0,
+        "after": 1.8
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "poly_cup",
+      "bin": "residual",
+      "spot": [
+        0.48,
+        0.0,
+        -0.271881
+      ],
+      "height_after_lift_m": 0.2199,
+      "lifted": true,
+      "final_base_link": [
+        -0.1038,
+        -0.1151,
+        0.135
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 3.11,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0262,
+      "ok": true,
+      "case": 6,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 3.1,
+        "open": 2.4,
+        "above": 2.4,
+        "descend": 2.2,
+        "close": 2.2,
+        "lift": 2.3,
+        "show": 2.3,
+        "above_spot": 3.0,
+        "lower": 3.0,
+        "rest": 2.5,
+        "after": 2.3
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "poly_cup",
+      "bin": "residual",
+      "spot": [
+        0.42,
+        -0.08,
+        -0.271881
+      ],
+      "height_after_lift_m": 0.1931,
+      "lifted": true,
+      "final_base_link": [
+        -0.1174,
+        -0.1061,
+        0.135
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 2.77,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0216,
+      "ok": true,
+      "case": 7,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 2.4,
+        "open": 1.8,
+        "above": 1.8,
+        "descend": 1.3,
+        "close": 1.2,
+        "lift": 1.3,
+        "show": 1.6,
+        "above_spot": 2.3,
+        "lower": 2.8,
+        "rest": 2.3,
+        "after": 2.2
+      },
+      "legs": "policy"
+    },
+    {
+      "item": "poly_cup",
+      "bin": "residual",
+      "spot": [
+        0.56,
+        0.08,
+        -0.271881
+      ],
+      "height_after_lift_m": 0.2052,
+      "lifted": true,
+      "final_base_link": [
+        -0.1177,
+        -0.0928,
+        0.135
+      ],
+      "in_compartment": true,
+      "max_tilt_deg": 2.64,
+      "fell": false,
+      "tips_item_top_at_attach_m": 0.0118,
+      "ok": true,
+      "case": 8,
+      "fall_phase": null,
+      "max_tilt_by_phase": {
+        "up": 2.2,
+        "open": 2.2,
+        "above": 2.5,
+        "descend": 2.5,
+        "close": 2.5,
+        "lift": 2.6,
+        "show": 2.5,
+        "above_spot": 2.3,
+        "lower": 2.0,
+        "rest": 2.1,
+        "after": 1.9
+      },
+      "legs": "policy"
+    }
+  ],
+  "ok": true,
+  "reasons": [],
+  "run_wall_s": 1059.21,
+  "sim_s": 358.525,
+  "total_s": 1084.41
+}

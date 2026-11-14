@@ -1,0 +1,159 @@
+{
+  "mode": "walk",
+  "stage": "/workspace/beach/sim/isaac/stages/generated/stage_3_walk.usda",
+  "gyro": "api",
+  "app_start_s": 24.22,
+  "stage_open_s": 0.48,
+  "paths": {
+    "articulation_root": "/World/Robot/Geometry/base_link/base",
+    "body": "/World/Robot/Geometry/base_link/base/trunk",
+    "gripper": "/World/Robot/Geometry/base_link/base/trunk/arm_plate_link/arm_base_link/arm_shoulder_link/arm_upper_arm_link/arm_upper_forearm_link/arm_lower_forearm_link/arm_wrist_link/arm_gripper_link/arm_ee_arm_link/arm_gripper_bar_link"
+  },
+  "dof_names": [
+    "FR_hip_joint",
+    "FL_hip_joint",
+    "RR_hip_joint",
+    "RL_hip_joint",
+    "FR_thigh_joint",
+    "FL_thigh_joint",
+    "RR_thigh_joint",
+    "RL_thigh_joint",
+    "FR_calf_joint",
+    "FL_calf_joint",
+    "RR_calf_joint",
+    "RL_calf_joint",
+    "arm_waist",
+    "arm_shoulder",
+    "arm_elbow",
+    "arm_forearm_roll",
+    "arm_wrist_angle",
+    "arm_wrist_rotate",
+    "arm_left_finger",
+    "arm_right_finger"
+  ],
+  "dof_gains": {
+    "kp": [
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      20.0,
+      300.0,
+      500.0,
+      150.0,
+      25.0,
+      30.0,
+      15.0,
+      250.0,
+      250.0
+    ],
+    "kd": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      10.0,
+      17.0,
+      5.0,
+      0.8500000238418579,
+      0.8999999761581421,
+      0.25,
+      8.0,
+      8.0
+    ]
+  },
+  "physics_dt_reported": 0.005,
+  "walk": {
+    "phases": [
+      {
+        "name": "stand",
+        "t0": 2.005,
+        "t1": 7.005,
+        "cmd": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "speed_mps": 0.0022,
+        "yaw_rate_radps": -0.002,
+        "trunk_above_ground_m": 0.2868
+      },
+      {
+        "name": "walk_0.2",
+        "t0": 7.005,
+        "t1": 12.005,
+        "cmd": [
+          0.2,
+          0.0,
+          0.0
+        ],
+        "speed_mps": 0.1564,
+        "yaw_rate_radps": -0.0007,
+        "trunk_above_ground_m": 0.2942
+      },
+      {
+        "name": "turn_0.3",
+        "t0": 12.005,
+        "t1": 17.005,
+        "cmd": [
+          0.0,
+          0.0,
+          0.3
+        ],
+        "speed_mps": 0.0257,
+        "yaw_rate_radps": 0.3161,
+        "trunk_above_ground_m": 0.2922
+      },
+      {
+        "name": "stop",
+        "t0": 17.005,
+        "t1": 22.005,
+        "cmd": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "speed_mps": 0.0001,
+        "yaw_rate_radps": -0.0,
+        "trunk_above_ground_m": 0.2967
+      }
+    ],
+    "fell_at_s": null,
+    "gyro_source": "api",
+    "max_tilt_deg": 17.8
+  },
+  "ok": true,
+  "reasons": [],
+  "numbers": {
+    "standing_height_m": [
+      0.2868,
+      0.29193272457655967
+    ],
+    "walk_0.2": [
+      0.1564,
+      0.21003991982814696
+    ],
+    "turn_0.3": [
+      0.3161,
+      0.3020970968759217
+    ]
+  },
+  "run_wall_s": 60.99,
+  "sim_s": 22.005,
+  "total_s": 86.69
+}
