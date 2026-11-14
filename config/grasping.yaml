@@ -6,6 +6,10 @@ grasping:
   pregrasp_above_m: 0.10        # approach from this far above the hover point
   lift_above_m: 0.20            # lift the jaw tips this far above the hover point
   approach_max_tilt_deg: 10     # gripper within this of straight down for picks
+  # Pick IK stays within this of the pose the arm comes from (hover near `up`, above and lift near hover;
+  # waist, forearm roll, wrist rotate; null = unbounded): unbounded, lift turned the forearm roll 2 pi
+  # (or the waist pi) from hover, a 21 s spin at the speed cap with the item hanging, 0.14 rad behind.
+  pick_joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, 1.0]
   # Reach envelope for picks, item centre in base_link (the robot walks until the item is
   # inside, then stands still). Physics-grasp tests used x = 0.48 m.
   reach_x_m: [0.42, 0.56]

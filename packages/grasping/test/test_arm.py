@@ -72,6 +72,25 @@ def test_pick_plan_phases(arm):
         assert np.degrees(np.arccos(-axis[2])) <= CFG['approach_max_tilt_deg'] + 0.5
 
 
+@pytest.mark.parametrize('spread', ['config', None])
+def test_pick_moves_stay_on_one_side(arm, spread):
+    """No pick move swings the waist or turns the forearm roll: bounded (config), over the envelope;
+    unbounded (None, the old solve), at least one lift turns either by more than 3 rad."""
+    cfg = CFG if spread == 'config' else dict(CFG, pick_joint_spread_rad=None)
+    worst = np.zeros(6)
+    for x in np.linspace(*CFG['reach_x_m'], 4):
+        for y in np.linspace(-CFG['reach_y_max_m'], CFG['reach_y_max_m'], 3):
+            for h in (0.022, 0.075):
+                ok, why, plan = plan_pick(arm, (x, y, -0.285 + h / 2), h, cfg)
+                assert ok, why
+                for a, b in (('above', 'hover'), ('hover', 'lift')):
+                    worst = np.maximum(worst, np.abs(np.subtract(plan[b], plan[a])))
+    if spread == 'config':
+        assert worst[0] <= 0.1 and worst[3] <= 0.2, worst
+    else:
+        assert max(worst[0], worst[3]) > 3.0, worst
+
+
 def test_outside_envelope_is_refused(arm):
     assert plan_pick(arm, (0.9, 0.0, -0.25), 0.05, CFG)[1] == 'outside_envelope'
     assert plan_pick(arm, (-0.4, 0.0, -0.25), 0.05, CFG)[1] == 'outside_envelope'

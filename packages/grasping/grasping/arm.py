@@ -344,12 +344,20 @@ def plan_pick(arm, centre, height, cfg):
     targets = {'hover': hover,
                'above': hover + [0, 0, cfg['pregrasp_above_m']],
                'lift': hover + [0, 0, cfg['lift_above_m']]}
-    plan, seed = {}, None
+    # pick_joint_spread_rad (None = unbounded): hover within it of `up`, above and lift within it of
+    # hover. Unbounded, the lowest-tilt restart won: lift turned forearm roll 2 pi (or the waist pi)
+    # from hover, ~21 s at the speed cap with the item hanging (0.14 rad lag, store_lower_test.py).
+    spread = cfg.get('pick_joint_spread_rad')
+    up = arm.poses['up']['arm']
+    plan, seed = {}, (up if spread is not None else None)
     for phase in ('hover', 'above', 'lift'):           # solve the lowest first, seed the others with it
-        ok, q, err, tilt = arm.ik(targets[phase], cfg['approach_max_tilt_deg'], seed_q=seed)
+        bounds = near(seed, spread) if spread is not None else None
+        ok, q, err, tilt = arm.ik(targets[phase], cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds)
         if not ok:
             return False, 'unreachable', {}
-        plan[phase], seed = q, q
+        plan[phase] = q
+        if spread is None or phase == 'hover':         # bounded: above and lift both near hover
+            seed = q
     return True, '', plan
 
 

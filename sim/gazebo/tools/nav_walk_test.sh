@@ -5,7 +5,8 @@
 #   e.g. nav_walk_test.sh 3 base --minutes 60
 # Own GZ_PARTITION / ROS_DOMAIN_ID (navwalk / 71). Writes $OUT/navwalk_<seed>_<label>.{launch,test}.log;
 # env RECORD=1 also records the command chain to .cmd.jsonl (cmd_record.py); TOOL: another test
-# script on the same stack (e.g. store_drop_test.py).
+# script on the same stack (e.g. store_drop_test.py); KEEP=1: stop only the task (perception, world
+# model and grasping keep running, e.g. store_lower_test.py).
 TOOLS=$(cd "$(dirname "$0")" && pwd)
 REPO=$(cd "$TOOLS/../../.." && pwd)
 OUT=${OUT:-$REPO/sim/gazebo/worlds/generated/tools}
@@ -20,9 +21,10 @@ cd "$REPO"
 for _ in $(seq 120); do sleep 2; grep -q "stand-up done" "$V.launch.log" && break; done
 sleep 5
 # the task would send its own goals; perception and the arm only cost CPU here
-for exe in task/lib/task/task perception/lib/perception/ground_truth_detector \
-           perception/lib/perception/ground_truth_classifier world_model/lib/world_model/world_model \
-           grasping/lib/grasping/grasping; do
+EXES="task/lib/task/task"
+[ -z "$KEEP" ] && EXES="$EXES perception/lib/perception/ground_truth_detector perception/lib/perception/ground_truth_classifier
+  world_model/lib/world_model/world_model grasping/lib/grasping/grasping"
+for exe in $EXES; do
   ps -eo pid=,args= | awk -v e="install/$exe" '$3 ~ e"$" {print $1}' | xargs -r kill
 done
 sleep 3
