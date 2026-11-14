@@ -1,0 +1,84 @@
+# D0b / D0c settings (notes/briefs/D0.md): the robot in Isaac Sim, its walking policy and the
+# attach-mode pick. Read by sim/isaac/*.py and the tests; never hard-code these.
+# Values marked "Gazebo" mirror how the robot runs there; don't tune them to make Isaac pass
+# without logging why (the point of D0b is the same policy, same convention).
+
+laptop_dir: ~/d0_from_laptop     # notes/briefs/D0_laptop.md; overridden by $BEACH_D0_LAPTOP_DIR
+variant: custom                  # D0b/D0c are custom only (decisions 2026-11-14)
+
+urdf_import:                     # isaacsim.asset.importer.urdf URDFImporterConfig (6.2)
+  urdf: urdf/beach_robot_custom_pkg.urdf      # package:// meshes, mapped below
+  ros_packages:                               # name -> folder under laptop_dir
+    go2_description: meshes/go2_description
+    interbotix_xsarm_descriptions: meshes/interbotix_xsarm_descriptions
+  merge_fixed_joints: false      # keep base_link, camera_link, basket_*_link, arm_jaw_tips_link
+  merge_mesh: false
+  collision_from_visuals: false  # use the URDF's collision geometry
+  collision_type: Convex Hull    # never a triangle mesh on a moving link
+  allow_self_collision: false    # Isaac Lab's Go2 default
+  fix_base: false                # a walking robot
+  joint_drive_type: force
+  joint_target_type: position
+
+robot:
+  root_link: base_link           # the URDF's root (base_link -> base -> trunk)
+  body_link: trunk               # the 6.9 kg body: pose, velocities, IMU (imu_link = trunk frame)
+  gripper_link: arm_gripper_bar_link   # has mass; the TCP is a fixed offset from it (URDF)
+  tcp_link: arm_ee_gripper_link
+  tips_link: arm_jaw_tips_link   # grasp height is set by the tips (architecture.md)
+  leg_joints: [FR_hip_joint, FR_thigh_joint, FR_calf_joint, FL_hip_joint, FL_thigh_joint, FL_calf_joint,
+               RR_hip_joint, RR_thigh_joint, RR_calf_joint, RL_hip_joint, RL_thigh_joint, RL_calf_joint]
+  arm_joints: [arm_waist, arm_shoulder, arm_elbow, arm_forearm_roll, arm_wrist_angle, arm_wrist_rotate]
+  finger_joints: [arm_left_finger, arm_right_finger]     # commanded [v, -v] (grasping node)
+  arm_rest: [0.0, 0.0, -0.8, 0.0, 1.6, 0.0]              # the `up` pose of the pick plans
+  finger_rest: 0.01
+
+# Leg PD on position targets. Gazebo: rl_kp 20, rl_kd 0.5 from the policy config (read from there,
+# not here); arm gains: packages/beach_description/config/arm_gains.yaml (+ variant overrides).
+leg_effort_limit: 23.5           # policy config torque_limits (URDF says 23.7)
+
+policy:
+  config: policy/config.yaml     # under laptop_dir
+  weights: policy/policy_weights.npz
+  io_pairs: policy/policy_io.npz
+  # Gazebo: rl_robot_lab_controller update_rate 200 Hz, decimation 4 -> 50 Hz policy;
+  # default joint positions = the controller's stand_pos (packages/sim_bridge_gazebo/config/gazebo_controllers.yaml)
+  physics_hz: 200
+  # command shaping as the Gazebo adapter does it (speed maps, yaw trim), read from:
+  adapter_config: packages/locomotion/config/legubiao_robot_lab_adapter.yaml
+
+# The stand before the policy takes over (Gazebo: FixedDown 1.8 s, FixedStand 1.8 s, then RL).
+stand:
+  spawn_clearance_m: 0.03        # feet this far above the terrain at spawn
+  hold_s: 2.0                    # PD on stand_pos before the policy starts
+
+walk:
+  # The C.7 reference sequence (d0_from_laptop/c7/*/summary.yaml): wanted twists on /cmd_vel_nav,
+  # 5 s each; speeds averaged over the second half of each step.
+  sequence:
+    - {name: stand, seconds: 5.0, cmd: [0.0, 0.0, 0.0]}
+    - {name: walk_0.2, seconds: 5.0, cmd: [0.2, 0.0, 0.0]}
+    - {name: turn_0.3, seconds: 5.0, cmd: [0.0, 0.0, 0.3]}
+    - {name: stop, seconds: 5.0, cmd: [0.0, 0.0, 0.0]}
+  scenes: [flat, 3]              # flat = seed 3 with slope / roughness / dunes 0 (like c7/flat3)
+  pass:
+    standing_height_tol_m: 0.02  # vs Gazebo's standing trunk height above ground
+    speed_rel_tol: 0.30          # mean speed / yaw rate vs Gazebo's
+    fall_tilt_deg: 30.0          # Gazebo adapter's fall_tilt_deg
+
+pick:
+  stance: robot_lab_stand        # pick_plans.json stance (C.7's standing legs)
+  plans: grasp/pick_plans.json   # under laptop_dir
+  move_time_s: 2.5               # config/grasping.yaml move_time_s (Gazebo)
+  finger_time_s: 1.0             # config/grasping.yaml finger_time_s
+  settle_s: 0.5                  # extra hold after each step
+  attach_mode: kinematic         # kinematic: the item follows the TCP; joint: a fixed joint (D0c compares)
+  cases: all                     # the plans' 9 cases (3 items x 3 spots)
+  pass:
+    lift_min_m: 0.10             # item above the ground after `lift`
+    basket_margin_m: 0.03        # grasping.arm.in_basket margin
+    max_tips_item_top_m: 0.04    # sanity: jaw tips within this of the item's top at attach (plan: 0.015; logged, not gated)
+
+capture:
+  every_s: 0.5                   # frame interval for the walk / pick image sequences
+  resolution: [640, 480]

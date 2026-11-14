@@ -52,3 +52,7 @@ results/d0_prep/d0_s*/scene_*/rgb/
 results/d0_prep/d0_s*/session.log
 results/d0_prep/d0_s*/compat.txt
 results/d0_prep/d0_s*/.done/
+
+# D0b: imported robot USDs and composed test stages (sim/isaac/import_robot.py, compose.py)
+sim/isaac/robots/generated/
+sim/isaac/stages/generated/
