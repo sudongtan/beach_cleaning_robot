@@ -49,7 +49,7 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **C3** Perception | Text-prompted detector (YOLOE) + depth | 🟡 built, currently fails its detection and frame-rate checks |
 | **C4** Classifier | Zero-shot material classifier, compared with an own colour-based one | 🟡 built, narrowly fails its contamination check |
 | **C5** Grasping | Look → plan → move → verify, picks by contact physics | ⬜ planned |
-| **D0** Isaac preparation | The scenes in USD, the robot walking with the same policy as in Gazebo, and the arm picking in attach mode, all in Isaac Sim 6.2 | ✅ done ($1.07 of GPU); the pick video still to re-record |
+| **D0** Isaac preparation | The scenes in USD, the robot walking with the same policy as in Gazebo, and the arm picking in attach mode, all in Isaac Sim 6.2 | ✅ done ($1.07 of GPU) |
 | **D1** Isaac port | Same pipeline in NVIDIA Isaac Sim, changes only in the simulator layer | ⬜ optional |
 | **D2** Gazebo vs Isaac | Same benchmark in both simulators | ⬜ optional |
 

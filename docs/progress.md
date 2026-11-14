@@ -147,7 +147,7 @@ The last and hardest step: picks by contact physics instead of the simulated att
   - **Walking (D0b):** the robot imported from our URDF walks with the same `robot_lab` policy file as in Gazebo, run in numpy with the Gazebo controller's exact input and output convention. Flat ground: 0.179 m/s for a 0.2 m/s command (Gazebo 0.216), 0.314 rad/s for 0.3 (Gazebo 0.290); on the dunes of scene 3 similar; no falls.
   - **Picking (D0c):** our own grasp planner's plans, in attach mode: a bottle, a can and a cup from 3 spots each, all 9 stored in the right compartment, the robot never tilting more than 4°.
   - **Three bugs found on the GPU**, each now covered by a Mac test: the URDF importer hides all physics behind an unselected variant; the policy's command was scaled twice; a kinematic carried item (infinite mass) shoved the robot over, so the carried item now has no collisions.
-  - Still open: the pick video doesn't show the carried item (it isn't rendered while held), so it has to be re-recorded.
+  - The pick video doesn't show the carried item (it isn't rendered while held); it is re-recorded in D1's first GPU session.
 - **D1 Port:** run the same pipeline in Isaac with zero changes outside `sim/` and `sim_bridge_isaac`.
 - **D2 Comparison:** the same benchmark in Gazebo and Isaac, side by side.
 - **D3 Soft sand:** a one-scene demo of the walking controller on particle sand.
