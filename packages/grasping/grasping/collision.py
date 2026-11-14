@@ -198,22 +198,35 @@ class Collision:
         return {k: pin.computeDistance(geom, gdata, k).min_distance
                 for k, res in enumerate(gdata.collisionResults) if res.isCollision()}
 
-    def _refined(self, qa, qb, fa, fb, state):
-        """The samples of a move: every step_rad, and every refine_step_rad on both sides of a sample (or the
-        start) where a pair is within clearance_m + refine_m (a dip below clearance_m between two samples is
-        at most ~0.2 mm at step_rad 0.02, B5.3 sweep 2; refine_m covers it with margin)."""
+    def _samples_to_check(self, qa, qb, fa, fb, state):
+        """Fractions s along a move, in order, that need the clearance_m test: every step_rad sample,
+        and every refine_step_rad sample in both intervals beside a sample (or the start) where a pair
+        comes within clearance_m + refine_m (a dip below clearance_m between two samples is at most
+        ~0.2 mm at step_rad 0.02, B5.3 sweep 2; refine_m covers it with margin). A step_rad sample
+        with no pair within clearance_m + refine_m is clear at clearance_m too and is left out (the
+        same samples and first failure as testing it, half the collision calls; B5.3 timing)."""
         coarse = self.samples(qa, qb, fa, fb)
         if not self.refine:
-            return coarse
+            yield from coarse
+            return
         geom, _, near = self._entry(state)
         fine = self.samples(qa, qb, fa, fb, self.refine_step)
-        out = set(coarse)
-        for k, s in enumerate([0.0] + coarse):
+
+        def close(s):
             q = self.full(qa + s * (qb - qa), fa + s * (fb - fa))
-            if pin.computeCollisions(self.arm.model, self.data, geom, near, q, True):
-                a, b = (coarse[k - 2] if k >= 2 else 0.0), (coarse[k] if k < len(coarse) else 1.0)
-                out.update(f for f in fine if a < f <= b)
-        return sorted(out)
+            return pin.computeCollisions(self.arm.model, self.data, geom, near, q, True)
+        prev, near_prev, i = 0.0, close(0.0), 0
+        for s in coarse:
+            near_s = close(s)
+            while i < len(fine) and fine[i] <= prev:
+                i += 1
+            if near_prev or near_s:
+                while i < len(fine) and fine[i] < s:
+                    yield fine[i]
+                    i += 1
+            if near_s:
+                yield s
+            prev, near_prev = s, near_s
 
     def check_move(self, qa, qb, state, fb=None):
         """None if the move qa -> qb (fingers state.fingers -> fb) keeps clearance_m everywhere, else
@@ -225,7 +238,7 @@ class Collision:
         fa = self.arm.finger_closed if state.fingers is None else state.fingers
         fb = fa if fb is None else fb
         start = self._contacts(self.full(qa, fa), geom, gdata)
-        for s in self._refined(qa, qb, fa, fb, state):
+        for s in self._samples_to_check(qa, qb, fa, fb, state):
             q = self.full(qa + s * (qb - qa), fa + s * (fb - fa))
             if not start:
                 hit = self._hit(q, geom, gdata)

@@ -92,6 +92,11 @@ class Arm:
         lo, hi = (self.lo, self.hi) if bounds is None else (np.maximum(self.lo, bounds[0]),
                                                              np.minimum(self.hi, bounds[1]))
         best = (False, None, 1e9, 180.0)
+        # the loop spells out np.cross / np.clip / np.vstack (same arithmetic, same results bit for bit):
+        # their per-call overhead was most of the IK time (B5.3 profile)
+        D0, D1, D2 = (float(v) for v in DOWN)
+        damp = 1e-4 * np.eye(6)
+        Jw, e = np.empty((6, len(self.vidx))), np.empty(6)
         for r in range(self.restarts):
             q = self.q0.copy()
             q[self.idx] = self.rng.uniform(lo, hi) if r else np.clip(0.0 if seed_q is None else seed_q, lo, hi)
@@ -100,15 +105,18 @@ class Arm:
                 M = d.oMf[fid]
                 a = M.rotation[:, 0]
                 e_pos = target - M.translation
-                tilt = math.degrees(math.acos(np.clip(a @ DOWN, -1, 1)))
+                tilt = math.degrees(math.acos(min(1.0, max(-1.0, float(a @ DOWN)))))
                 w_rot = 1.0 if tilt > max_tilt_deg else 0.0      # pull towards down only beyond the limit
                 if np.linalg.norm(e_pos) < self.tol * 0.6 and tilt <= max_tilt_deg + 0.5:
                     break
                 J = pin.computeFrameJacobian(m, d, q, fid, pin.LOCAL_WORLD_ALIGNED)[:, self.vidx]
-                Jw = np.vstack([J[:3], 0.3 * w_rot * J[3:]])
-                e = np.concatenate([e_pos, 0.3 * w_rot * np.cross(a, DOWN)])
-                dq = Jw.T @ np.linalg.solve(Jw @ Jw.T + 1e-4 * np.eye(6), e)
-                q[self.idx] = np.clip(q[self.idx] + np.clip(dq, -0.2, 0.2), lo, hi)
+                w = 0.3 * w_rot
+                Jw[:3], Jw[3:] = J[:3], w * J[3:]
+                a0, a1, a2 = float(a[0]), float(a[1]), float(a[2])
+                e[:3] = e_pos
+                e[3], e[4], e[5] = w * (a1 * D2 - a2 * D1), w * (a2 * D0 - a0 * D2), w * (a0 * D1 - a1 * D0)
+                dq = Jw.T @ np.linalg.solve(Jw @ Jw.T + damp, e)
+                q[self.idx] = np.minimum(np.maximum(q[self.idx] + np.minimum(np.maximum(dq, -0.2), 0.2), lo), hi)
             pin.framesForwardKinematics(m, d, q)
             M = d.oMf[fid]
             err = float(np.linalg.norm(target - M.translation))
