@@ -500,3 +500,12 @@ def test_all_pick_plans_succeed_on_a_fake():
     for r in res:
         assert r['tips_item_top_at_attach_m'] < CFG['pick']['pass']['max_tips_item_top_m'], r
         assert r['height_after_lift_m'] > 0.10
+
+
+def test_compose_robot_without_default_prim(tmp_path):
+    """The importer may not set a default prim: compose then references the first root prim."""
+    st = fake_import(tmp_path / 'robot.usda')
+    st.GetRootLayer().ClearDefaultPrim()
+    st.GetRootLayer().Save()
+    out, _ = compose.build('flat', tmp_path / 'robot.usda', tmp_path / 'stage.usda')
+    assert Usd.Stage.Open(str(out)).GetPrimAtPath('/World/Robot/trunk')

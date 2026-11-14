@@ -106,7 +106,13 @@ def compose(scene_usda, robot_usd, out, spawn, physics_hz, pick_items=(), object
 
     x, y, z, yaw = spawn
     robot = UsdGeom.Xform.Define(stage, ROBOT_PRIM)
-    robot.GetPrim().GetReferences().AddReference(load_scene.rel_asset(robot_usd, out.parent))
+    asset = Usd.Stage.Open(str(robot_usd))
+    rel = load_scene.rel_asset(robot_usd, out.parent)
+    if asset is not None and not asset.GetDefaultPrim():      # no default prim: the first root prim
+        roots = [p for p in asset.GetPseudoRoot().GetChildren() if p.IsDefined()]
+        robot.GetPrim().GetReferences().AddReference(rel, roots[0].GetPath())
+    else:
+        robot.GetPrim().GetReferences().AddReference(rel)
     robot.ClearXformOpOrder()
     load_scene.set_pose(robot, (x, y, z), load_scene.yaw_quat(yaw))
     for p in Usd.PrimRange(robot.GetPrim()):            # one physics scene: the scene's

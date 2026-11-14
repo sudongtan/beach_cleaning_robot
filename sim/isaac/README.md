@@ -93,3 +93,41 @@ any create: `vastai create ssh-key "$(cat ~/.ssh/id_ed25519.pub)"`.
    vastai destroy instance INSTANCE_ID
    ```
    Then fill in `budget.md`.
+
+## D0b / D0c: the robot walks and picks (one GPU instance)
+
+Brief: `notes/briefs/D0.md`. The laptop's files (robot URDF + meshes, the robot_lab policy, the Gazebo
+reference walks, the pick plans) are in `~/d0_from_laptop` (private repo branch `data`,
+`notes/briefs/D0_laptop.md`); they never go into this repo (third-party meshes).
+
+| File | What |
+|---|---|
+| `robot.yaml` | every D0b/D0c setting: import options, joints, stand, walk sequence, pick timing, pass thresholds |
+| `walk.py` | the policy as Gazebo runs it: numpy network, StateRL.cpp's observation / action convention, the adapter's command shaping |
+| `robot_model.py` | URDF facts: fixed transforms, basket compartments (= `grasping.arm`), drive gains |
+| `pick.py` | the planner's pick + store steps as a timed schedule, and the per-case checks |
+| `d0_runner.py` | the stand / walk / pick loops against any simulator (`io`), and the walk verdict |
+| `check_robot_usd.py` | imported USD vs URDF; writes the joint drives (per-degree angular gains) |
+| `compose.py` | test stage: a scene + the robot at `robot_start` + pick items + view cameras, 200 Hz physics |
+| `import_robot.py`, `run_d0.py` | `# REQUIRES_GPU`: Isaac's URDF importer; the Isaac side of the loops |
+| `tools/gpu_session_d0.sh` | `# REQUIRES_GPU`: the whole D0b/D0c session on one instance, restartable |
+
+Mac: `uv pip install -r sim/isaac/requirements-mac.txt` (adds Pinocchio for the planner checks), then
+`pytest sim/isaac -q` (the D0 tests skip without `~/d0_from_laptop` or `$BEACH_D0_LAPTOP_DIR`).
+
+**Session** (one instance; same host, image and create command as above):
+```bash
+# from the Mac, repo root: the code (no git history, no private notes, no results) and the laptop files
+ssh -p PORT root@HOST 'mkdir -p /workspace/beach'
+rsync -az -e "ssh -p PORT" --exclude .git --exclude .git-private --exclude notes --exclude CLAUDE.md \
+  --exclude results --exclude __pycache__ --exclude 'generated/' ./ root@HOST:/workspace/beach/
+rsync -az -e "ssh -p PORT" --exclude 'c7/*/bag' --exclude gazebo_ref ~/d0_from_laptop root@HOST:/workspace/
+# on the host, in tmux
+cd /workspace/beach && BEACH_D0_LAPTOP_DIR=/workspace/d0_from_laptop bash sim/isaac/tools/gpu_session_d0.sh /workspace/d0
+# from the Mac, after each step that writes files and before destroying
+rsync -az -e "ssh -p PORT" root@HOST:/workspace/d0/ results/d0/
+```
+Steps: host checks → laptop files' md5s → URDF import → USD check + drives → compose 3 stages → walk on
+flat ground (if it falls with the API's angular velocity, again with the finite-difference gyro) →
+walk on seed 3 → 9 picks on flat ground → frame sequences (not judged) → summary + tarball.
+Each step's verdict is the `ok` in its JSON; `summary.txt` lists them.

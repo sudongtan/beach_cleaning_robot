@@ -7,3 +7,5 @@ PyYAML==6.0.1
 pytest==7.4.4
 # Isaac Sim 6.2's bundled OpenUSD is 0.25.11 (GPU session 1, 2026-11-13).
 usd-core==25.11
+# D0b/D0c: the grasp planner's kinematics in the Mac tests (same version as the laptop, VERSIONS.md)
+pin==4.1.0
