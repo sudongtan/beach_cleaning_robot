@@ -369,3 +369,16 @@ def test_bin_step_corridor_is_clear():
                 assert near_bin or not lethal_at(occ, res, wx, wy), \
                     f'seed {sc["seed"]}: lethal cell at ({wx:.2f}, {wy:.2f}) in the step corridor'
         assert clear > margin, f'seed {sc["seed"]}: footprint {clear:.3f} m from a bin (margin {margin})'
+
+
+def test_collision_clearance_fits_the_store_and_pick_gaps():
+    """B5: a store releases the item drop_gap_m above what lies there and a pick hovers
+    hover_above_item_m above the item; a collision clearance at or above either gap would refuse
+    every plan (and must never be raised to make a row pass)."""
+    g = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
+    if not g.get('collision'):
+        pytest.skip('collision check off')
+    clearance = g['collision']['clearance_m']
+    assert 0 < clearance < g['store']['drop_gap_m']
+    assert clearance < g['hover_above_item_m']
+    assert 0 < g['collision']['step_rad'] <= 0.05

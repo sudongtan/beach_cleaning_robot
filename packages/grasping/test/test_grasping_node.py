@@ -351,6 +351,8 @@ def hold_at_show_pose(grasping, size, yaw=0.6):
     tf.transform.rotation.y = (R[0, 2] - R[2, 0]) / (4 * w)
     tf.transform.rotation.z = (R[1, 0] - R[0, 1]) / (4 * w)
     grasping.tf_buffer.set_transform_static(tf, 'test')
+    # the arm is at the show pose (a pick ends there): the collision check starts the store from it
+    grasping.arm_reference = (dict(zip(ARM, grasping.cfg['show_pose'])), time.monotonic() + 60.0)
     c = t + R @ np.array([size[2] / 2 + grasping.cfg['hover_above_item_m'], 0.0, 0.0])   # tool x = down
     grasping.gt = gt_objects(('trash_03', tuple(c)))
     d = grasping.gt.detections[0]

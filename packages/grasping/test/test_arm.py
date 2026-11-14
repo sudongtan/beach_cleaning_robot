@@ -244,7 +244,11 @@ def test_store_lays_every_item_along_the_compartment_on_its_floor(arm, comp):
             assert ok, (name, yaw, why)
             item, Rb, e = landed(arm, plan['release'], held, info['drop'])
             # drop_gap_m, more only for items so flat that the gripper bar would reach the rim (cigarette pack)
-            assert st['drop_gap_m'] - 0.006 <= info['drop'] <= 0.03, (name, yaw, info['drop'])
+            assert st['drop_gap_m'] - 0.006 <= info['drop'], (name, yaw, info['drop'])
+            under = arm.bar_underside if st.get('bar_box_exact') else \
+                (lambda q: arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2)
+            if info['drop'] > 0.03:                                              # only with the bar at its limit
+                assert under(plan['release']) <= c['rim'] + st['bar_clearance_m'] + 0.006, (name, yaw, info['drop'])
             assert item['centre'][2] - e[2] / 2 == pytest.approx(c['floor'], abs=0.006), (name, yaw)
             if abs(held['size'][0] - held['size'][1]) > 0.01:                     # square: any yaw
                 assert abs(np.sin(item_yaw(Rb, held['size']))) < np.sin(np.radians(5)), (name, yaw)   # along x
@@ -252,8 +256,7 @@ def test_store_lays_every_item_along_the_compartment_on_its_floor(arm, comp):
             assert c['x'][0] - 1e-3 <= x - e[0] / 2 and x + e[0] / 2 <= c['x'][1] + 1e-3, (name, yaw)
             assert c['y'][0] - 1e-3 <= y - e[1] / 2 and y + e[1] / 2 <= c['y'][1] + 1e-3, (name, yaw)
             for q in (plan['release'], plan['above']):
-                bar = arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2
-                assert bar >= c['rim'] + st['bar_clearance_m'] - 0.006, (name, yaw)
+                assert under(q) >= c['rim'] + st['bar_clearance_m'] - 0.006, (name, yaw)
 
 
 FILL = {'recyclable': ['pet_bottle_500', 'food_tin', 'can_330', 'glass_bottle_330', 'glass_jar'],

@@ -4,9 +4,10 @@ The robot model is the beach_description xacro of the configured variant, with t
 in the leg controller's stand pose; targets are in base_link. IK is position IK of a
 frame (default the jaw tips) with the tool's approach axis (tool x) kept within a tilt of
 straight down; adapted from A0's beach_description/scripts/reach_check.py. Self-collision
-is not checked (the named poses in arm_poses_custom.yaml were checked in A0).
+is checked by grasping.collision (B5) when config `collision` is set; plans take a `check` callback.
 """
 
+import itertools
 import math
 import subprocess
 import xml.etree.ElementTree as ET
@@ -28,6 +29,7 @@ class Arm:
         share = get_package_share_directory('beach_description')
         urdf = subprocess.run(['xacro', share + '/urdf/beach_robot.urdf.xacro', f'variant:={variant}'],
                               check=True, capture_output=True, text=True).stdout
+        self.urdf = urdf
         self.model = pin.buildModelFromXML(urdf)
         self.data = self.model.createData()
         m = self.model
@@ -46,6 +48,7 @@ class Arm:
         self.poses = self.poses['poses']
         self.basket = basket_size(urdf)
         self.bar = box_sizes(urdf, 'arm_gripper_bar_link')[0]      # gripper bar (tool x, y = jaw axis, z)
+        self.bar_origin = box_origins(urdf, 'arm_gripper_bar_link')[0]   # its box centre in the bar link
 
     def full(self, arm_q):
         q = self.q0.copy()
@@ -63,6 +66,12 @@ class Arm:
         pin.framesForwardKinematics(self.model, self.data, self.full(arm_q))
         M = self.data.oMf[self.model.getFrameId(frame)]
         return M.translation.copy(), M.rotation.copy()
+
+    def bar_underside(self, arm_q):
+        """Height (base_link z) of the gripper bar's lowest collision-box corner."""
+        t, R = self.pose(arm_q, 'arm_gripper_bar_link')
+        corners = self.bar_origin + np.array(list(itertools.product(*[(-h, h) for h in self.bar / 2])))
+        return float(np.min(corners @ R.T[:, 2] + t[2]))
 
     def jaw_axis(self, arm_q):
         """Direction the fingers open along (tool y) in base_link."""
@@ -119,6 +128,16 @@ def box_sizes(urdf, link_name):
     link = next(lk for lk in ET.fromstring(urdf).iter('link') if lk.get('name') == link_name)
     return np.array([[float(v) for v in box.get('size').split()]
                      for col in link.iter('collision') for box in col.iter('box')])
+
+
+def box_origins(urdf, link_name):
+    """Origins (n x 3, in the link frame) of a link's collision boxes."""
+    link = next(lk for lk in ET.fromstring(urdf).iter('link') if lk.get('name') == link_name)
+    out = []
+    for col in link.iter('collision'):
+        o = col.find('origin')
+        out.append([float(v) for v in (o.get('xyz', '0 0 0') if o is not None else '0 0 0').split()])
+    return np.array(out)
 
 
 def basket_size(urdf):
@@ -184,13 +203,14 @@ def in_basket(arm, p, margin=0.03):
             and rec['floor'] - margin <= p[2] <= rec['rim'] + height)
 
 
-def plan_unload(arm, bin_id, centre, height, cfg):
+def plan_unload(arm, bin_id, centre, height, cfg, check=None):
     """Arm joint targets to take an item (bbox centre in base_link, vertical extent `height`)
     out of compartment bin_id. The jaws (and the gripper bar, wider than a compartment) point
     along the compartment's length and stay closed: in attach mode the tips only hover above
     the item's top. The gripper is kept clear of the walls (the item's offset to it stays small),
     then lifts straight up until the item clears the rim. Returns (ok, reason, {phase: arm_q})
-    with phases above, hover."""
+    with phases above, hover. check(plan) -> None | failure text (collision check, B5): a failing plan
+    is solved again from a random seed within the bounds, at most collision.restarts times."""
     u = cfg['unload']
     c = compartment(arm, bin_id)
     half_x = arm.bar[1] / 2 + u['wall_clearance_m']           # bar along the compartment (x)
@@ -203,18 +223,41 @@ def plan_unload(arm, bin_id, centre, height, cfg):
     above = np.array([x, y, c['rim'] + height + cfg['hover_above_item_m'] + u['rim_clearance_m']])
     over = arm.poses[f'over_{bin_id}']['arm']
     bounds = near(over, u['joint_spread_rad'])
-    plan, seed = {}, over
     nearest = cfg.get('wrist_branch', 'any') == 'nearest'
-    for phase, target, tilt_max in (('hover', hover, cfg['approach_max_tilt_deg']),
-                                    ('above', above, u['above_max_tilt_deg'])):
-        ok, q, err, tilt = arm.ik(target, tilt_max, seed_q=seed, bounds=bounds)
-        if not ok:
-            return False, f'unreachable ({phase})', {}
-        q = align_jaws(arm, q, (1.0, 0.0), seed[-1] if nearest else None)
-        if q is None:
-            return False, 'wrist_limit', {}
-        plan[phase], seed = q, q
-    return True, '', plan
+    why = ''
+    for attempt in range(1 if check is None else 1 + restarts(cfg)):
+        plan, seed = {}, (over if attempt == 0 else random_seed(arm, bounds))
+        for phase, target, tilt_max in (('hover', hover, cfg['approach_max_tilt_deg']),
+                                        ('above', above, u['above_max_tilt_deg'])):
+            ok, q, err, tilt = arm.ik(target, tilt_max, seed_q=seed, bounds=bounds)
+            if not ok:
+                if attempt == 0:
+                    return False, f'unreachable ({phase})', {}
+                break
+            q = align_jaws(arm, q, (1.0, 0.0), (over if attempt and phase == 'hover' else seed)[-1]
+                           if nearest else None)
+            if q is None:
+                if attempt == 0:
+                    return False, 'wrist_limit', {}
+                break
+            plan[phase], seed = q, q
+        if len(plan) < 2:
+            continue
+        why = check(plan) if check is not None else None
+        if not why:
+            return True, '', plan
+    return False, why, {}
+
+
+def restarts(cfg):
+    """Plan restarts after a collision (collision.restarts, default ik_restarts)."""
+    return (cfg.get('collision') or {}).get('restarts', cfg['ik_restarts'])
+
+
+def random_seed(arm, bounds):
+    """A random arm pose within the joint limits and bounds (an IK restart after a collision)."""
+    lo, hi = np.maximum(arm.lo, bounds[0]), np.minimum(arm.hi, bounds[1])
+    return arm.rng.uniform(lo, hi)
 
 
 def held_item(arm, q, held):
@@ -258,14 +301,15 @@ def pile_top(slot, half, others, floor, tolerance=0.0):
                 and abs(o['centre'][1] - slot[1]) < half[1] + o['half'][1] - tolerance] + [floor])
 
 
-def plan_store(arm, bin_id, held, others, cfg):
+def plan_store(arm, bin_id, held, others, cfg, check=None):
     """Arm joint targets to put a held item (see held_item) into compartment bin_id: long side
     along the compartment, at the lowest free spot (others: items already in the basket, see
     pile_top), released `drop_gap_m` above what lies there, but never so low that the gripper bar
     (across the compartment when the item is turned) reaches the rim. Spots: slots_x x slots_y
     along / across the compartment. An item that would stick out above the rim (less than
-    top_below_rim_m below it) is refused as compartment_full. Returns (ok, reason, {'above',
-    'release'}, info)."""
+    top_below_rim_m below it) is refused as compartment_full. check(plan) -> None | failure text
+    (collision check, B5): a failing spot is skipped (info 'rejected': [(slot, text)]); if no spot
+    is clean the item is refused as compartment_full. Returns (ok, reason, {'above', 'release'}, info)."""
     st = cfg['store']
     c = compartment(arm, bin_id)
     over = arm.poses[f'over_{bin_id}']['arm']
@@ -278,19 +322,25 @@ def plan_store(arm, bin_id, held, others, cfg):
     c0, _, ext = held_item(arm, q0, held)
     d = c0 - t0                                              # item centre relative to the tips
     half = ext / 2
-    bar_low = arm.fk(q0, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2 - t0[2]   # bar underside above the tips
+    def bar_under(q):                                        # bar_box_exact false: the box centre (9ac4816)
+        return arm.bar_underside(q) if st.get('bar_box_exact') else \
+            arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2
+    bar_low = bar_under(q0) - t0[2]                          # bar underside above the tips
     tips_min = c['rim'] + st['bar_clearance_m'] - bar_low
 
     def spots(lo, hi, h, n):
         lo, hi = lo + h + st['wall_clearance_m'], hi - h - st['wall_clearance_m']
         return [(lo + hi) / 2] if hi <= lo else list(np.linspace(lo, hi, n))
     mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
-    cands = [(pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']),
+    ys = spots(*c['y'], half[1], st['slots_y'])
+    middle = ys[len(ys) // 2] if len(ys) % 2 and len(ys) > 1 else None   # odd slots_y: a fallback row
+    cands = [(pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle,
               float(np.hypot(x - mid[0], y - mid[1])), x, y)
-             for x in spots(*c['x'], half[0], st['slots_x']) for y in spots(*c['y'], half[1], st['slots_y'])]
-    for pile, _, x, y in sorted(cands):
+             for x in spots(*c['x'], half[0], st['slots_x']) for y in ys]
+    rejected = []
+    for pile, _, _, x, y in sorted(cands):
         if pile + ext[2] > c['rim'] - st['top_below_rim_m']:           # its top once it has landed
-            return False, 'compartment_full', {}, {'pile': pile}     # sorted: every other spot is higher
+            return False, 'compartment_full', {}, {'pile': pile, 'rejected': rejected}   # sorted: the rest is higher
         tips_z = max(pile + st['drop_gap_m'] + half[2] - d[2], tips_min)
         target = np.array([x - d[0], y - d[1], tips_z])
         q, seed = None, q0
@@ -306,15 +356,21 @@ def plan_store(arm, bin_id, held, others, cfg):
             continue
         ci, _, e = held_item(arm, q, held)
         if (abs(ci[0] - x) > 0.015 or abs(ci[1] - y) > 0.015
-                or arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2 < c['rim'] + st['bar_clearance_m'] - 0.005):
+                or bar_under(q) < c['rim'] + st['bar_clearance_m'] - 0.005):
             continue
         above = target + [0, 0, max(0.0, c['rim'] + cfg['unload']['rim_clearance_m'] - (ci[2] - e[2] / 2))]
         ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds)
         qa = align_item(arm, qa, held, near_wrist=q[-1] if nearest else None) if ok else None
         if qa is None:
             continue
-        return True, '', {'above': qa, 'release': q}, {'slot': (x, y), 'pile': pile,
-                                                       'drop': ci[2] - e[2] / 2 - pile}
+        info = {'slot': (x, y), 'pile': pile, 'drop': ci[2] - e[2] / 2 - pile, 'rejected': rejected}
+        why = check({'above': qa, 'release': q}) if check is not None else None
+        if why:
+            rejected.append(((x, y), why))
+            continue
+        return True, '', {'above': qa, 'release': q}, info
+    if rejected:
+        return False, 'compartment_full', {}, {'pile': float('nan'), 'rejected': rejected}
     return False, 'no_spot', {}, {}
 
 
@@ -335,9 +391,11 @@ def in_envelope(x, y, cfg):
     return cfg['reach_x_m'][0] <= x <= cfg['reach_x_m'][1] and abs(y) <= cfg['reach_y_max_m']
 
 
-def plan_pick(arm, centre, height, cfg):
+def plan_pick(arm, centre, height, cfg, check=None):
     """Arm joint targets for a top-down attach-mode pick of an item whose bbox centre (base_link)
-    and height are given. Returns (ok, reason, {phase: arm_q}) with phases above, hover, lift."""
+    and height are given. Returns (ok, reason, {phase: arm_q}) with phases above, hover, lift.
+    check(plan) -> None | failure text (collision check, B5): a failing plan is solved again with the
+    hover pose from a random seed within the bounds, at most collision.restarts times."""
     if not in_envelope(centre[0], centre[1], cfg):
         return False, 'outside_envelope', {}
     hover = np.array([centre[0], centre[1], centre[2] + height / 2 + cfg['hover_above_item_m']])
@@ -349,16 +407,27 @@ def plan_pick(arm, centre, height, cfg):
     # from hover, ~21 s at the speed cap with the item hanging (0.14 rad lag, store_lower_test.py).
     spread = cfg.get('pick_joint_spread_rad')
     up = arm.poses['up']['arm']
-    plan, seed = {}, (up if spread is not None else None)
-    for phase in ('hover', 'above', 'lift'):           # solve the lowest first, seed the others with it
-        bounds = near(seed, spread) if spread is not None else None
-        ok, q, err, tilt = arm.ik(targets[phase], cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds)
-        if not ok:
-            return False, 'unreachable', {}
-        plan[phase] = q
-        if spread is None or phase == 'hover':         # bounded: above and lift both near hover
-            seed = q
-    return True, '', plan
+    why = ''
+    for attempt in range(1 if check is None else 1 + restarts(cfg)):
+        plan, seed = {}, (up if spread is not None else None)
+        if attempt:
+            seed = random_seed(arm, near(up, spread) if spread is not None else (arm.lo, arm.hi))
+        for phase in ('hover', 'above', 'lift'):           # solve the lowest first, seed the others with it
+            bounds = near(up if phase == 'hover' else seed, spread) if spread is not None else None
+            ok, q, err, tilt = arm.ik(targets[phase], cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds)
+            if not ok:
+                if attempt == 0:
+                    return False, 'unreachable', {}
+                break
+            plan[phase] = q
+            if spread is None or phase == 'hover':         # bounded: above and lift both near hover
+                seed = q
+        if len(plan) < 3:
+            continue
+        why = check(plan) if check is not None else None
+        if not why:
+            return True, '', plan
+    return False, why, {}
 
 
 def bin_release_target(bin_rim_centre, near_wall_x, bin_drop, hang=0.0, clearance=None):
