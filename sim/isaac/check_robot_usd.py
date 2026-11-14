@@ -48,6 +48,19 @@ def joint_prims(stage):
     return by_name(stage, UsdPhysics.Joint)
 
 
+def select_physics(stage, variant_set, variant, prim=None):
+    """Select the importer's physics variant on the robot's root prim (default prim). Returns the
+    selection made, or None if the prim has no such variant set. Authored in the edit target."""
+    prim = prim or stage.GetDefaultPrim()
+    if not prim or not prim.GetVariantSets().HasVariantSet(variant_set):
+        return None
+    vs = prim.GetVariantSets().GetVariantSet(variant_set)
+    if variant not in vs.GetVariantNames():
+        raise ValueError(f'{prim.GetPath()}: variant {variant!r} not in {vs.GetVariantNames()}')
+    vs.SetVariantSelection(variant)
+    return f'{prim.GetPath()} {variant_set}={variant}'
+
+
 def check(stage, urdf):
     errors, notes = [], []
     roots = [str(p.GetPath()) for p in stage.Traverse() if p.HasAPI(UsdPhysics.ArticulationRootAPI)]
@@ -149,7 +162,8 @@ def main():
     laptop = robot_model.laptop_dir(cfg)
     urdf = robot_model.Urdf(laptop / cfg['urdf_import']['urdf'])
     stage = Usd.Stage.Open(a.usd)
-    rep = {}
+    ic = cfg['urdf_import']
+    rep = {'physics_variant': select_physics(stage, ic['physics_variant_set'], ic['physics_variant'])}
     if a.apply_drives:
         import walk
         with open(laptop / cfg['policy']['config']) as f:
@@ -157,7 +171,8 @@ def main():
         gains = robot_model.drive_gains(cfg, pcfg, cfg['variant'])
         tg = stand_targets(cfg, walk.load_controller()['stand_pos'])
         rep['drives'] = apply_drives(stage, urdf, gains, tg, cfg['leg_effort_limit'], cfg['robot']['leg_joints'])
-        stage.GetRootLayer().Save()
+    if a.apply_drives or rep['physics_variant']:
+        stage.GetRootLayer().Save()          # the variant selection stays in the asset
     rep.update(check(stage, urdf))
     text = json.dumps(rep, indent=2)
     if a.report:

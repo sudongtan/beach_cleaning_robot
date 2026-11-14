@@ -19,6 +19,11 @@ urdf_import:                     # isaacsim.asset.importer.urdf URDFImporterConf
   fix_base: false                # a walking robot
   joint_drive_type: force
   joint_target_type: position
+  # 6.2's importer (URDF USD Converter 0.3.2) puts physics behind a `Physics` variant set
+  # (mujoco / none / physics / physx) with NO default selection: without one the robot is geometry
+  # only (GPU session D0-1, 2026-11-14). check_robot_usd.py and compose.py select this one.
+  physics_variant_set: Physics
+  physics_variant: physx
 
 robot:
   root_link: base_link           # the URDF's root (base_link -> base -> trunk)

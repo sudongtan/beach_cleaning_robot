@@ -177,8 +177,9 @@ def main():
             simulation_app.update()
         res['stage_open_s'] = round(time.time() - t, 2)
         robot_root = find(stage, meta['robot_prim'], api=UsdPhysics.ArticulationRootAPI)
-        body = find(stage, meta['robot_prim'], name=r['body_link'])
-        grip = find(stage, meta['robot_prim'], name=r['gripper_link'])
+        # the rigid-body prim: the importer also names a geometry child after its link (GPU D0-1)
+        body = find(stage, meta['robot_prim'], name=r['body_link'], api=UsdPhysics.RigidBodyAPI)
+        grip = find(stage, meta['robot_prim'], name=r['gripper_link'], api=UsdPhysics.RigidBodyAPI)
         res['paths'] = {'articulation_root': robot_root, 'body': body, 'gripper': grip}
         if not (robot_root and body and grip):
             raise RuntimeError(f'robot prims not found: {res["paths"]}')

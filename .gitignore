@@ -56,3 +56,10 @@ results/d0_prep/d0_s*/.done/
 # D0b: imported robot USDs and composed test stages (sim/isaac/import_robot.py, compose.py)
 sim/isaac/robots/generated/
 sim/isaac/stages/generated/
+# D0b/D0c GPU session outputs: the imported robot (third-party meshes), frames, Kit logs, tarballs
+results/d0/*/robot/
+results/d0/*/import/robot_usd.tgz
+results/d0/*/kit_logs/
+results/d0/*/*/frames/
+results/d0/*.tgz
+results/d0/*/.done/

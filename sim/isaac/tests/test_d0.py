@@ -509,3 +509,59 @@ def test_compose_robot_without_default_prim(tmp_path):
     st.GetRootLayer().Save()
     out, _ = compose.build('flat', tmp_path / 'robot.usda', tmp_path / 'stage.usda')
     assert Usd.Stage.Open(str(out)).GetPrimAtPath('/World/Robot/trunk')
+
+
+# ------------------------------------------------------------------ the importer's physics variant (GPU D0-1)
+
+def test_select_physics_variant(tmp_path):
+    """6.2's importer puts physics behind a `Physics` variant set with no default selection: the
+    robot was geometry only until check_robot_usd / compose select `physx` (GPU session D0-1)."""
+    phys = tmp_path / 'physx.usda'
+    s = Usd.Stage.CreateNew(str(phys))
+    s.SetDefaultPrim(s.OverridePrim('/beach_robot'))          # as the importer's payloads
+    UsdPhysics.RevoluteJoint.Define(s, '/beach_robot/Physics/j')
+    s.GetRootLayer().Save()
+    root = Usd.Stage.CreateNew(str(tmp_path / 'robot.usda'))
+    p = UsdGeom.Xform.Define(root, '/beach_robot').GetPrim()
+    root.SetDefaultPrim(p)
+    vs = p.GetVariantSets().AddVariantSet('Physics')
+    for v in ('none', 'physx'):
+        vs.AddVariant(v)
+    vs.SetVariantSelection('physx')
+    with vs.GetVariantEditContext():
+        p.GetPayloads().AddPayload('./physx.usda')
+    p.GetVariantSets().GetVariantSet('Physics').ClearVariantSelection()
+    root.GetRootLayer().Save()
+    st = Usd.Stage.Open(str(tmp_path / 'robot.usda'))
+    assert not [q for q in st.Traverse() if q.IsA(UsdPhysics.Joint)]          # as imported: no physics
+    ic = CFG['urdf_import']
+    assert cru.select_physics(st, ic['physics_variant_set'], ic['physics_variant']) == '/beach_robot Physics=physx'
+    assert [str(q.GetPath()) for q in st.Traverse() if q.IsA(UsdPhysics.Joint)] == ['/beach_robot/Physics/j']
+    with pytest.raises(ValueError):
+        cru.select_physics(st, 'Physics', 'nope')
+
+
+REAL_ROBOT = REPO / 'results' / 'd0' / 's1' / 'robot' / 'beach_robot_custom_pkg' / 'beach_robot_custom_pkg.usda'
+
+
+@pytest.mark.skipif(not REAL_ROBOT.is_file(), reason='no downloaded import (results/d0/s1/robot)')
+def test_real_import_checks_and_composes(tmp_path):
+    """The USD Isaac 6.2's importer wrote in GPU session D0-1: passes the URDF check with `physx`
+    selected, and the composed stage has one articulation, one physics scene, rigid-body links."""
+    import shutil
+    src = REAL_ROBOT.parent
+    shutil.copytree(src, tmp_path / 'r')
+    usd = tmp_path / 'r' / REAL_ROBOT.name
+    st = Usd.Stage.Open(str(usd))
+    ic = CFG['urdf_import']
+    cru.select_physics(st, ic['physics_variant_set'], ic['physics_variant'])
+    rep = cru.check(st, URDF)
+    assert rep['ok'], rep['errors']
+    assert len(rep['joints_found']) == 20
+    out, _ = compose.build('flat', usd, tmp_path / 'stage.usda')
+    s = Usd.Stage.Open(str(out))
+    roots = [p for p in s.Traverse() if p.HasAPI(UsdPhysics.ArticulationRootAPI)]
+    assert len(roots) == 1 and str(roots[0].GetPath()).startswith('/World/Robot/')
+    assert [str(p.GetPath()) for p in s.Traverse() if p.IsA(UsdPhysics.Scene)] == ['/World/PhysicsScene']
+    trunks = [p for p in Usd.PrimRange(s.GetPrimAtPath('/World/Robot')) if p.GetName() == 'trunk']
+    assert len(trunks) == 2 and sum(p.HasAPI(UsdPhysics.RigidBodyAPI) for p in trunks) == 1

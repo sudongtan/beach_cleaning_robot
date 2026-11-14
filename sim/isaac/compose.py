@@ -115,6 +115,9 @@ def compose(scene_usda, robot_usd, out, spawn, physics_hz, pick_items=(), object
         robot.GetPrim().GetReferences().AddReference(rel)
     robot.ClearXformOpOrder()
     load_scene.set_pose(robot, (x, y, z), load_scene.yaw_quat(yaw))
+    import check_robot_usd
+    ic = robot_model.load_robot_cfg()['urdf_import']
+    check_robot_usd.select_physics(stage, ic['physics_variant_set'], ic['physics_variant'], robot.GetPrim())
     for p in Usd.PrimRange(robot.GetPrim()):            # one physics scene: the scene's
         if p.IsA(UsdPhysics.Scene):
             p.SetActive(False)
