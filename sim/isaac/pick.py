@@ -36,6 +36,12 @@ class Schedule:
         """[(t, kind, item, phase)] for attach / detach."""
         return [(s.t0, s.kind, s.item, s.phase) for s in self.segments if s.kind in ('attach', 'detach')]
 
+    def phase_at(self, t):
+        for s in self.segments:
+            if t < s.t1:
+                return s.phase
+        return 'after'
+
     def phase_end(self, phase, nth=0):
         hits = [s for s in self.segments if s.phase == phase]
         return hits[nth].t1 if len(hits) > nth else None

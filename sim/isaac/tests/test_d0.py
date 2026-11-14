@@ -421,6 +421,17 @@ class FakeIO:
     def hold_item(self, name, xyz, wxyz):
         self.place_item(name, xyz, wxyz)
 
+    def set_item_collision(self, name, on):
+        self.coll = getattr(self, 'coll', {})
+        self.coll[name] = on
+
+    def root_pose(self):
+        return self.body_pose()
+
+    def reset_robot(self, pose, q):
+        self.resets = getattr(self, 'resets', 0) + 1
+        self.set_q(q)
+
     def set_item_kinematic(self, name, on):
         self.kin[name] = on
         if not on:                                     # drop: basket floor if above it, else the ground
@@ -507,6 +518,9 @@ def test_all_pick_plans_succeed_on_a_fake():
     assert len(res) == 9
     bad = [r for r in res if not r['ok']]
     assert not bad, bad
+    assert io.resets == 8                               # every case after the first from the same start
+    assert all(v is True for v in io.coll.values())     # collisions back on after each release
+    assert all(r['fall_phase'] is None and 'lift' in r['max_tilt_by_phase'] for r in res)
     for r in res:
         assert r['tips_item_top_at_attach_m'] < CFG['pick']['pass']['max_tips_item_top_m'], r
         assert r['height_after_lift_m'] > 0.10

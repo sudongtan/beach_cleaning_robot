@@ -73,6 +73,17 @@ def install(monkeypatch, world, stage_path, calls):
             assert q.shape == (1, len(world.dof_names))
             world.set_targets(q[0])
 
+        def get_world_poses(self):                  # the articulation root (wxyz)
+            p, q = world.body_pose()
+            return Arr(np.asarray(p)[None]), Arr(np.asarray(q)[None])
+
+        def set_world_poses(self, p, q):
+            assert p.shape == (1, 3) and q.shape == (1, 4)
+            calls.append(('reset_root',))
+
+        def set_dof_velocities(self, v):
+            assert v.shape == (1, len(world.dof_names))
+
         def get_dof_gains(self):
             return Arr(np.ones((1, len(world.dof_names)))), Arr(np.ones((1, len(world.dof_names))))
 
@@ -170,3 +181,6 @@ def test_run_d0_pick_glue(monkeypatch, tmp_path):
     assert res['ok'], res['reasons']
     for p in res['picks']:
         assert p['tips_item_top_at_attach_m'] < CFG['pick']['pass']['max_tips_item_top_m']
+        assert p['fall_phase'] is None and p['legs'] == 'policy'
+    assert ('reset_root',) in calls                    # the second case starts from the reset pose
+    assert res['reset_errors'] is None or 'set_dof_velocities' not in res['reset_errors']

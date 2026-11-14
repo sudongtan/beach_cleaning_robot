@@ -120,6 +120,29 @@ class IsaacIO:
     def hold_item(self, name, xyz, wxyz):
         self.place_item(name, xyz, wxyz)
 
+    def set_item_collision(self, name, on):
+        root = self.stage.GetPrimAtPath(self.item_paths[name])
+        for p in Usd.PrimRange(root):
+            if p.HasAPI(UsdPhysics.CollisionAPI):
+                UsdPhysics.CollisionAPI(p).CreateCollisionEnabledAttr().Set(bool(on))
+
+    def root_pose(self):
+        p, q = self.art.get_world_poses()
+        return np_(p)[0].astype(float), np_(q)[0].astype(float)
+
+    def reset_robot(self, pose, q):
+        p, o = pose
+        self.art.set_world_poses(np.asarray(p, np.float32)[None, :], np.asarray(o, np.float32)[None, :])
+        self.set_q(q)
+        self.set_targets(q)
+        z = np.zeros((1, len(self.dof_names)), np.float32)
+        for fn, args in (('set_dof_velocities', (z,)), ('set_velocities', (np.zeros((1, 3), np.float32), np.zeros((1, 3), np.float32)))):
+            try:
+                getattr(self.art, fn)(*args)
+            except Exception as e:                     # logged once; positions are what matter most
+                self.reset_errors = getattr(self, 'reset_errors', {})
+                self.reset_errors[fn] = f'{type(e).__name__}: {e}'
+
     def set_item_kinematic(self, name, on):
         prim = self.stage.GetPrimAtPath(self.item_paths[name])
         UsdPhysics.RigidBodyAPI(prim).CreateKinematicEnabledAttr().Set(bool(on))
@@ -157,6 +180,8 @@ def main():
     ap.add_argument('--gyro', choices=['api', 'fd'], default='api')
     ap.add_argument('--frames', action='store_true')
     ap.add_argument('--cases', default='all', help='pick: all or comma-separated indices')
+    ap.add_argument('--legs', choices=['policy', 'hold'], default='policy', help='pick: legs on the policy, or PD hold (diagnostic)')
+    ap.add_argument('--held-collision', choices=['config', 'on', 'off'], default='config')
     a, _ = ap.parse_known_args()
     out = Path(a.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -218,14 +243,20 @@ def main():
             bar_to_tcp = urdf.fixed_transform(r['gripper_link'], r['tcp_link'])
             body_to_base = urdf.fixed_transform(r['body_link'], r['root_link'])
             park = {n: io.item_pose(n) for n in items}
+            cfg['pick']['stance_legs'] = stance['stand_legs'] if isinstance(stance['stand_legs'], dict) else None
+            hc = None if a.held_collision == 'config' else (a.held_collision == 'on')
+            res['legs'], res['held_collision'] = a.legs, hc
             results = d0_runner.run_picks(
                 io, cfg, policy, shaper, cases,
                 lambda b, p, m: robot_model.in_compartment(comp, b, p, m),
                 bar_to_tcp, body_to_base, float(stance['ground_z_in_base_link']), park, a.gyro,
-                cfg['capture']['every_s'], urdf.fixed_transform(r['gripper_link'], r['tips_link']))
+                cfg['capture']['every_s'], urdf.fixed_transform(r['gripper_link'], r['tips_link']),
+                legs=a.legs, held_collides=hc)
+            res['reset_errors'] = getattr(io, 'reset_errors', None)
             res.update(picks=results, ok=all(x['ok'] for x in results),
                        reasons=[f"case {x['case']} {x['item']}: lifted {x['lifted']}, in compartment "
-                                f"{x['in_compartment']}, fell {x['fell']}" for x in results if not x['ok']])
+                                f"{x['in_compartment']}, fell {x['fell']} (at {x['fall_phase']})"
+                                for x in results if not x['ok']])
         res['run_wall_s'] = round(time.time() - t, 2)
         res['sim_s'] = round(io.time(), 3)
         if a.frames:

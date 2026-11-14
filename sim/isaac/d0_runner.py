@@ -13,6 +13,8 @@ It must provide:
     place_item(name, xyz, wxyz)       teleport an item (dynamic, at rest)
     hold_item(name, xyz, wxyz)        move a held item (kinematic follow)
     set_item_kinematic(name, on)
+    set_item_collision(name, on)      collisions of a pick item's colliders
+    root_pose(), reset_robot(pose, q) the articulation root's pose; teleport root + joints, zero velocities
     step(n)              n physics steps
     time()               simulation time (s)
     capture(tag)         optional frame (may do nothing)
@@ -230,8 +232,9 @@ def judge_walk(result, reference, pass_cfg):
 class Attach:
     """Kinematic follow: at attach the item's pose relative to the TCP is kept until detach."""
 
-    def __init__(self, io, gripper_link, bar_to_tcp, bar_to_tips=None):
+    def __init__(self, io, gripper_link, bar_to_tcp, bar_to_tips=None, held_collides=False):
         self.io = io
+        self.held_collides = held_collides
         self.gripper_link = gripper_link
         self.bar_to_tcp = bar_to_tcp
         self.bar_to_tips = bar_to_tcp if bar_to_tips is None else bar_to_tips
@@ -249,6 +252,10 @@ class Attach:
         self.rel = np.linalg.inv(t_tcp) @ t_item
         self.held = item
         self.io.set_item_kinematic(item, True)
+        if not self.held_collides:
+            # a kinematic item has infinite mass: touching the basket or the robot it shoves the
+            # robot over (GPU D0-3); Gazebo's attached item weighs its real ~25-200 g
+            self.io.set_item_collision(item, False)
         tips = (pose_matrix(*self.io.link_pose(self.gripper_link)) @ self.bar_to_tips)[:3, 3]
         top = (t_item @ np.array([0.0, 0.0, height, 1.0]))[:3]
         return float(np.linalg.norm(tips - top))
@@ -260,6 +267,8 @@ class Attach:
     def detach(self):
         if self.held:
             self.io.set_item_kinematic(self.held, False)
+            if not self.held_collides:
+                self.io.set_item_collision(self.held, True)
         self.held = None
 
 
@@ -268,22 +277,35 @@ def base_link_matrix(io, body_to_base):
 
 
 def run_picks(io, cfg, policy, shaper, cases, comp, bar_to_tcp, body_to_base, ground_z_base,
-              park, gyro_source='api', capture_every=0.5, bar_to_tips=None):
-    """Every case: stand, place the item at its planned spot (base_link), play pick + store with the
-    policy at zero command (as in Gazebo), let it settle, check, park the item."""
+              park, gyro_source='api', capture_every=0.5, bar_to_tips=None, legs='policy', held_collides=None):
+    """Every case: from the same settled start (robot reset), place the item at its planned spot
+    (base_link), play pick + store with the legs on the policy at zero command (as in Gazebo) or held
+    by PD at the pick stance (`legs='hold'`, a diagnostic), let it settle, check, park the item."""
     robot = Robot(io, cfg, policy, shaper, gyro_source)
     pc = cfg['pick']
-    att = Attach(io, cfg['robot']['gripper_link'], bar_to_tcp, bar_to_tips)
+    if held_collides is None:
+        held_collides = bool(pc.get('held_item_collides', False))
+    att = Attach(io, cfg['robot']['gripper_link'], bar_to_tcp, bar_to_tips, held_collides)
+    stance = pc.get('stance_legs')                              # pick plans' stand_legs, for legs='hold'
+    if legs == 'hold' and stance:
+        robot.leg_target = np.array([stance[j] for j in cfg['robot']['leg_joints']], float)
     robot.start_pose()
     tick_dt = robot.dt * robot.decimation
     for _ in range(int(round(float(cfg['stand']['hold_s']) / tick_dt))):
         robot.tick((0.0, 0.0, 0.0), policy_on=False)
     policy.reset()
     for _ in range(int(round(2.0 / tick_dt))):                 # settle on the policy
-        robot.tick((0.0, 0.0, 0.0))
+        robot.tick((0.0, 0.0, 0.0), policy_on=(legs == 'policy'))
+    start = (io.root_pose(), np.asarray(io.q(), float).copy(), robot.leg_target.copy())
     results = []
     t_cap = -1e9
     for k, case in enumerate(cases):
+        if k > 0:                                               # every case from the same start
+            io.reset_robot(start[0], start[1])
+            robot.leg_target = start[2].copy()
+            policy.reset()
+            for _ in range(int(round(1.0 / tick_dt))):
+                robot.tick((0.0, 0.0, 0.0), policy_on=(legs == 'policy'))
         item = case['item']
         p_b, yaw_b = pick_mod.item_pose_base_link(case)
         t_base = base_link_matrix(io, body_to_base)
@@ -292,6 +314,8 @@ def run_picks(io, cfg, policy, shaper, cases, comp, bar_to_tcp, body_to_base, gr
         sch = pick_mod.case_schedule(case, pc, cfg['robot']['arm_rest'], cfg['robot']['finger_rest'])
         t0 = io.time()
         trace = {'t': [], 'item_base_link': [], 'tilt_deg': [], 'fall_tilt_deg': cfg['walk']['pass']['fall_tilt_deg']}
+        fall_tilt = float(cfg['walk']['pass']['fall_tilt_deg'])
+        phase_tilt, fall_phase = {}, None
         events = sorted(sch.events())
         ev = 0
         lift_end = sch.phase_end('lift')
@@ -315,18 +339,26 @@ def run_picks(io, cfg, policy, shaper, cases, comp, bar_to_tcp, body_to_base, gr
             trace['t'].append(rel_t)
             trace['item_base_link'].append((np.linalg.inv(t_base) @ centre)[:3])
             trace['tilt_deg'].append(tilt_deg(quat))
+            ph = sch.phase_at(rel_t)
+            phase_tilt[ph] = max(phase_tilt.get(ph, 0.0), trace['tilt_deg'][-1])
+            if fall_phase is None and trace['tilt_deg'][-1] > fall_tilt:
+                fall_phase = (ph, round(rel_t, 2))
             if io.time() - t_cap >= capture_every:
                 io.capture(f'pick{k}_{item}_{rel_t:06.2f}')
                 t_cap = io.time()
-            policy_step(robot)
+            if legs == 'policy':
+                policy_step(robot)
         att.detach()
         r = pick_mod.evaluate_case(case, trace, lambda b, p, m: comp(b, p, m), pc['pass'], ground_z_base)
         r['case'] = k
+        r['fall_phase'] = fall_phase
+        r['max_tilt_by_phase'] = {p: round(v, 1) for p, v in phase_tilt.items()}
+        r['legs'] = legs
         results.append(r)
         io.place_item(item, *park[item])                   # out of the basket for the next case
         robot.arm_target, robot.finger_target = np.asarray(cfg['robot']['arm_rest'], float), float(cfg['robot']['finger_rest'])
         for _ in range(int(round(1.0 / tick_dt))):
-            robot.tick((0.0, 0.0, 0.0))
+            robot.tick((0.0, 0.0, 0.0), policy_on=(legs == 'policy'))
     return results
 
 

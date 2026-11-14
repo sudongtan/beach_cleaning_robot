@@ -78,6 +78,7 @@ pick:
   finger_time_s: 1.0             # config/grasping.yaml finger_time_s
   settle_s: 0.5                  # extra hold after each step
   attach_mode: kinematic         # kinematic: the item follows the TCP; joint: a fixed joint (D0c compares)
+  held_item_collides: false      # a kinematic item has infinite mass: colliding, it shoves the robot over (GPU D0-3)
   cases: all                     # the plans' 9 cases (3 items x 3 spots)
   pass:
     lift_min_m: 0.10             # item above the ground after `lift`
