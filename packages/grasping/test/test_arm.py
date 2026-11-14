@@ -281,3 +281,49 @@ def test_store_move_keeps_the_held_item_above_the_rim(arm, comp):
             ok, why, plan, _ = plan_store(arm, comp, held, [], CFG)
             assert ok, why
             assert lowest_over_basket(arm, up, plan['above'], held, c['rim']) > 0.005, (name, yaw)
+
+
+def deepest_in_wall(arm, qa, qb, held, c, n=60):
+    """Deepest the held item's bbox reaches through a compartment's inner walls (m, > 0 = through)
+    along a joint-space move, while its bottom is below the rim."""
+    worst = -np.inf
+    for f in np.linspace(0.0, 1.0, n):
+        ci, _, e = held_item(arm, np.asarray(qa) + f * (np.asarray(qb) - np.asarray(qa)), held)
+        if ci[2] - e[2] / 2 <= c['rim']:
+            worst = max(worst, c['x'][0] - (ci[0] - e[0] / 2), ci[0] + e[0] / 2 - c['x'][1],
+                        c['y'][0] - (ci[1] - e[1] / 2), ci[1] + e[1] / 2 - c['y'][1])
+    return worst
+
+
+@pytest.mark.parametrize('branch', ['nearest', 'any'])
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_store_lower_keeps_the_held_item_inside_the_walls(arm, comp, branch):
+    """c1_axis s3: with wrist_branch any, `above` and `release` took wrist turns ~pi apart, so the
+    bottle turned half a turn while lowered into the compartment (9 cm through the wall). nearest
+    keeps the turn; what is left is the joint-space arc (<= 6 mm of the bbox past the wall)."""
+    c = compartment(arm, comp)
+    cfg = {**CFG, 'wrist_branch': branch}
+    worst = (-np.inf, 0.0, '')
+    for name, spec in OBJECTS['trash'].items():
+        for yaw in np.linspace(-np.pi, np.pi, 7)[:-1]:
+            held = picked(arm, spec, yaw)
+            ok, why, plan, _ = plan_store(arm, comp, held, [], cfg)
+            assert ok, (name, yaw, why)
+            turn = abs(plan['release'][-1] - plan['above'][-1])
+            worst = max(worst, (deepest_in_wall(arm, plan['above'], plan['release'], held, c), turn, name))
+    if branch == 'nearest':
+        assert worst[0] <= 0.006 and worst[1] <= 0.1, worst
+    else:
+        assert worst[0] > 0.03, worst                  # the old behaviour: reproduces the half turn
+
+
+def test_unload_keeps_the_wrist_turn(arm):
+    """wrist_branch nearest: the jaws don't turn between hovering in the compartment and lifting."""
+    cfg = {**CFG, 'wrist_branch': 'nearest'}
+    for comp in ('recyclable', 'residual'):
+        c = compartment(arm, comp)
+        for x in np.linspace(c['x'][0] + 0.05, c['x'][1] - 0.05, 3):
+            centre = (x, np.mean(c['y']), c['floor'] + 0.033)
+            ok, why, plan = plan_unload(arm, comp, centre, 0.066, cfg)
+            assert ok, (comp, x, why)
+            assert abs(plan['above'][-1] - plan['hover'][-1]) <= 0.1, (comp, x)

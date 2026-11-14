@@ -135,10 +135,13 @@ def near(q, spread):
     return q - spread, q + spread
 
 
-def align_jaws(arm, q, axis):
+def align_jaws(arm, q, axis, near_wrist=None):
     """Turn the wrist (last joint) so the jaws open along the horizontal direction `axis`
-    (either sign); the jaw tips stay on the wrist axis. None if the joint limit forbids it."""
-    best = None
+    (either sign); the jaw tips stay on the wrist axis. None if the joint limit forbids it.
+    near_wrist: of the turns within 5 deg (k x pi apart, equal up to float noise), take the one
+    nearest this wrist value; None picks by that noise (c1_axis s3: the stored bottle turned half
+    a turn between `above` and `release`, through the compartment walls)."""
+    cands = []
     want = math.atan2(axis[1], axis[0])
     for sign in (1, -1):
         q2 = np.array(q, dtype=float)
@@ -153,9 +156,13 @@ def align_jaws(arm, q, axis):
                 continue
             a = arm.jaw_axis(q3)
             off = abs((want - math.atan2(a[1], a[0]) + math.pi / 2) % math.pi - math.pi / 2)
-            if best is None or off < best[0]:
-                best = (off, q3)
-    return None if best is None or best[0] > math.radians(5) else best[1]
+            if off <= math.radians(5):
+                cands.append((off, q3))
+    if not cands:
+        return None
+    if near_wrist is None:
+        return min(cands, key=lambda c: c[0])[1]
+    return min(cands, key=lambda c: abs(c[1][-1] - near_wrist))[1]
 
 
 def compartment(arm, bin_id):
@@ -197,12 +204,13 @@ def plan_unload(arm, bin_id, centre, height, cfg):
     over = arm.poses[f'over_{bin_id}']['arm']
     bounds = near(over, u['joint_spread_rad'])
     plan, seed = {}, over
+    nearest = cfg.get('wrist_branch', 'any') == 'nearest'
     for phase, target, tilt_max in (('hover', hover, cfg['approach_max_tilt_deg']),
                                     ('above', above, u['above_max_tilt_deg'])):
         ok, q, err, tilt = arm.ik(target, tilt_max, seed_q=seed, bounds=bounds)
         if not ok:
             return False, f'unreachable ({phase})', {}
-        q = align_jaws(arm, q, (1.0, 0.0))
+        q = align_jaws(arm, q, (1.0, 0.0), seed[-1] if nearest else None)
         if q is None:
             return False, 'wrist_limit', {}
         plan[phase], seed = q, q
@@ -223,12 +231,24 @@ def item_yaw(Rb, size):
     return math.atan2(Rb[1, i], Rb[0, i])
 
 
-def align_item(arm, q, held, yaw=0.0):
-    """Turn the wrist so the held item's long side points along `yaw` (base_link)."""
+def align_item(arm, q, held, yaw=0.0, near_wrist=None):
+    """Turn the wrist so the held item's long side points along `yaw` (base_link). near_wrist: see
+    align_jaws; then a footprint within 1 cm of square may also turn a quarter turn (which side is
+    'long' flips with tilt: the jar turned pi/2 while lowered)."""
     _, Rb, _ = held_item(arm, q, held)
     a = arm.jaw_axis(q)
     jaw = math.atan2(a[1], a[0]) + (yaw - item_yaw(Rb, held['size']))
-    return align_jaws(arm, q, (math.cos(jaw), math.sin(jaw)))
+    q1 = align_jaws(arm, q, (math.cos(jaw), math.sin(jaw)), near_wrist)
+    if near_wrist is None or q1 is None:
+        return q1
+    q2 = align_jaws(arm, q, (-math.sin(jaw), math.cos(jaw)), near_wrist)
+    if q2 is None or abs(q2[-1] - near_wrist) >= abs(q1[-1] - near_wrist):
+        return q1
+    e1, e2 = held_item(arm, q1, held)[2], held_item(arm, q2, held)[2]
+    along = (math.cos(yaw), math.sin(yaw))
+    long1 = abs(along[0]) * e1[0] + abs(along[1]) * e1[1]
+    long2 = abs(along[0]) * e2[0] + abs(along[1]) * e2[1]
+    return q2 if long2 >= long1 - 0.01 else q1
 
 
 def pile_top(slot, half, others, floor, tolerance=0.0):
@@ -250,7 +270,8 @@ def plan_store(arm, bin_id, held, others, cfg):
     c = compartment(arm, bin_id)
     over = arm.poses[f'over_{bin_id}']['arm']
     bounds = near(over, cfg['unload']['joint_spread_rad'])
-    q0 = align_item(arm, over, held)
+    nearest = cfg.get('wrist_branch', 'any') == 'nearest'     # any: the wrist turn as align_jaws' noise picks
+    q0 = align_item(arm, over, held, near_wrist=over[-1] if nearest else None)
     if q0 is None:
         return False, 'wrist_limit', {}, {}
     t0, _ = arm.fk(q0, TIPS)
@@ -275,7 +296,7 @@ def plan_store(arm, bin_id, held, others, cfg):
         q, seed = None, q0
         for _ in range(2):                                   # the item's offset turns with the wrist: re-aim
             ok, q, err, tilt = arm.ik(target, cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds)
-            q = align_item(arm, q, held) if ok else None
+            q = align_item(arm, q, held, near_wrist=q0[-1] if nearest else None) if ok else None
             if q is None:
                 break
             ci, _, _ = held_item(arm, q, held)
@@ -289,7 +310,7 @@ def plan_store(arm, bin_id, held, others, cfg):
             continue
         above = target + [0, 0, max(0.0, c['rim'] + cfg['unload']['rim_clearance_m'] - (ci[2] - e[2] / 2))]
         ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds)
-        qa = align_item(arm, qa, held) if ok else None
+        qa = align_item(arm, qa, held, near_wrist=q[-1] if nearest else None) if ok else None
         if qa is None:
             continue
         return True, '', {'above': qa, 'release': q}, {'slot': (x, y), 'pile': pile,
