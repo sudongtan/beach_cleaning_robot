@@ -328,6 +328,10 @@ class GraspingNode(Node):
                 scene = self.basket_scene(obj)
                 if scene is not None:
                     ok, why, plan, info = plan_store(self.arm, g.bin_id, scene[0], scene[1], self.cfg)
+                    self.get_logger().info(
+                        f"store {obj}: {why or 'ok'} slot {np.round(info.get('slot', ()), 3).tolist()} pile "
+                        f"{info.get('pile', float('nan')):.3f} drop {info.get('drop', float('nan')):.3f}; in basket "
+                        + ', '.join(f"({o['centre'][0]:.3f} {o['centre'][1]:.3f} top {o['top']:.3f})" for o in scene[1]))
                     if why == 'compartment_full':                 # still held: the task puts it back
                         return self.refuse(goal_handle, result, f"compartment_full (pile {info['pile']:.3f})")
                 if not plan:

@@ -45,7 +45,7 @@ def main():
     a, _ = ap.parse_known_args()
     rclpy.init()
     n = Node('store_lower_test')
-    st = {'q': None, 'ref': None, 'phase': None, 'gaps': {}, 'wm': {}}
+    st = {'q': None, 'ref': None, 'phase': None, 'gaps': {}, 'wm': {}, 'end': {}}
 
     def on_js(m):
         d = dict(zip(m.name, m.position))
@@ -55,6 +55,7 @@ def main():
             if ph and st['ref'] and time.monotonic() - ph[1] > SETTLE_S:
                 g = max((abs(st['ref'][j] - d[j]), j) for j in ARM)
                 st['gaps'][ph[0]] = max(st['gaps'].get(ph[0], (0.0, '')), g)
+                st['end'][ph[0]] = [st['ref'][j] - d[j] for j in ARM]     # signed, last sample of the phase
 
     def on_wm(m):
         st['wm'] = {it.scene_id: it for it in m.items if it.scene_id}
@@ -92,7 +93,7 @@ def main():
         if it is None:
             print(f'{sid}: not in the world model', flush=True)
             continue
-        st['gaps'] = {}
+        st['gaps'], st['end'] = {}, {}
         g = PickObject.Goal(id=it.id, pose=it.pose, size=it.size)
         r = run(pick, g, 'pick')
         print(f'{sid} ({it.id}) pick: {r.success if r else None} {r.message if r else "no result"}', flush=True)
@@ -101,7 +102,8 @@ def main():
         r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.COMPARTMENT, item_id=it.id, bin_id=a.bin), 'store')
         print(f'{sid} store: {r.success if r else None} {r.message if r else "no result"}', flush=True)
         for ph, (gap, j) in st['gaps'].items():
-            print(f'  {ph:22s} max gap {gap:.4f} rad ({j})', flush=True)
+            end = ' '.join(f'{v:+.3f}' for v in st['end'].get(ph, []))
+            print(f'  {ph:22s} max gap {gap:.4f} rad ({j})  at end [{end}]', flush=True)
             if ph.startswith('store') and gap > worst[0]:
                 worst = (gap, f'{sid} {ph} {j}')
     print(f'RESULT worst store gap {worst[0]:.4f} rad at {worst[1]} (limit {a.gap_limit}): '
