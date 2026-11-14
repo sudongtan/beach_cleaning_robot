@@ -5,11 +5,11 @@
 > 🚧 **Work in progress (as of 2026-11-13).** The whole loop runs on its own, unattended. Parts A and B are done on ground truth: the best row (`b4_robot_lab_flip`) collected 75 of 110 items, all in the correct bin, with no falls and no safety violations. Part C has started replacing ground truth with real components. The realistic trash visuals are done. Localization (EKF) runs the full loop but doesn't have a clean benchmark row yet, because the arm safety rule still trips at the bins. Grasps still use a simulated attach. See [Progress](#progress).
 
 <p align="center">
-  <img src="results/a1/checks/camera_rgb.png" width="45%" alt="Head-camera view of the generated beach: sand ripples, dunes and the lifeguard tower">
+  <a href="results/d0/videos/d0_walk_flat.mp4"><img src="results/d0/videos/d0_walk_flat.gif" width="45%" alt="The Go2 with its arm and basket walking forward, then turning on the spot, on the generated beach in NVIDIA Isaac Sim"></a>
   &nbsp;
   <img src="results/a1/checks/held_item_custom.png" width="45%" alt="Head-camera view of the custom wide gripper above a cigarette pack">
   <br>
-  <sub>Views from the robot's head camera in Gazebo: a generated beach scene (left) and the custom wide gripper above a cigarette pack (right).</sub>
+  <sub>Left: the robot walking on a generated beach in NVIDIA Isaac Sim 6.2, with the same walking policy as in Gazebo (0.2 m/s forward, then a turn at 0.3 rad/s; click for the video). Right: the custom wide gripper above a cigarette pack, seen from the robot's head camera in Gazebo.</sub>
 </p>
 
 <!-- TODO (packaging phase): 60–90 s hero video of a full cleanup run plus 2–3 honest failure clips -->
