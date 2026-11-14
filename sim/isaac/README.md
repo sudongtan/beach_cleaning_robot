@@ -94,6 +94,12 @@ any create: `vastai create ssh-key "$(cat ~/.ssh/id_ed25519.pub)"`.
    ```
    Then fill in `budget.md`.
 
+## D0b / D0c results (2026-11-14)
+
+Custom variant, one RTX 4090 instance, $0.93: walks on flat ground (0.179 m/s for 0.2, 0.314 rad/s for 0.3; Gazebo 0.216 / 0.290) and on seed 3 (0.156 / 0.316; Gazebo 0.210 / 0.302), no falls; 9/9 picks stored in the right compartment, max tilt 4°. Per-run results in `results/d0/final/`, videos in `results/d0/videos/`.
+
+**Known issue: the pick video.** In `results/d0/videos/d0_pick_bottle.mp4` the carried bottle isn't rendered moving with the gripper (it stays on the sand while the arm lifts). The physics run itself stored the item (its end state is on the compartment floor), but the held item is a kinematic body teleported with the tensor API while physics is stepped manually, and the renderer doesn't see those poses. Fix before re-recording: author the held item's pose in USD (or try `SimulationManager.step(..., update_fabric=True)`, or attach with a runtime fixed joint), render a few frames around the lift and look at them, then capture. Note also that the carry's "lifted" height in `result.json` reads back the pose the code wrote; only the end state is independent evidence.
+
 ## D0b / D0c: the robot walks and picks (one GPU instance)
 
 Brief: `notes/briefs/D0.md`. The laptop's files (robot URDF + meshes, the robot_lab policy, the Gazebo

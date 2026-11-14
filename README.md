@@ -49,7 +49,7 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **C3** Perception | Text-prompted detector (YOLOE) + depth | 🟡 built, currently fails its detection and frame-rate checks |
 | **C4** Classifier | Zero-shot material classifier, compared with an own colour-based one | 🟡 built, narrowly fails its contamination check |
 | **C5** Grasping | Look → plan → move → verify, picks by contact physics | ⬜ planned |
-| **D0** Isaac preparation | The scenes in USD (done: all 11 render in Isaac Sim 6.2), then the robot walking and the arm picking in Isaac | 🟡 scenes done |
+| **D0** Isaac preparation | The scenes in USD, the robot walking with the same policy as in Gazebo, and the arm picking in attach mode, all in Isaac Sim 6.2 | ✅ done ($1.07 of GPU); the pick video still to re-record |
 | **D1** Isaac port | Same pipeline in NVIDIA Isaac Sim, changes only in the simulator layer | ⬜ optional |
 | **D2** Gazebo vs Isaac | Same benchmark in both simulators | ⬜ optional |
 
@@ -68,7 +68,7 @@ C1 (localization) gets furthest. Its first row collected 87 of 110 items, more t
 
 The last re-run had three clean scenes before it stopped on the fourth.
 
-**Part D: Isaac Sim (optional).** A port to Isaac Sim that touches only the simulator layer, and a Gazebo-vs-Isaac comparison on the same benchmark. The port can run alongside Part C; the comparison waits for the final pipeline.
+**Part D: Isaac Sim (optional).** D0 prepared everything the port needs and ran it in NVIDIA Isaac Sim 6.2 on two short rented-GPU sessions ($1.07 in total): the 11 benchmark scenes open and render from the same views as Gazebo; the robot walks with the same `robot_lab` policy file as in Gazebo (17–26 % slower forward, turning within 8 %, no falls on flat ground or dunes); and the arm picks a bottle, a can and a cup from 3 spots each and stores all 9 in the right basket compartment. Next: the port of the whole pipeline (D1), which only touches the simulator layer; the Gazebo-vs-Isaac comparison waits for the final pipeline.
 
 Details for every phase (component table, integration runs, what each row showed, the controller tests): **[docs/progress.md](docs/progress.md)**.
 

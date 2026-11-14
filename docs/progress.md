@@ -142,7 +142,12 @@ The last and hardest step: picks by contact physics instead of the simulated att
 
 ## Part D: Isaac Sim (optional)
 
-- **D0 Preparation:** everything before the pipeline can run in NVIDIA Isaac Sim. First the 11 benchmark scenes as USD files, built and tested on a Mac and checked in Isaac Sim 6.2 on a rented GPU (done 2026-11-13: every scene opens without errors and renders from the same views as Gazebo, for $0.14); then the robot standing and walking with the same policy as in Gazebo, and the arm picking an item in attach mode.
+- **D0 Preparation (done 2026-11-14, $1.07 of GPU):** everything before the pipeline can run in NVIDIA Isaac Sim 6.2. Almost all of it was built and tested on a Mac without a GPU (151 tests, including the walking and picking loops against a kinematics-only fake simulator), then checked in two short sessions on a rented RTX 4090.
+  - **Scenes (D0a):** the 11 benchmark scenes as USD files; every one opens without errors, renders from the same views as Gazebo, and its trash rests.
+  - **Walking (D0b):** the robot imported from our URDF walks with the same `robot_lab` policy file as in Gazebo, run in numpy with the Gazebo controller's exact input and output convention. Flat ground: 0.179 m/s for a 0.2 m/s command (Gazebo 0.216), 0.314 rad/s for 0.3 (Gazebo 0.290); on the dunes of scene 3 similar; no falls.
+  - **Picking (D0c):** our own grasp planner's plans, in attach mode: a bottle, a can and a cup from 3 spots each, all 9 stored in the right compartment, the robot never tilting more than 4°.
+  - **Three bugs found on the GPU**, each now covered by a Mac test: the URDF importer hides all physics behind an unselected variant; the policy's command was scaled twice; a kinematic carried item (infinite mass) shoved the robot over, so the carried item now has no collisions.
+  - Still open: the pick video doesn't show the carried item (it isn't rendered while held), so it has to be re-recorded.
 - **D1 Port:** run the same pipeline in Isaac with zero changes outside `sim/` and `sim_bridge_isaac`.
 - **D2 Comparison:** the same benchmark in Gazebo and Isaac, side by side.
 - **D3 Soft sand:** a one-scene demo of the walking controller on particle sand.

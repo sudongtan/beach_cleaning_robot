@@ -72,4 +72,8 @@ from `sim/isaac/requirements-mac.txt` (`notes/briefs/D0_prep.md` §1).
 | usd-core | 25.11 (= Isaac Sim 6.2's OpenUSD 0.25.11, GPU session 1; was 26.11) | `sim/isaac/load_scene.py`; the 25.11 wheel lacks `shaderDefs.usda`, so the `ShaderSdrCompliance` validator is skipped in the tests |
 | Isaac Sim container | `nvcr.io/nvidia/isaac-sim:6.2.0` (Kit SDK 110.4.0; `/isaac-sim/VERSION` = `6.2.0-rc.14+release.52805.02189a84.gl`), OpenUSD 0.25.11, Python 3.12.14 | GPU sessions 2026-11-13 on vast.ai: RTX 4090, driver 595.99.02 (`results/d0_prep/d0_s1/host.txt`) |
 | Pinocchio (`pin` wheel) | 4.1.0 (= the laptop's) | D0c Mac tests: runs `grasping.arm`'s planner without ROS |
+| Isaac Sim URDF importer | `isaacsim.asset.importer.urdf` in 6.2.0, "URDF USD Converter v0.3.2" (from the output's `customLayerData`) | D0b robot import; physics behind a `Physics` variant set with no default (select `physx`) |
+| GPU host, D0b/D0c | vast.ai RTX 4090, driver 595.71.05, same `isaac-sim:6.2.0` image (2026-11-14) | `results/d0/final/host.txt` |
+| vastai CLI | 1.11.0 (in the Mac venv) | destroy the instance from the command line (`echo y \| vastai destroy instance ID`) |
+| ffmpeg | 9.0.1 (Homebrew, Mac) | `sim/isaac/tools/make_video.sh` |
 | Blender | 5.3.0 (hash 02f0899d78e3, 2026-11-10; `brew install --cask blender`, the cask listed 5.2.3) | `sim/isaac/tools/blender_preview.py`: Cycles on Metal (Apple M1 Pro GPU) |
