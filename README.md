@@ -49,8 +49,9 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **C3** Perception | Text-prompted detector (YOLOE) + depth | 🟡 built, currently fails its detection and frame-rate checks |
 | **C4** Classifier | Zero-shot material classifier, compared with an own colour-based one | 🟡 built, narrowly fails its contamination check |
 | **C5** Grasping | Look → plan → move → verify, picks by contact physics | ⬜ planned |
-| **D0** Isaac port | Same pipeline in NVIDIA Isaac Sim, changes only in the simulator layer | ⬜ optional |
-| **D1** Gazebo vs Isaac | Same benchmark in both simulators | ⬜ optional |
+| **D0** Isaac preparation | The scenes in USD (done: all 11 render in Isaac Sim 6.2), then the robot walking and the arm picking in Isaac | 🟡 scenes done |
+| **D1** Isaac port | Same pipeline in NVIDIA Isaac Sim, changes only in the simulator layer | ⬜ optional |
+| **D2** Gazebo vs Isaac | Same benchmark in both simulators | ⬜ optional |
 
 **Part A: the pipeline and the benchmark.** The robot, the beach and every pipeline component are built, first as *baselines* that read the simulator's ground truth, so the whole loop could run end to end before any part was made hard. The first complete unattended run collected and sorted all 6 items of a small dev scene. `make bench` then runs 10 seeded scenes overnight; the baseline row has zero safety violations and every collected item in the right bin, but most runs end in a fall or a navigation stall.
 

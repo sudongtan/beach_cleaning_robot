@@ -142,10 +142,12 @@ The last and hardest step: picks by contact physics instead of the simulated att
 
 ## Part D: Isaac Sim (optional)
 
-- **D0 Port:** run the same pipeline in NVIDIA Isaac Sim with zero changes outside `sim/` and `sim_bridge_isaac`.
-- **D1 Comparison:** the same benchmark in Gazebo and Isaac, side by side.
+- **D0 Preparation:** everything before the pipeline can run in NVIDIA Isaac Sim. First the 11 benchmark scenes as USD files, built and tested on a Mac and checked in Isaac Sim 6.2 on a rented GPU (done 2026-11-13: every scene opens without errors and renders from the same views as Gazebo, for $0.14); then the robot standing and walking with the same policy as in Gazebo, and the arm picking an item in attach mode.
+- **D1 Port:** run the same pipeline in Isaac with zero changes outside `sim/` and `sim_bridge_isaac`.
+- **D2 Comparison:** the same benchmark in Gazebo and Isaac, side by side.
+- **D3 Soft sand:** a one-scene demo of the walking controller on particle sand.
 
-D0 runs in parallel with Part C, starting with the scenes built as USD files and a first render check in Isaac. D1 waits until Part C is done, so the comparison uses the final pipeline.
+D0 and D1 run in parallel with Part C. D2 and D3 wait until Part C is done, so the comparison uses the final pipeline.
 
 ## Engineering notes
 

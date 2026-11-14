@@ -1,4 +1,4 @@
-# sim/isaac: the beach scenes in USD (D0 prep)
+# sim/isaac: the beach scenes in USD (D0a)
 
 `load_scene.py` builds one OpenUSD stage per seed of `bench/scenes.yaml`: the same scene as the
 Gazebo world (`sim/gazebo/load_scene.py`), with no robot and no person. It's plain OpenUSD
