@@ -75,6 +75,7 @@ def _policy():
 
 def test_observation_layout_and_scales():
     pol, _ = _policy()
+    # the command input is StateRL's control_ (sticks), scaled here by (2, 2, 0.25)
     obs = pol.observation((1, 0, 0, 0), [0.4, 0, 0], [0.2, 0.0, 0.3], pol.default + 0.1, np.full(12, 2.0))
     assert obs.shape == (45,)
     assert np.allclose(obs[0:3], [0.4 * 0.25, 0, 0])                 # ang_vel * ang_vel_scale
@@ -106,14 +107,23 @@ def test_hip_quirk_and_targets():
 
 
 def test_command_shaping_matches_the_gazebo_adapter():
-    _, sh = _policy()
-    # C.7: 0.2 m/s wanted -> control_input ly 0.1041667 -> the policy sees 0.2083 (laptop summary)
-    assert sh(0.2, 0.0, 0.0, 0.0, 0.02)[0] == pytest.approx(2.0 * 0.1041666641831398, abs=1e-6)
+    """The shaper gives StateRL's control_ (the sticks); the observation scales it by (2, 2, 0.25).
+    GPU D0-2: the shaper returned the twist, so it was scaled twice (walked 2x, turned 1/4)."""
+    pol, sh = _policy()
+    # C.7: 0.2 m/s wanted -> control_input ly 0.1041667 (laptop summary) -> the policy sees 0.2083
+    c = sh(0.2, 0.0, 0.0, 0.0, 0.02)
+    assert c[0] == pytest.approx(0.1041666641831398, abs=1e-6)
+    obs = pol.observation((1, 0, 0, 0), [0, 0, 0], c, pol.default, np.zeros(12))
+    assert obs[6] == pytest.approx(0.2083333, abs=1e-6)
     sh2 = walk.CommandShaper(walk.load_adapter_params(REPO / CFG['policy']['adapter_config']))
     c1 = sh2(0.0, 0.0, 0.3, 0.0, 0.02)
-    assert c1[2] == pytest.approx(0.3)                                 # first tick: no trim yet
+    assert c1[2] == pytest.approx(0.3 / 0.25)                          # first tick: no trim; yaw stick
+    obs = pol.observation((1, 0, 0, 0), [0, 0, 0], c1, pol.default, np.zeros(12))
+    assert obs[8] == pytest.approx(0.3)                                # the policy sees 0.3 rad/s
     c2 = sh2(0.0, 0.0, 0.3, 0.0, 0.02)                                 # measured 0: trim grows
-    assert c2[2] == pytest.approx(0.3 + 1.0 * 0.3 * 0.02)
+    assert c2[2] * 0.25 == pytest.approx(0.3 + 1.0 * 0.3 * 0.02)
+    lat = sh2(0.0, 0.3, 0.0, 0.0, 0.02)                                # left: vy = -max_vy * lx
+    assert pol.observation((1, 0, 0, 0), [0, 0, 0], lat, pol.default, np.zeros(12))[7] > 0
     assert 'rclpy' not in sys.modules or hasattr(sys.modules['rclpy'], '__file__')
 
 

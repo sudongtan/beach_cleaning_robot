@@ -10,8 +10,8 @@ Mirrors, line by line where it matters:
   Joint order = the controller's `joints` (FR, FL, RR, RL x hip, thigh, calf). The quaternion is
   (w, x, y, z) ("isaacsim" framework), the IMU frame = trunk.
 - the Gazebo adapter (packages/locomotion/locomotion/legubiao_adapter.py, robot_lab config): the
-  wanted twist goes through the speed maps and the yaw trim; the policy's command term is then that
-  twist (the controller scales the sticks back: stick = v / max_v, times (2, 2, 0.25) = v).
+  wanted twist goes through the speed maps and the yaw trim and becomes sticks (v / max_v);
+  StateRL's control_ = (ly, -lx, -rx) times (2, 2, 0.25) is then the twist the policy sees.
 """
 
 import importlib
@@ -68,8 +68,11 @@ def load_adapter_params(path):
 
 
 class CommandShaper:
-    """Wanted twist -> the policy's command term, as the Gazebo adapter makes it: speed maps per
-    direction (map_planar) and the integral yaw trim from the gyro (yaw_trim_step)."""
+    """Wanted twist -> the controller's `control_` (x, y, yaw) as StateRL.cpp reads it from the
+    adapter's sticks: (ly, -lx, -rx). Speed maps per direction (map_planar) and the integral yaw
+    trim from the gyro (yaw_trim_step) as the adapter applies them. Policy.observation then scales
+    by (lin_vel_scale, lin_vel_scale, ang_vel_scale) = (2, 2, 0.25), so the policy sees the twist.
+    (GPU D0-2, 2026-11-14: returning the twist here scaled it twice: 2x forward, 1/4 yaw.)"""
 
     def __init__(self, params, adapter=None):
         self.a = adapter or adapter_module()
@@ -92,7 +95,7 @@ class CommandShaper:
             wz = wz + self.trim
         # sticks clamp at stick_limit; the policy then sees stick * max (StateRL scales back)
         (ly, lx, rx), _ = self.a.sticks(vx, vy, wz, self.max_v, self.limit)
-        return np.array([ly * self.max_v[0], -lx * self.max_v[1], -rx * self.max_v[2]])
+        return np.array([ly, -lx, -rx])
 
 
 # ---------------------------------------------------------------- the policy network
