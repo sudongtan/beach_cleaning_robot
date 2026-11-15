@@ -96,7 +96,7 @@ def test_compartment_count_limit():
     m.items[ids[n]].mass_kg = 0.01
     assert not m.update(ids[n], COLLECTED, 'pet', 'recyclable')[0]
     assert m.update(ids[n], COLLECTED, 'residual', 'residual')[0]   # the other compartment has room
-    assert not m.basket_full()
+    assert m.basket_full() == (n == 1)                              # B5b: one item each fills both
 
 
 def test_load_limit_with_ground_truth_masses():

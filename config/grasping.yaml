@@ -80,7 +80,15 @@ grasping:
   # collision check (false = off). devb5b s2: a cube in a corner and a wide item stacked on another stored
   # fine, but neither (nor the item under the stack) could be unloaded: the compartment stayed full. With
   # task unload_order last_first the layout at an unload is the one checked when that item was stored.
-  store: {slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
+  # B5b (devb5c: every compartment blocked: the sim lands items 5-15 mm off the planned spot, packed spots had
+  # 0-5 mm of slack): placement centre: one spot, the middle of the compartment floor; if it fails any check
+  # the item is refused compartment_full and the task puts it back (grid = the slot grid above). max_items:
+  # compartment_full once that many items lie in the compartment, from ground truth, whatever the task counts
+  # (null = off; world_model.yaml max_items_per_compartment is the task's limit). check_unload_margin: the
+  # store-time unload check also with the item landed landing_margin_m off in x, y and both (9 checks; a
+  # number or [x, y]; false = off). landing_margin_m from the measured landing errors (drop + walk), B5b S1.
+  store: {placement: centre, max_items: 1, check_unload_margin: true, landing_margin_m: 0.015,
+          slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
           drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01,
           support_margin_m: 0.03, check_unload: true}
   # Wrist turn of the store and unload plans (the jaws open the same way every half turn; a square

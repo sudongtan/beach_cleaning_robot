@@ -12,12 +12,12 @@ pytest.importorskip('pinocchio')
 pytest.importorskip('coal')
 pytest.importorskip('ament_index_python')
 
-from test_arm import CFG, LIMITS, OBJECTS, box_size, picked, rz  # noqa: E402
+from test_arm import CFG, LIMITS, OBJECTS, ROW, box_size, picked, rz  # noqa: E402
 
-from grasping.arm import (TIPS, Arm, compartment, held_item, plan_pick, plan_store,  # noqa: E402
-                          plan_unload)
+from grasping.arm import (TIPS, Arm, compartment, first_plan_only, held_item, plan_pick,  # noqa: E402
+                          plan_store, plan_unload)
 from grasping.collision import Collision, State, reason  # noqa: E402
-from grasping.sequence import store_steps  # noqa: E402
+from grasping.sequence import bin_steps, store_steps  # noqa: E402
 
 DATA = Path(__file__).resolve().parent / 'data'
 COL = CFG['collision']
@@ -186,3 +186,59 @@ def test_off_gives_the_9ac4816_plans():
             assert set(plan) == set(r), kind
             for k in plan:
                 assert np.asarray(plan[k]).tolist() == r[k], (kind, k)
+
+
+def unload_checker(arm, col, comp, obj):
+    """node.unload_check offline: the unload of obj landed as box (alone in the basket), first plan only,
+    checked from rest up to over_bin."""
+    rest, cfg = np.asarray(arm.poses['rest']['arm'], dtype=float), first_plan_only(ROW)
+
+    def unload_check(box, height):
+        state = State({obj: box}, excluded={obj})
+
+        def check(plan):
+            steps = bin_steps(arm.poses, comp, plan, plan['above'], arm.finger_open, arm.finger_closed, obj)
+            failure, _, _ = col.check_steps(steps[:next(i for i, st in enumerate(steps) if st.phase == 'over_bin')],
+                                            rest, state)
+            return None if failure is None else reason(failure)
+        ok, why, _ = plan_unload(arm, comp, box['centre'], height, cfg, check)
+        return None if ok else why
+    return unload_check
+
+
+def test_margin_refuses_the_devb5b_corner_cube(arm, col):
+    """devb5b / devb5c: a 0.063 m cup stored at the residual corner spot (-0.223, -0.04) unloads from there,
+    but landed 5-9 mm toward the divider (the sim) its lift touches the wall (sens.py). With
+    check_unload_margin the corner spot the exact check accepts is refused, naming the offset."""
+    c = compartment(arm, 'residual')
+    size = box_size(OBJECTS['trash']['poly_cup'])
+    uc = unload_checker(arm, col, 'residual', 'cup')
+    at = lambda dy: {'centre': np.array([-0.223, -0.04 + dy, c['floor'] + size[2] / 2]),  # noqa: E731
+                     'R': np.eye(3), 'size': tuple(size)}
+    assert uc(at(0.0), size[2]) is None
+    assert uc(at(0.009), size[2]) == 'collision:lift:basket_link/held:cup'
+    held = picked(arm, OBJECTS['trash']['poly_cup'], 0.0)
+    corner = {**CFG, 'store': {**CFG['store'], 'fill_corner': [-1, 1], 'check_unload': True,
+                               'landing_margin_m': 0.009}}
+    ok, _, _, exact = plan_store(arm, 'residual', held, [], corner, unload_check=unload_checker(arm, col, 'residual', 'h'))
+    assert ok and exact['slot'][1] > c['y'][1] - 0.06                          # beside the divider
+    margin = {**corner, 'store': {**corner['store'], 'check_unload_margin': True}}
+    ok, _, _, info = plan_store(arm, 'residual', held, [], margin, unload_check=unload_checker(arm, col, 'residual', 'h'))
+    assert any(xy == exact['slot'] and w.startswith('no_unload at (') for xy, w in info['rejected'])
+    assert not ok or info['slot'] != exact['slot']
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_a_narrow_bottle_at_the_centre_passes_the_margin(arm, col, comp):
+    """B5b as configured: a 6.5 cm bottle at the centre unloads from every offset of landing_margin_m."""
+    assert ROW['store']['placement'] == 'centre' and ROW['store']['check_unload_margin']
+    seen = []
+    uc = unload_checker(arm, col, comp, 'h')
+
+    def counted(box, height):
+        seen.append(box)
+        return uc(box, height)
+    held = picked(arm, OBJECTS['trash']['pet_bottle_500'], 0.0)
+    ok, why, _, info = plan_store(arm, comp, held, [], ROW, unload_check=counted)
+    assert ok, (why, info.get('rejected'))
+    assert len(seen) == 9

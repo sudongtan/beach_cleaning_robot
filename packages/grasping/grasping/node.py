@@ -416,16 +416,20 @@ class GraspingNode(Node):
                             return self.check('store slot', steps, start, state)[0]
                     unload_check = self.unload_check(g.bin_id, obj) \
                         if self.collision and self.cfg['store'].get('check_unload') else None
+                    t_plan = time.monotonic()
                     ok, why, plan, info = plan_store(self.arm, g.bin_id, scene[0], scene[1], self.cfg, check,
                                                      unload_check)
                     self.get_logger().info(
-                        f"store {obj}: {why or 'ok'} slot {np.round(info.get('slot', ()), 3).tolist()} pile "
+                        f"store {obj}: {why or 'ok'} ({time.monotonic() - t_plan:.2f} s) "
+                        f"slot {np.round(info.get('slot', ()), 3).tolist()} pile "
                         f"{info.get('pile', float('nan')):.3f} drop {info.get('drop', float('nan')):.3f} held bbox "
                         f"{np.round(info.get('ext', ()), 3).tolist()} (over the compartment); in basket "
                         + ', '.join(f"({o['centre'][0]:.3f} {o['centre'][1]:.3f} top {o['top']:.3f})" for o in scene[1])
                         + ''.join(f"; rejected slot {np.round(xy, 3).tolist()}: {w}" for xy, w in info.get('rejected', [])))
                     if why == 'compartment_full':                 # still held: the task puts it back
-                        return self.refuse(goal_handle, result, f"compartment_full (pile {info['pile']:.3f})")
+                        last = info['rejected'][-1][1] if info.get('rejected') else ''
+                        return self.refuse(goal_handle, result, f"compartment_full (pile {info['pile']:.3f}"
+                                                                + (f'; {last})' if last else ')'))
                 steps = store_steps(self.arm.poses, g.bin_id, self.arm.finger_open, obj, plan)
                 if not plan:
                     if self.collision:                            # the held item is unknown: arm and basket only

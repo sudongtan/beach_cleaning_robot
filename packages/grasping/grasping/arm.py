@@ -372,10 +372,14 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
     (collision check, B5): a failing spot is skipped (info 'rejected': [(slot, text)]); if no spot
     is clean the item is refused as compartment_full. unload_check(box, height) -> None | failure text
     (store.check_unload): a spot is used only if the item, landed there ({'centre', 'R', 'size'}), can be
-    unloaded again (devb5b: a corner cube and a stacked wide item stored fine but no unload planned).
+    unloaded again (devb5b: a corner cube and a stacked wide item stored fine but no unload planned);
+    with check_unload_margin also landed landing_margin_m off in x, y and both (devb5c: the sim lands
+    items 5-15 mm off the plan). placement centre: one spot, the floor's middle, else compartment_full
+    (B5b); max_items: compartment_full once that many items lie in the compartment (null = off).
     Returns (ok, reason, {'above', 'release'}, info)."""
     st = cfg['store']
     c = compartment(arm, bin_id)
+    mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
     over = arm.poses[f'over_{bin_id}']['arm']
     bounds = near(over, cfg['unload']['joint_spread_rad'])
     nearest = cfg.get('wrist_branch', 'any') == 'nearest'     # any: the wrist turn as align_jaws' noise picks
@@ -386,6 +390,12 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
     c0, _, ext = held_item(arm, q0, held)
     d = c0 - t0                                              # item centre relative to the tips
     half = ext / 2
+    cap = st.get('max_items')                                # never more than this in it, whatever the task counts
+    if cap is not None:
+        n_in = sum(c['y'][0] - 0.01 <= o['centre'][1] <= c['y'][1] + 0.01 for o in others)
+        if n_in >= cap:
+            return False, 'compartment_full', {}, {'pile': float('nan'), 'ext': ext,
+                                                   'rejected': [(tuple(mid), f'max_items {cap}: {n_in} in it')]}
     def bar_under(q):                                        # bar_box_exact false: the box centre (9ac4816)
         return arm.bar_underside(q) if st.get('bar_box_exact') else \
             arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2
@@ -404,7 +414,7 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
     margin = st.get('support_margin_m')                      # stack only flat on what lies there (null = off)
     n_via = st.get('lower_vias') or 0                        # IK points between above and release: the joint line
                                                              # drifted the item 2-3 cm sideways (B5.4 run 3)
-    mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
+    centre = st.get('placement', 'grid') == 'centre'
     corner = st.get('fill_corner')                           # [sx, sy]: from the (sx x, sy y) corner; null: centre first
     rank = (lambda x, y: (-corner[0] * x, -corner[1] * y)) if corner else \
         (lambda x, y: (float(np.hypot(x - mid[0], y - mid[1])), 0.0))
@@ -442,7 +452,22 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
     def cand(x, y, inx, iny, again):                         # again: retries so far
         return (pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle,
                 rank(x, y), again, x, y, inx, iny)          # a retry 5 mm in before the next spot along
-    cands = [cand(x, y, inx, iny, 0) for x, inx in spots(*c['x'], half[0], st['slots_x']) for y, iny in ys]
+    m = st.get('landing_margin_m') if st.get('check_unload_margin') else None
+    mx, my = (0.0, 0.0) if m is None else (m, m) if np.isscalar(m) else m
+    offsets = [(0.0, 0.0)] + ([(sx * mx, sy * my) for sx in (-1, 0, 1) for sy in (-1, 0, 1) if sx or sy]
+                              if m is not None else [])
+
+    def unloadable(lc, Rb, le):                              # landed off by each offset; the least slack to a wall
+        lo, hi = lc[:2] - le[:2] / 2, lc[:2] + le[:2] / 2    # or the divider first, stop at the first failure
+        slack = lambda o: min(lo[0] + o[0] - c['x'][0], c['x'][1] - hi[0] - o[0],  # noqa: E731
+                              lo[1] + o[1] - c['y'][0], c['y'][1] - hi[1] - o[1])
+        for dx, dy in sorted(offsets, key=slack):
+            u = unload_check({'centre': lc + [dx, dy, 0.0], 'R': Rb, 'size': tuple(held['size'])}, float(le[2]))
+            if u:
+                return f'no_unload at ({dx:+.3f}, {dy:+.3f}): {u}' if dx or dy else f'no_unload: {u}'
+        return None
+    cands = [cand(float(mid[0]), float(mid[1]), 0.0, 0.0, 0)] if centre else \
+        [cand(x, y, inx, iny, 0) for x, inx in spots(*c['x'], half[0], st['slots_x']) for y, iny in ys]
     heapq.heapify(cands)
     rejected = []
     while cands:
@@ -494,9 +519,7 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
             why = check({'above': qa, 'via': qv, 'release': q}) if check is not None else None
         if not why and unload_check is not None:             # with unload_order last_first the items stored
             lc, Rb, le = held_item(arm, q, held)             # later are out by then: this layout comes back
-            lc = lc - [0, 0, lc[2] - le[2] / 2 - pile]
-            u = unload_check({'centre': lc, 'R': Rb, 'size': tuple(held['size'])}, float(le[2]))
-            why = f'no_unload: {u}' if u else None
+            why = unloadable(lc - [0, 0, lc[2] - le[2] / 2 - pile], Rb, le)
         info = {'slot': (x, y), 'pile': pile, 'drop': ci[2] - e[2] / 2 - pile, 'rejected': rejected, 'ext': ext}
         if why:
             rejected.append(((x, y), why))
@@ -504,8 +527,9 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
                 heapq.heappush(cands, cand(x + inx * retry, y + iny * retry, inx, iny, again + 1))
             continue
         return True, '', dict({'above': qa, 'release': q}, **({'via': qv} if qv else {})), info
-    if rejected:
-        return False, 'compartment_full', {}, {'pile': float('nan'), 'rejected': rejected, 'ext': ext}
+    if rejected or centre:                                   # centre: never the fixed-pose release (node)
+        return False, 'compartment_full', {}, {'pile': float('nan'), 'ext': ext,
+                                               'rejected': rejected or [(tuple(mid), 'no plan (IK, aim or walls)')]}
     return False, 'no_spot', {}, {}
 
 

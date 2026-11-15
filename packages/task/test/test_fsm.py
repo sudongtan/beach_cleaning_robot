@@ -1123,3 +1123,21 @@ def test_unload_order_takes_the_last_stored_item_first(order):
     run(make(w, PATH, cfg=dict(CFG, unload_order=order)), w)
     places = [r['item'] for r in w.log_records if r['event'] == 'place' and r['bin'] == 'recyclable']
     assert places == (['c', 'a'] if order == 'last_first' else ['a', 'c'])    # a stored before c
+
+
+def test_an_item_no_compartment_takes_is_put_back_and_skipped():
+    """B5b: the grasping node refuses an item every time (store.check_unload_margin: too wide to unload from
+    the centre landed off by the margin): it is put back, the basket emptied, then skipped compartment_full;
+    the rest is collected and the task ends."""
+    items = {'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}, 'b': {'cls': 'trash', 'x': 15.0, 'y': 13.0},
+             'c': {'cls': 'trash', 'x': 12.0, 'y': 15.0}}
+    w = FakeWorld(items, {'a': 'residual', 'b': 'residual', 'c': 'pet'})
+
+    class Always(set):
+        def discard(self, x):
+            pass
+    w.store_full = Always({'a'})
+    t = run(make(w, PATH, capacity=Capacity(1, 2.0, 0.05)), w)
+    assert t.state == 'DONE'
+    assert (w.known['a'].status, w.known['a'].skip_reason) == (SKIPPED, 'compartment_full')
+    assert w.known['b'].status == PLACED and w.known['c'].status == PLACED
