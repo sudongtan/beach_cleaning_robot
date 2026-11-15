@@ -27,6 +27,10 @@ task:
     # robot_lab creeps towards the bin while the arm places (devpose s3: 0.805 -> 0.70 m over 3 places, then
     # the stowed gripper hooked on the rim and held the robot at the bin). false = one approach per bin (B4)
     reapproach_before_place: true
+    # B5: unload each compartment in the reverse order it was filled (the item stacked on top first). In order
+    # (first_first) the collision check refused the bottom item's unload past the one on it 3 times (devb5 s8);
+    # the bottom item then stayed in the basket as stuck.
+    unload_order: last_first     # last_first | first_first
     # C1: the bin final approach's settle accepts a mean distance at most this far short of bin_place_distance_m
     # (long side unchanged: tolerance 0.03 + settle_band_m). The symmetric window let PLACE start at 0.80-0.83
     # (devreap, devreap2: the task's own estimate was right within 1 cm) and the arm's rest <-> up move hit the

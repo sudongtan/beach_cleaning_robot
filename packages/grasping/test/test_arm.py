@@ -10,7 +10,7 @@ import yaml
 pytest.importorskip('pinocchio')
 pytest.importorskip('ament_index_python')
 
-from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item,  # noqa: E402
+from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item, supported,  # noqa: E402
                           in_basket, in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload,
                           release_clearances)
 
@@ -374,3 +374,14 @@ def test_unload_keeps_the_wrist_turn(arm):
             ok, why, plan = plan_unload(arm, comp, centre, 0.066, cfg)
             assert ok, (comp, x, why)
             assert abs(plan['above'][-1] - plan['hover'][-1]) <= 0.1, (comp, x)
+
+
+def test_a_stacked_item_rests_flat_on_what_lies_there():
+    """devb5 s8: a 0.23 m bottle stacked over the end of a 0.12 m one (its centre 4 mm inside the one
+    below) tipped; a spot over the middle of an item of that height is fine, the floor always."""
+    short = {'centre': (-0.034, 0.100), 'half': (0.059, 0.034), 'top': 0.170}
+    m = CFG['store']['support_margin_m']
+    assert not supported((-0.089, 0.107), [short], 0.170, 0.105, m)
+    assert supported((-0.034, 0.107), [short], 0.170, 0.105, m)
+    assert supported((-0.200, 0.040), [short], 0.105, 0.105, m)
+    assert not supported((-0.034, 0.107), [short], 0.200, 0.105, m)   # nothing of that height

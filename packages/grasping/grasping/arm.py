@@ -342,6 +342,19 @@ def pile_top(slot, half, others, floor, tolerance=0.0):
                 and abs(o['centre'][1] - slot[1]) < half[1] + o['half'][1] - tolerance] + [floor])
 
 
+def supported(slot, others, pile, floor, margin):
+    """Whether an item centred at slot rests flat on the pile at height `pile` (see pile_top): its
+    centre, and margin either side of it along the compartment (x, the item's long side), lies over an item whose top is that pile. A pile
+    under one end only tips it (devb5: a 0.23 m bottle stacked over the end of a 0.12 m one tipped
+    to a height the unload could not lift clear of the rim, and the item under it was blocked)."""
+    if pile <= floor:
+        return True
+    tops = [o for o in others if abs(o['top'] - pile) < 0.01]
+    return all(any(abs(o['centre'][0] - px) <= o['half'][0] and abs(o['centre'][1] - py) <= o['half'][1]
+                   for o in tops)
+               for px, py in [(slot[0] + dx, slot[1]) for dx in (-margin, 0.0, margin)])
+
+
 def plan_store(arm, bin_id, held, others, cfg, check=None):
     """Arm joint targets to put a held item (see held_item) into compartment bin_id: long side
     along the compartment, at the lowest free spot (others: items already in the basket, see
@@ -378,6 +391,7 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
     retry = st.get('wall_retry_m') or 0.0                    # an edge spot the wall rejected: again, further in,
     retries = st.get('wall_retries') or 1                    # at most this many times
     quick = st.get('seeded_ik')                              # one seeded try: pre-aim, and above for a first check
+    margin = st.get('support_margin_m')                      # stack only flat on what lies there (null = off)
     n_via = st.get('lower_vias') or 0                        # IK points between above and release: the joint line
                                                              # drifted the item 2-3 cm sideways (B5.4 run 3)
     mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
@@ -425,6 +439,9 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
         pile, _, _, again, x, y, inx, iny = heapq.heappop(cands)
         if pile + ext[2] > c['rim'] - st['top_below_rim_m']:           # its top once it has landed
             return False, 'compartment_full', {}, {'pile': pile, 'rejected': rejected, 'ext': ext}   # sorted: the rest is higher
+        if margin is not None and not supported((x, y), others, pile, c['floor'], margin):
+            rejected.append(((x, y), f'unsupported (pile {pile:.3f})'))
+            continue
         tips_z = max(pile + st['drop_gap_m'] + half[2] - d[2], tips_min)
         target = np.array([x - d[0], y - d[1], tips_z])
         q, seed = None, q0

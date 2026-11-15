@@ -399,8 +399,11 @@ class Task:
         return min(todo, key=lambda it: math.hypot(it.x - rx, it.y - ry), default=None)
 
     def basket_items(self, snap):
-        """(bin id, item id) in the basket that can still be placed."""
-        return [(c, i) for c in COMPARTMENTS for i in snap.compartments.get(c, []) if i not in self.stuck]
+        """(bin id, item id) in the basket that can still be placed; with unload_order last_first each
+        compartment's items in the reverse order they were stored (an item stacked on another first)."""
+        last = self.cfg.get('unload_order', 'first_first') == 'last_first'
+        return [(c, i) for c in COMPARTMENTS for i in (snap.compartments.get(c, [])[::-1] if last
+                                                     else snap.compartments.get(c, [])) if i not in self.stuck]
 
     # --- main loop ----------------------------------------------------------------------
     def tick(self, snap):

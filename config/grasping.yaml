@@ -72,8 +72,13 @@ grasping:
   # each and above re-aimed on the item centre; the arm goes down through them and back up the same way
   # (with 2 the item stayed within 7 mm of the spot in the replay); wall_retries: how often an edge spot
   # is retried further in (1 left the jar's -x end spot at 10 mm in, still 4 mm from the wall; 3 reach 15 mm).
+  # support_margin_m: a spot on top of items is used only when the item's centre and this far either side of it
+  # along the compartment lie over an item of that pile height (null = off). devb5 s8: a 0.23 m bottle stacked
+  # over the end of a 0.12 m one tipped (vertical extent 0.14 m, unload above out of reach at 0.135 m) and the
+  # item below could not be unloaded past it: the compartment stayed full for the rest of the run.
   store: {slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
-          drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01}
+          drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01,
+          support_margin_m: 0.03}
   # Wrist turn of the store and unload plans (the jaws open the same way every half turn; a square
   # item fits every quarter turn). nearest: the turn nearest the previous pose (over -> release ->
   # above); any: whichever float noise picks. With any, the held bottle turned ~pi while lowered into

@@ -1115,3 +1115,11 @@ def test_full_run_with_a_moving_map_estimate():
     run(make(w, PATH), w)
     trash = [i for i, m in MATS.items() if m != 'distractor']
     assert all(w.known[i].status == PLACED for i in trash)
+
+
+@pytest.mark.parametrize('order', ['last_first', 'first_first'])
+def test_unload_order_takes_the_last_stored_item_first(order):
+    w = FakeWorld(ITEMS, MATS)
+    run(make(w, PATH, cfg=dict(CFG, unload_order=order)), w)
+    places = [r['item'] for r in w.log_records if r['event'] == 'place' and r['bin'] == 'recyclable']
+    assert places == (['c', 'a'] if order == 'last_first' else ['a', 'c'])    # a stored before c
