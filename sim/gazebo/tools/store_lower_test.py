@@ -81,11 +81,14 @@ def main():
         st['phase'] = None
         return r.result().result if r.done() else None
 
-    worst = (0.0, '')
+    def walk(x, y, tol):
+        subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{x - 0.49},{y}', '--yaw', '0', '--tol', str(tol),
+                        '--seed', str(a.seed), '--accel', '0.3', '--ang-accel', '0.5'], check=False)
+
+    worst, failed = (0.0, ''), []
     for sid in a.items.split(','):
         x, y = scene_pose(a.seed, sid)
-        subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{x - 0.49},{y}', '--yaw', '0', '--tol', '0.12',
-                        '--seed', str(a.seed), '--accel', '0.3', '--ang-accel', '0.5'], check=False)
+        walk(x, y, 0.12)
         t0 = time.monotonic()
         while sid not in st['wm'] and time.monotonic() - t0 < 30.0:
             rclpy.spin_once(n, timeout_sec=0.1)
@@ -97,17 +100,29 @@ def main():
         g = PickObject.Goal(id=it.id, pose=it.pose, size=it.size)
         r = run(pick, g, 'pick')
         print(f'{sid} ({it.id}) pick: {r.success if r else None} {r.message if r else "no result"}', flush=True)
+        if r and not r.success and r.message.startswith('outside_envelope'):
+            # B5.4 runs 5, 6: the 0.12 m walk tolerance is wider than the reach band (reach_x_m 0.42-0.56):
+            # the jar ended 0.562 m ahead. Walk again, tighter, and pick once more.
+            walk(x, y, 0.04)
+            rclpy.spin_once(n, timeout_sec=1.0)
+            it = st['wm'].get(sid, it)
+            r = run(pick, PickObject.Goal(id=it.id, pose=it.pose, size=it.size), 'pick')
+            print(f'{sid} ({it.id}) pick after a tighter walk: {r.success if r else None} '
+                  f'{r.message if r else "no result"}', flush=True)
         if not r or not r.success:
+            failed.append(f'{sid} pick')
             continue
         r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.COMPARTMENT, item_id=it.id, bin_id=a.bin), 'store')
         print(f'{sid} store: {r.success if r else None} {r.message if r else "no result"}', flush=True)
+        if not r or not r.success:
+            failed.append(f'{sid} store')
         for ph, (gap, j) in st['gaps'].items():
             end = ' '.join(f'{v:+.3f}' for v in st['end'].get(ph, []))
             print(f'  {ph:22s} max gap {gap:.4f} rad ({j})  at end [{end}]', flush=True)
             if ph.startswith('store') and gap > worst[0]:
                 worst = (gap, f'{sid} {ph} {j}')
-    print(f'RESULT worst store gap {worst[0]:.4f} rad at {worst[1]} (limit {a.gap_limit}): '
-          f'{"PASS" if worst[0] <= a.gap_limit else "FAIL"}', flush=True)
+    print(f'RESULT worst store gap {worst[0]:.4f} rad at {worst[1]} (limit {a.gap_limit}), failed: '
+          f'{failed or "none"}: {"PASS" if worst[0] <= a.gap_limit and not failed else "FAIL"}', flush=True)
     rclpy.try_shutdown()
 
 
