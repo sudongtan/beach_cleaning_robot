@@ -417,7 +417,8 @@ class GraspingNode(Node):
                     ok, why, plan, info = plan_store(self.arm, g.bin_id, scene[0], scene[1], self.cfg, check)
                     self.get_logger().info(
                         f"store {obj}: {why or 'ok'} slot {np.round(info.get('slot', ()), 3).tolist()} pile "
-                        f"{info.get('pile', float('nan')):.3f} drop {info.get('drop', float('nan')):.3f}; in basket "
+                        f"{info.get('pile', float('nan')):.3f} drop {info.get('drop', float('nan')):.3f} held bbox "
+                        f"{np.round(info.get('ext', ()), 3).tolist()} (over the compartment); in basket "
                         + ', '.join(f"({o['centre'][0]:.3f} {o['centre'][1]:.3f} top {o['top']:.3f})" for o in scene[1])
                         + ''.join(f"; rejected slot {np.round(xy, 3).tolist()}: {w}" for xy, w in info.get('rejected', [])))
                     if why == 'compartment_full':                 # still held: the task puts it back

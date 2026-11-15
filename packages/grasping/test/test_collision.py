@@ -25,7 +25,8 @@ SHOW = np.asarray(CFG['show_pose'], dtype=float)          # where a pick ends: a
 OLD = {**CFG, 'store': {**CFG['store'], 'slots_x': 3, 'slots_y': 2,         # the 9ac4816 store planner
                         'bar_box_exact': False,                            # (B5.3: 4 x 3, exact bar;
                         'wall_retry_m': None, 'fill_corner': None,         # B5.4: 8 x 3 from a corner,
-                        'seeded_ik': False, 'inside_walls': False}}        # retry, IK tries, footprint)
+                        'seeded_ik': False, 'inside_walls': False,         # retry, IK tries, footprint;
+                        'lower_vias': 0}}                                  # run 3: lower waypoints)
 
 
 @pytest.fixture(scope='module')
@@ -100,14 +101,16 @@ def test_c1_axis_s3_half_turn_is_flagged(arm, col, comp):
 def test_checked_store_lower_stays_inside_the_walls(arm, col, comp):
     """B5.4: stores fill from a corner, 5 mm from two walls; the joint-space arc of `lower` bulges past
     them unchecked (test_arm), so with the check every plan of every item and yaw is clear on a 4x finer
-    scan of above -> release."""
+    scan of above -> release (through the store.lower_vias points the arm goes down by)."""
     for name, spec in OBJECTS['trash'].items():
         for yaw in np.linspace(-np.pi, np.pi, 7)[:-1]:
             held = picked(arm, spec, yaw)
             state = State(held=dict(held, id='i'))
             ok, why, plan, _ = plan_store(arm, comp, held, [], CFG, store_check(arm, col, comp, state, 'i'))
             assert ok, (name, yaw, why)
-            assert not col.scan_move(plan['above'], plan['release'], state, step=COL['step_rad'] / 4), (name, yaw)
+            path = [plan['above']] + list(plan.get('via') or []) + [plan['release']]
+            for qa, qb in zip(path, path[1:]):
+                assert not col.scan_move(qa, qb, state, step=COL['step_rad'] / 4), (name, yaw)
 
 
 def half_turns(arm, col, comp, cfg):

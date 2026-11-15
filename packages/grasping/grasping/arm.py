@@ -344,8 +344,11 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
             return [((lo + hi) / 2, 0.0)]
         v = np.linspace(lo, hi, n)
         return [(float(x), 1.0 if i == 0 else -1.0 if i == n - 1 else 0.0) for i, x in enumerate(v)]
-    retry = st.get('wall_retry_m') or 0.0                    # an edge spot the wall rejected: once more, further in
+    retry = st.get('wall_retry_m') or 0.0                    # an edge spot the wall rejected: again, further in,
+    retries = st.get('wall_retries') or 1                    # at most this many times
     quick = st.get('seeded_ik')                              # one seeded try: pre-aim, and above for a first check
+    n_via = st.get('lower_vias') or 0                        # IK points between above and release: the joint line
+                                                             # drifted the item 2-3 cm sideways (B5.4 run 3)
     mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
     corner = st.get('fill_corner')                           # [sx, sy]: from the (sx x, sy y) corner; null: centre first
     rank = (lambda x, y: (-corner[0] * x, -corner[1] * y)) if corner else \
@@ -360,16 +363,37 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
                 return res
         return arm.ik(target, tilt, seed_q=seed, bounds=bounds)
 
-    def cand(x, y, inx, iny, again):
+    def over(xy, target, max_tilt, seed, near_q, restarts=None):   # tips at target, re-aimed once so the item
+        target = np.array(target, dtype=float)                     # centre is over xy (it hangs below the tips)
+        for aim in range(2):
+            ok, qt, err, tilt = arm.ik(target, max_tilt, seed_q=seed, bounds=bounds, restarts=restarts)
+            qt = align_item(arm, qt, held, near_wrist=near_q[-1] if nearest else None) if ok else None
+            if qt is None:
+                return None
+            target[:2] += np.asarray(xy) - held_item(arm, qt, held)[0][:2]
+            seed = qt
+        return qt
+
+    def vias(xy, target, dz, q):                             # top first; seeded upward from the release
+        out, seed = [], q
+        for k in range(1, n_via + 1):
+            qv = over(xy, target + [0, 0, dz * k / (n_via + 1)], cfg['approach_max_tilt_deg'], seed, q, 1)
+            if qv is None:
+                return None
+            out.append(qv)
+            seed = qv
+        return out[::-1]
+
+    def cand(x, y, inx, iny, again):                         # again: retries so far
         return (pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle,
                 rank(x, y), again, x, y, inx, iny)          # a retry 5 mm in before the next spot along
-    cands = [cand(x, y, inx, iny, False) for x, inx in spots(*c['x'], half[0], st['slots_x']) for y, iny in ys]
+    cands = [cand(x, y, inx, iny, 0) for x, inx in spots(*c['x'], half[0], st['slots_x']) for y, iny in ys]
     heapq.heapify(cands)
     rejected = []
     while cands:
         pile, _, _, again, x, y, inx, iny = heapq.heappop(cands)
         if pile + ext[2] > c['rim'] - st['top_below_rim_m']:           # its top once it has landed
-            return False, 'compartment_full', {}, {'pile': pile, 'rejected': rejected}   # sorted: the rest is higher
+            return False, 'compartment_full', {}, {'pile': pile, 'rejected': rejected, 'ext': ext}   # sorted: the rest is higher
         tips_z = max(pile + st['drop_gap_m'] + half[2] - d[2], tips_min)
         target = np.array([x - d[0], y - d[1], tips_z])
         q, seed = None, q0
@@ -390,28 +414,35 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
         if st.get('inside_walls') and not (c['x'][0] <= ci[0] - e[0] / 2 and ci[0] + e[0] / 2 <= c['x'][1] and
                                            c['y'][0] <= ci[1] - e[1] / 2 and ci[1] + e[1] / 2 <= c['y'][1]):
             continue                                         # a tilted item at an edge spot reaches past the wall
-        above = target + [0, 0, max(0.0, c['rim'] + cfg['unload']['rim_clearance_m'] - (ci[2] - e[2] / 2))]
+        dz = max(0.0, c['rim'] + cfg['unload']['rim_clearance_m'] - (ci[2] - e[2] / 2))
+        above = target + [0, 0, dz]
+        qv = vias((x, y), target, dz, q)
+        if qv is None:
+            continue
+        def solve_above(restarts=None):                      # with vias: re-aimed like them
+            if n_via:
+                return over((x, y), above, cfg['unload']['above_max_tilt_deg'], qv[0], q, restarts)
+            ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds,
+                                       restarts=restarts)
+            return align_item(arm, qa, held, near_wrist=q[-1] if nearest else None) if ok else None
         why = None
         if quick and check is not None:                      # a cheap seeded above first: most spots fail the
-            ok, qs, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds,
-                                       restarts=1)           # check anyway (the full solve only for the rest)
-            qs = align_item(arm, qs, held, near_wrist=q[-1] if nearest else None) if ok else None
-            why = check({'above': qs, 'release': q}) if qs is not None else None
+            qs = solve_above(1)                              # check anyway (the full solve only for the rest)
+            why = check({'above': qs, 'via': qv, 'release': q}) if qs is not None else None
         if not why:
-            ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds)
-            qa = align_item(arm, qa, held, near_wrist=q[-1] if nearest else None) if ok else None
+            qa = solve_above()
             if qa is None:
                 continue
-            why = check({'above': qa, 'release': q}) if check is not None else None
-        info = {'slot': (x, y), 'pile': pile, 'drop': ci[2] - e[2] / 2 - pile, 'rejected': rejected}
+            why = check({'above': qa, 'via': qv, 'release': q}) if check is not None else None
+        info = {'slot': (x, y), 'pile': pile, 'drop': ci[2] - e[2] / 2 - pile, 'rejected': rejected, 'ext': ext}
         if why:
             rejected.append(((x, y), why))
-            if retry and not again and (inx or iny) and 'basket_link' in why:
-                heapq.heappush(cands, cand(x + inx * retry, y + iny * retry, inx, iny, True))
+            if retry and again < retries and (inx or iny) and 'basket_link' in why:
+                heapq.heappush(cands, cand(x + inx * retry, y + iny * retry, inx, iny, again + 1))
             continue
-        return True, '', {'above': qa, 'release': q}, info
+        return True, '', dict({'above': qa, 'release': q}, **({'via': qv} if qv else {})), info
     if rejected:
-        return False, 'compartment_full', {}, {'pile': float('nan'), 'rejected': rejected}
+        return False, 'compartment_full', {}, {'pile': float('nan'), 'rejected': rejected, 'ext': ext}
     return False, 'no_spot', {}, {}
 
 

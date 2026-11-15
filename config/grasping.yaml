@@ -62,7 +62,13 @@ grasping:
   # check (a seeded above alone tilted long items to 0-5 mm over the rim). 30 tries x 3 solves x the extra
   # spots made store plans 6.5 s p95; false = off. inside_walls: a spot where the held item's
   # footprint at the release pose reaches past a wall is skipped (a tilted IK solve at an edge spot; false = off).
-  store: {slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
+  # B5.4 run 3 (the jar refused as compartment_full beside a flat bottle): the joint-space line from above to
+  # release swung the held jar 19-27 mm sideways and tilted it (bbox 70 -> 88 mm tall), so every edge spot
+  # touched a wall top near the rim. lower_vias: IK points spaced evenly between above and release (0 = off),
+  # each and above re-aimed on the item centre; the arm goes down through them and back up the same way
+  # (with 2 the item stayed within 7 mm of the spot in the replay); wall_retries: how often an edge spot
+  # is retried further in (1 left the jar's -x end spot at 10 mm in, still 4 mm from the wall; 3 reach 15 mm).
+  store: {slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
           drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01}
   # Wrist turn of the store and unload plans (the jaws open the same way every half turn; a square
   # item fits every quarter turn). nearest: the turn nearest the previous pose (over -> release ->
