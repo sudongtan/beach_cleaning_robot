@@ -385,3 +385,24 @@ def test_a_stacked_item_rests_flat_on_what_lies_there():
     assert supported((-0.034, 0.107), [short], 0.170, 0.105, m)
     assert supported((-0.200, 0.040), [short], 0.105, 0.105, m)
     assert not supported((-0.034, 0.107), [short], 0.200, 0.105, m)   # nothing of that height
+
+
+def test_a_spot_the_item_cannot_be_unloaded_from_is_skipped(arm):
+    """devb5b s2: a cube in a corner stored fine but no unload planned from there. With unload_check
+    the first spot that fails it is rejected (no_unload) and the next spot is used; the landed box
+    handed to it is the one the item will be."""
+    held = picked(arm, OBJECTS['trash'][next(iter(OBJECTS['trash']))], 0.0)
+    ok, _, plan, info = plan_store(arm, 'recyclable', held, [], CFG)
+    assert ok
+    first = info['slot']
+    seen = []
+
+    def unload_check(box, height):
+        seen.append((box, height))
+        return 'unreachable (above)' if len(seen) == 1 else None
+    ok, _, plan2, info2 = plan_store(arm, 'recyclable', held, [], CFG, unload_check=unload_check)
+    assert ok and info2['slot'] != first
+    assert any(xy == first and w.startswith('no_unload') for xy, w in info2['rejected'])
+    item, _, e = landed(arm, plan2['release'], held, info2['drop'])
+    box, height = seen[-1]
+    assert np.allclose(box['centre'], item['centre'], atol=1e-6) and abs(height - e[2]) < 1e-6

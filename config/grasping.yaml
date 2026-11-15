@@ -76,9 +76,13 @@ grasping:
   # along the compartment lie over an item of that pile height (null = off). devb5 s8: a 0.23 m bottle stacked
   # over the end of a 0.12 m one tipped (vertical extent 0.14 m, unload above out of reach at 0.135 m) and the
   # item below could not be unloaded past it: the compartment stayed full for the rest of the run.
+  # check_unload: a spot is used only if the unload from it (as it will have landed) plans and passes the
+  # collision check (false = off). devb5b s2: a cube in a corner and a wide item stacked on another stored
+  # fine, but neither (nor the item under the stack) could be unloaded: the compartment stayed full. With
+  # task unload_order last_first the layout at an unload is the one checked when that item was stored.
   store: {slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
           drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01,
-          support_margin_m: 0.03}
+          support_margin_m: 0.03, check_unload: true}
   # Wrist turn of the store and unload plans (the jaws open the same way every half turn; a square
   # item fits every quarter turn). nearest: the turn nearest the previous pose (over -> release ->
   # above); any: whichever float noise picks. With any, the held bottle turned ~pi while lowered into

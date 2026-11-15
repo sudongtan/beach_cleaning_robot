@@ -290,6 +290,13 @@ def plan_unload(arm, bin_id, centre, height, cfg, check=None):
     return False, why, {}
 
 
+def first_plan_only(cfg):
+    """cfg without collision restarts: plan_unload's first plan only (seeded at over, no random seeds),
+    the one store.check_unload checks: the same plan comes back at the bin, and a failing spot costs
+    one plan, not 1 + restarts (offline: store p95 1.43 -> 4.94 s with the restarts)."""
+    return dict(cfg, collision=dict(cfg.get('collision') or {}, restarts=0))
+
+
 def restarts(cfg):
     """Plan restarts after a collision (collision.restarts, default ik_restarts)."""
     return (cfg.get('collision') or {}).get('restarts', cfg['ik_restarts'])
@@ -355,7 +362,7 @@ def supported(slot, others, pile, floor, margin):
                for px, py in [(slot[0] + dx, slot[1]) for dx in (-margin, 0.0, margin)])
 
 
-def plan_store(arm, bin_id, held, others, cfg, check=None):
+def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
     """Arm joint targets to put a held item (see held_item) into compartment bin_id: long side
     along the compartment, at the lowest free spot (others: items already in the basket, see
     pile_top), released `drop_gap_m` above what lies there, but never so low that the gripper bar
@@ -363,7 +370,10 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
     along / across the compartment. An item that would stick out above the rim (less than
     top_below_rim_m below it) is refused as compartment_full. check(plan) -> None | failure text
     (collision check, B5): a failing spot is skipped (info 'rejected': [(slot, text)]); if no spot
-    is clean the item is refused as compartment_full. Returns (ok, reason, {'above', 'release'}, info)."""
+    is clean the item is refused as compartment_full. unload_check(box, height) -> None | failure text
+    (store.check_unload): a spot is used only if the item, landed there ({'centre', 'R', 'size'}), can be
+    unloaded again (devb5b: a corner cube and a stacked wide item stored fine but no unload planned).
+    Returns (ok, reason, {'above', 'release'}, info)."""
     st = cfg['store']
     c = compartment(arm, bin_id)
     over = arm.poses[f'over_{bin_id}']['arm']
@@ -482,6 +492,11 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
             if qa is None:
                 continue
             why = check({'above': qa, 'via': qv, 'release': q}) if check is not None else None
+        if not why and unload_check is not None:             # with unload_order last_first the items stored
+            lc, Rb, le = held_item(arm, q, held)             # later are out by then: this layout comes back
+            lc = lc - [0, 0, lc[2] - le[2] / 2 - pile]
+            u = unload_check({'centre': lc, 'R': Rb, 'size': tuple(held['size'])}, float(le[2]))
+            why = f'no_unload: {u}' if u else None
         info = {'slot': (x, y), 'pile': pile, 'drop': ci[2] - e[2] / 2 - pile, 'rejected': rejected, 'ext': ext}
         if why:
             rejected.append(((x, y), why))

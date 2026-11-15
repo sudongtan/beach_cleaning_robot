@@ -50,8 +50,8 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from vision_msgs.msg import Detection3DArray
 
 from perception.true_pose import TruePose
-from grasping.arm import (ARM, TIPS, Arm, bin_release_target, in_basket, near, plan_pick, plan_store,
-                          plan_unload, release_clearances)
+from grasping.arm import (ARM, TIPS, Arm, bin_release_target, first_plan_only, in_basket, near, plan_pick,
+                          plan_store, plan_unload, release_clearances)
 from grasping.collision import Collision, State, bin_boxes, describe, reason
 from grasping.sequence import (Runner, Step, bin_steps, ground_steps, pick_steps, recovery_steps,
                                store_steps)
@@ -414,7 +414,10 @@ class GraspingNode(Node):
                         def check(plan):
                             steps = store_steps(self.arm.poses, g.bin_id, self.arm.finger_open, obj, plan)
                             return self.check('store slot', steps, start, state)[0]
-                    ok, why, plan, info = plan_store(self.arm, g.bin_id, scene[0], scene[1], self.cfg, check)
+                    unload_check = self.unload_check(g.bin_id, obj) \
+                        if self.collision and self.cfg['store'].get('check_unload') else None
+                    ok, why, plan, info = plan_store(self.arm, g.bin_id, scene[0], scene[1], self.cfg, check,
+                                                     unload_check)
                     self.get_logger().info(
                         f"store {obj}: {why or 'ok'} slot {np.round(info.get('slot', ()), 3).tolist()} pile "
                         f"{info.get('pile', float('nan')):.3f} drop {info.get('drop', float('nan')):.3f} held bbox "
@@ -490,6 +493,24 @@ class GraspingNode(Node):
             return self.run(goal_handle, steps, result)
         finally:
             self.busy.release()
+
+    def unload_check(self, bin_id, obj):
+        """For plan_store (store.check_unload): unload_check(box, height) -> None | failure text, the
+        unload of obj landed as box among the basket's items, checked up to over_bin from rest."""
+        boxes, rest = self.basket_boxes(), np.asarray(self.arm.poses['rest']['arm'], dtype=float)
+        boxes.pop(obj, None)
+        cfg = first_plan_only(self.cfg)
+
+        def unload_check(box, height):
+            state = State(dict(boxes, **{obj: box}), excluded={obj})
+
+            def check(plan):
+                steps = bin_steps(self.arm.poses, bin_id, plan, plan['above'], self.arm.finger_open,
+                                  self.arm.finger_closed, obj)
+                return self.check('unload at store', steps, rest, state, until='over_bin')[0]
+            ok, why, _ = plan_unload(self.arm, bin_id, box['centre'], height, cfg, check)
+            return None if ok else why
+        return unload_check
 
     def basket_scene(self, object_id):
         """For plan_store, from ground truth: the held item in the jaw-tips frame ({'p', 'R', 'size'})
