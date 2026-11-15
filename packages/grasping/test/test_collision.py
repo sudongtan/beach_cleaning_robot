@@ -26,7 +26,8 @@ OLD = {**CFG, 'store': {**CFG['store'], 'slots_x': 3, 'slots_y': 2,         # th
                         'bar_box_exact': False,                            # (B5.3: 4 x 3, exact bar;
                         'wall_retry_m': None, 'fill_corner': None,         # B5.4: 8 x 3 from a corner,
                         'seeded_ik': False, 'inside_walls': False,         # retry, IK tries, footprint;
-                        'lower_vias': 0}}                                  # run 3: lower waypoints)
+                        'lower_vias': 0},                                  # run 3: lower waypoints)
+       'unload': {**CFG['unload'], 'lift_vias': 0}}                         # sweep 7: lift waypoints
 
 
 @pytest.fixture(scope='module')
@@ -176,7 +177,7 @@ def test_off_gives_the_9ac4816_plans():
     for comp in ('recyclable', 'residual'):
         cc = compartment(arm, comp)
         centre = (np.mean(cc['x']), np.mean(cc['y']), cc['floor'] + 0.033)
-        out['unload'].append(plan_unload(arm, comp, centre, 0.066, CFG)[2])
+        out['unload'].append(plan_unload(arm, comp, centre, 0.066, OLD)[2])
     for h, comp in zip(helds, ('recyclable', 'residual', 'recyclable')):
         out['store'].append(plan_store(arm, comp, h, [], OLD)[2])
     for kind, plans in out.items():

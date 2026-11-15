@@ -76,14 +76,17 @@ def bin_steps(poses, bin_id, plan, release_q, finger_open, finger_closed, object
     """Take item object_id out of compartment bin_id and release it over the bin (one item).
     plan (grasping.arm.plan_unload): jaws hover just above the item, then lift straight up until
     it clears the rim. Attaching from above the rim instead (the item ~23 cm below the jaws)
-    dragged it through the basket wall (A2b a2b_bin2)."""
+    dragged it through the basket wall (A2b a2b_bin2). plan['via']: top first (unload.lift_vias)."""
+    via = list(plan.get('via') or [])
     return [Step('arm', poses['up']['arm'], 'up'),
             Step('fingers', finger_closed, 'close'),          # jaws closed inside the compartment
             Step('arm', poses[f'over_{bin_id}']['arm'], f'over_{bin_id}'),
-            Step('arm', plan['above'], 'above_item'),
-            Step('arm', plan['hover'], 'descend'),
-            Step('attach', object_id, 'attach'),
-            Step('arm', plan['above'], 'lift'),
+            Step('arm', plan['above'], 'above_item')] + \
+           [Step('arm', q, 'descend') for q in via] + \
+           [Step('arm', plan['hover'], 'descend'),
+            Step('attach', object_id, 'attach')] + \
+           [Step('arm', q, 'lift') for q in via[::-1]] + \
+           [Step('arm', plan['above'], 'lift'),
             Step('arm', poses['up']['arm'], 'up'),
             Step('arm', release_q, 'over_bin'),
             Step('fingers', finger_open, 'open'),

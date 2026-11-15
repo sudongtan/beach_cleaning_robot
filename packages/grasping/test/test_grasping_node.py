@@ -306,7 +306,8 @@ def test_bin_place_takes_the_item_from_inside_the_compartment(system):
     r = send(node, PlaceObject, '/grasp/place', bin_goal())
     assert r.success, r.message
     assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]
-    hover = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]                     # up, over, above, hover
+    n = grasping.cfg['unload'].get('lift_vias') or 0
+    hover = grasping.arm.fk(fakes.arm_goals[3 + n], TIPS)[0]                 # up, over, above, vias, hover
     assert hover[2] == pytest.approx(item[2] + 0.011 + grasping.cfg['hover_above_item_m'], abs=0.006)
     assert hover[:2] == pytest.approx(item[:2], abs=0.01)
     release = fakes.arm_goals[-3]
@@ -320,7 +321,8 @@ def test_failed_bin_place_releases_the_item(system):
     c = compartment(grasping.arm, 'recyclable')
     grasping.gt = gt_objects(('trash_03', ((c['x'][0] + c['x'][1]) / 2, 0.07, c['floor'] + 0.03)))
     grasping.gt.detections[0].bbox.size.z = 0.06
-    fakes.fail_goal = 5                         # up, over, above, hover, then the lift out fails
+    fakes.fail_goal = 5 + (grasping.cfg['unload'].get('lift_vias') or 0)   # up, over, above, vias, hover,
+                                                                            # then the lift out fails
     r = send(node, PlaceObject, '/grasp/place', bin_goal())
     assert not r.success and 'item released' in r.message
     assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]

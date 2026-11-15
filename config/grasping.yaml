@@ -38,6 +38,10 @@ grasping:
     # IK stays within this of the over-compartment pose, per joint in arm_controller order
     # (waist and forearm roll; .inf = free): no flipped solutions, no half-turn swings
     joint_spread_rad: [1.0, .inf, .inf, 1.0, .inf, .inf]
+    # IK points between hover and above, re-aimed so the item centre stays over its spot (0 = off). The store's
+    # edge spots (store.lower_vias, B5.4 run 3) cut unload success to 38.9 % in sweep 7: the joint line swung
+    # the gripper and the held item into the walls. 12 second-store tasks: 148/384 (off) -> 294/384 (2).
+    lift_vias: 2
   # Storing in the basket (attach mode): the item's long side along the compartment, at the lowest of
   # slots_x x slots_y spots (ground truth of the items already there, like the unload), released
   # drop_gap_m above what lies there. One fixed release point stacked the items up to the rim and

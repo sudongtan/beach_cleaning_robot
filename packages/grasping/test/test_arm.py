@@ -159,8 +159,30 @@ def test_unload_moves_stay_on_one_side(arm, comp):
                                             c['floor'] + 0.033), 0.066, CFG)
     assert ok, why
     over = np.array(arm.poses[f'over_{comp}']['arm'])
-    for q in plan.values():
+    for q in [plan['above'], plan['hover']] + list(plan.get('via', [])):
         assert abs(q[0] - over[0]) <= 1.0 + 1e-6 and abs(q[3] - over[3]) <= 1.0 + 1e-6
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_unload_lift_keeps_the_item_over_its_spot(arm, comp):
+    """unload.lift_vias: the item (it hangs below the tips) stays over the spot it lay on from
+    hover up through the waypoints to above, on the plan's IK points (sweep 7: the joint line
+    from hover to above swung it into the walls)."""
+    c = compartment(arm, comp)
+    assert CFG['unload']['lift_vias'] > 0
+    centre = np.array([c['x'][0] + 0.04, c['y'][0] + 0.04, c['floor'] + 0.035])
+    ok, why, plan = plan_unload(arm, comp, centre, 0.07, CFG)
+    assert ok, why
+    assert len(plan['via']) == CFG['unload']['lift_vias']
+    t0, R0 = arm.pose(plan['hover'], TIPS)
+    p = R0.T @ (centre - t0)
+    zs = []
+    for q in list(plan['via'])[::-1] + [plan['above']]:
+        t, R = arm.pose(q, TIPS)
+        item = t + R @ p
+        assert np.linalg.norm(item[:2] - centre[:2]) < 0.004
+        zs.append(item[2])
+    assert zs == sorted(zs) and zs[0] > centre[2]
 
 
 def test_release_clearances_step_down_to_the_minimum():

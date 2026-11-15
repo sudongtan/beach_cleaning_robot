@@ -234,6 +234,29 @@ def plan_unload(arm, bin_id, centre, height, cfg, check=None):
     over = arm.poses[f'over_{bin_id}']['arm']
     bounds = near(over, u['joint_spread_rad'])
     nearest = cfg.get('wrist_branch', 'any') == 'nearest'
+    n_via = u.get('lift_vias') or 0                         # IK points between hover and above (0 = off): with the
+                                                            # store's edge spots (7d542b2) the joint line swung the
+                                                            # gripper and the held item into the walls (sweep 7)
+
+    def lift_vias(plan, seed):                              # top first; above and each re-aimed so the item centre
+        t, R = arm.pose(plan['hover'], TIPS)                # stays over `centre` (it hangs below the tips)
+        p = R.T @ (np.asarray(centre, dtype=float) - t)
+        out, seed = [], plan['hover']
+        for k in list(range(1, n_via + 1)) + [None]:
+            target = above.copy() if k is None else hover + (above - hover) * k / (n_via + 1)
+            for aim in range(2):
+                ok, q, err, tilt = arm.ik(target, u['above_max_tilt_deg'], seed_q=seed, bounds=bounds,
+                                          restarts=1 if aim else None)
+                q = align_jaws(arm, q, (1.0, 0.0), plan['hover'][-1] if nearest else None) if ok else None
+                if q is None:
+                    return None
+                t, R = arm.pose(q, TIPS)
+                target[:2] += np.asarray(centre[:2], dtype=float) - (t + R @ p)[:2]
+                seed = q
+            out.append(q)
+        plan['above'] = out.pop()
+        return out[::-1]
+
     why = ''
     for attempt in range(1 if check is None else 1 + restarts(cfg)):
         plan, seed = {}, (over if attempt == 0 else random_seed(arm, bounds))
@@ -253,6 +276,11 @@ def plan_unload(arm, bin_id, centre, height, cfg, check=None):
             plan[phase], seed = q, q
         if len(plan) < 2:
             continue
+        if n_via:
+            vias = lift_vias(plan, seed)
+            if vias is None:
+                continue
+            plan['via'] = vias
         why = check(plan) if check is not None else None
         if not why:
             return True, '', plan
