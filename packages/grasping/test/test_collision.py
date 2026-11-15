@@ -23,7 +23,9 @@ DATA = Path(__file__).resolve().parent / 'data'
 COL = CFG['collision']
 SHOW = np.asarray(CFG['show_pose'], dtype=float)          # where a pick ends: a store starts here
 OLD = {**CFG, 'store': {**CFG['store'], 'slots_x': 3, 'slots_y': 2,         # the 9ac4816 store planner
-                        'bar_box_exact': False}}                           # (B5.3: 4 x 3, exact bar)
+                        'bar_box_exact': False,                            # (B5.3: 4 x 3, exact bar;
+                        'wall_retry_m': None, 'fill_corner': None,         # B5.4: 8 x 3 from a corner,
+                        'seeded_ik': False, 'inside_walls': False}}        # retry, IK tries, footprint)
 
 
 @pytest.fixture(scope='module')
@@ -42,6 +44,16 @@ def store_check(arm, col, comp, state, object_id):
                                         SHOW, state)
         return None if failure is None else reason(failure)
     return check
+
+
+def test_geometry_cache_does_not_reuse_a_dead_state(arm, col):
+    """B5.4: the cache was keyed by id(state.held); a new held dict made after the old one died got its
+    id and the old item's box (a different size: wrong verdicts, order-dependent test failures)."""
+    for i in range(50):
+        size = (0.05 + 0.001 * i, 0.06, 0.07)
+        geom, _ = col._geometry(State(held={'id': 'i', 'R': np.eye(3), 'p': np.zeros(3), 'size': size}))
+        box = [g for g in geom.geometryObjects if g.name == 'held:i'][0].geometry
+        assert np.allclose(2 * np.asarray(box.halfSide), size), (i, box.halfSide)
 
 
 def test_named_moves_are_clear(arm, col):
@@ -82,6 +94,20 @@ def test_c1_axis_s3_half_turn_is_flagged(arm, col, comp):
         for name, yaw, why, plan_state in turns:
             if why is None:
                 assert not col.scan_move(*plan_state, step=COL['step_rad'] / 4), (name, yaw)
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_checked_store_lower_stays_inside_the_walls(arm, col, comp):
+    """B5.4: stores fill from a corner, 5 mm from two walls; the joint-space arc of `lower` bulges past
+    them unchecked (test_arm), so with the check every plan of every item and yaw is clear on a 4x finer
+    scan of above -> release."""
+    for name, spec in OBJECTS['trash'].items():
+        for yaw in np.linspace(-np.pi, np.pi, 7)[:-1]:
+            held = picked(arm, spec, yaw)
+            state = State(held=dict(held, id='i'))
+            ok, why, plan, _ = plan_store(arm, comp, held, [], CFG, store_check(arm, col, comp, state, 'i'))
+            assert ok, (name, yaw, why)
+            assert not col.scan_move(plan['above'], plan['release'], state, step=COL['step_rad'] / 4), (name, yaw)
 
 
 def half_turns(arm, col, comp, cfg):

@@ -6,7 +6,7 @@
       a2 second store into recyclable, every trash pair x 4 x 4 yaws (pair_store, 1024 plans): any store move
          below clearance_m with the first item lying where it landed.
   (b) check on: every executed move (the plan the planner returned, walked step by step with attach / detach)
-      measured on its own, every pair at step_rad / 10 (a grid apart from the check's refine_step_rad):
+      measured on its own, every pair at step_rad / 9 (a grid apart from the check's refine_step_rad):
       count moves below clearance_m over second stores (every pair x 4 x 4 yaws x both compartments), third
       stores (200 random triples), unloads from those layouts, bin releases over a grid of robot poses at the
       bin, picks over the envelope.
@@ -72,12 +72,12 @@ def checker(steps_of, start, state):
 
 
 def measure(steps, start, state):
-    """Executed moves of a step list, measured on their own (every pair, step_rad / 10, no early stop):
+    """Executed moves of a step list, measured on their own (every pair, step_rad / 9, no early stop):
     [(phase, distance, pair)], per move its closest sample below clearance_m, or (phase, inf, ()) if clear."""
     col, out = W['col'], []
 
     def m(phase, qa, qb, st, fb):
-        hits = col.scan_move(qa, qb, st, fb, col.step / 10)
+        hits = col.scan_move(qa, qb, st, fb, col.step / 9)
         out.append(min(((phase, d, pair) for _, d, pair, sep in hits if not sep), key=lambda x: x[1],
                        default=(phase, math.inf, ())))
         if any(sep for *_, sep in hits):

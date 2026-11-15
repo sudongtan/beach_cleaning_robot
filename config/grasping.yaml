@@ -47,11 +47,22 @@ grasping:
   # less than top_below_rim_m below the rim is refused (compartment_full: the task puts it back).
   # B5.3: slots 4 x 3 (was 3 x 2: with the collision check the jar's slot beside a flat bottle was rejected
   # and no other spot was left; the jar now fits in the middle row). With odd slots_y the middle row is
-  # tried last (a fallback): ranked by distance it centred items and a full compartment fitted fewer. bar_box_exact: the bar's underside from its collision box corners; false
-  # took the box centre (12.5 mm higher than the underside), so a thin item's store put the 18 cm bar
-  # 2-4 mm below the rim, across the side wall and the divider (B5.3 sweep 2, cigarette_pack).
-  store: {slots_x: 4, slots_y: 3, wall_clearance_m: 0.005, drop_gap_m: 0.01, bar_clearance_m: 0.01,
-          bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01}
+  # tried last (a fallback): ranked by distance it centred items and a full compartment fitted fewer.
+  # bar_box_exact: the bar's underside from its collision box corners; false took the box centre (12.5 mm
+  # higher than the underside), so a thin item's store put the 18 cm bar 2-4 mm below the rim, across the
+  # side wall and the divider (B5.3 sweep 2, cigarette_pack).
+  # B5.4 (run lower_b5a: the bottle's edge slots, wall_clearance_m = collision.clearance_m, all touched the
+  # wall at 4.1-5.0 mm, the bottle went to the centre and left the jar no spot): slots_x 8 and fill_corner
+  # [1, 1] (fill from the +x, +y corner; null = nearest the centre first), so a long item lies at one end
+  # and leaves a free end; wall_retry_m: an edge spot the check rejected at the basket is tried once more
+  # that much further in (null = off); seeded_ik: the pre-aim solve (only finds the item's offset for the
+  # re-aim) takes one try from its seed first (all ik_restarts if it fails); with the check on, a spot is first
+  # checked with a one-try seeded above, and only a spot that passes gets the full above solve and the real
+  # check (a seeded above alone tilted long items to 0-5 mm over the rim). 30 tries x 3 solves x the extra
+  # spots made store plans 6.5 s p95; false = off. inside_walls: a spot where the held item's
+  # footprint at the release pose reaches past a wall is skipped (a tilted IK solve at an edge spot; false = off).
+  store: {slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
+          drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01}
   # Wrist turn of the store and unload plans (the jaws open the same way every half turn; a square
   # item fits every quarter turn). nearest: the turn nearest the previous pose (over -> release ->
   # above); any: whichever float noise picks. With any, the held bottle turned ~pi while lowered into
@@ -69,8 +80,10 @@ grasping:
   # plans solved again after a collision (each ~0.3-0.6 s of IK; ik_restarts = 30 took up to 40 s, B5.3).
   # refine_m: where a pair comes within clearance_m + refine_m at a sample, both sample intervals beside it
   # are checked every refine_step_rad (B5.3 sweep 2: 7 of 13972 unload lifts dipped to 4.8-5.0 mm between
-  # two step_rad samples; null = no refinement).
-  collision: {clearance_m: 0.005, step_rad: 0.02, refine_m: 0.002, refine_step_rad: 0.005, restarts: 4}
+  # two step_rad samples; null = no refinement); refine_step_rad 0.0025 (was 0.005: sweep 4, one unload lift
+  # 4.995-5.0 mm between two fine samples). check_first: phases checked before the rest of a plan (same
+  # verdict; a store's lower move fails most, so the long up -> above move is skipped then; null = in order).
+  collision: {clearance_m: 0.005, step_rad: 0.02, refine_m: 0.002, refine_step_rad: 0.0025, restarts: 4, check_first: [lower]}
   move_time_s: 2.5              # duration of each arm move (at least; see max_joint_speed_radps)
   # C1 item 24: a move stopped for safety keeps going ~0.03 rad per 1 rad/s of joint speed (devtrace: stop
   # latency + the hold spline starting at the measured velocity); with 2.5 s per move big swings ran at

@@ -8,6 +8,7 @@ is checked by grasping.collision (B5) when config `collision` is set; plans take
 """
 
 import itertools
+import heapq
 import math
 import subprocess
 import xml.etree.ElementTree as ET
@@ -83,9 +84,10 @@ class Arm:
         pin.framesForwardKinematics(self.model, self.data, self.q0)
         return self.data.oMf[self.model.getFrameId(name)].translation.copy()
 
-    def ik(self, target, max_tilt_deg, frame=TIPS, seed_q=None, iters=300, bounds=None):
+    def ik(self, target, max_tilt_deg, frame=TIPS, seed_q=None, iters=300, bounds=None, restarts=None):
         """Returns (ok, arm_q, position error m, tilt deg). First try starts at seed_q (or zeros).
-        bounds: (lo, hi) arrays narrowing the joint limits for this solve (e.g. no flipped arm)."""
+        bounds: (lo, hi) arrays narrowing the joint limits for this solve (e.g. no flipped arm).
+        restarts: tries for this solve (default the arm's)."""
         m, d = self.model, self.data
         fid = m.getFrameId(frame)
         target = np.asarray(target, dtype=float)
@@ -97,7 +99,7 @@ class Arm:
         D0, D1, D2 = (float(v) for v in DOWN)
         damp = 1e-4 * np.eye(6)
         Jw, e = np.empty((6, len(self.vidx))), np.empty(6)
-        for r in range(self.restarts):
+        for r in range(self.restarts if restarts is None else restarts):
             q = self.q0.copy()
             q[self.idx] = self.rng.uniform(lo, hi) if r else np.clip(0.0 if seed_q is None else seed_q, lo, hi)
             for _ in range(iters):
@@ -336,24 +338,43 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
     bar_low = bar_under(q0) - t0[2]                          # bar underside above the tips
     tips_min = c['rim'] + st['bar_clearance_m'] - bar_low
 
-    def spots(lo, hi, h, n):
+    def spots(lo, hi, h, n):                                 # [(spot, inward step for a retry)]
         lo, hi = lo + h + st['wall_clearance_m'], hi - h - st['wall_clearance_m']
-        return [(lo + hi) / 2] if hi <= lo else list(np.linspace(lo, hi, n))
+        if hi <= lo:
+            return [((lo + hi) / 2, 0.0)]
+        v = np.linspace(lo, hi, n)
+        return [(float(x), 1.0 if i == 0 else -1.0 if i == n - 1 else 0.0) for i, x in enumerate(v)]
+    retry = st.get('wall_retry_m') or 0.0                    # an edge spot the wall rejected: once more, further in
+    quick = st.get('seeded_ik')                              # one seeded try: pre-aim, and above for a first check
     mid = np.array([(c['x'][0] + c['x'][1]) / 2, (c['y'][0] + c['y'][1]) / 2])
+    corner = st.get('fill_corner')                           # [sx, sy]: from the (sx x, sy y) corner; null: centre first
+    rank = (lambda x, y: (-corner[0] * x, -corner[1] * y)) if corner else \
+        (lambda x, y: (float(np.hypot(x - mid[0], y - mid[1])), 0.0))
     ys = spots(*c['y'], half[1], st['slots_y'])
-    middle = ys[len(ys) // 2] if len(ys) % 2 and len(ys) > 1 else None   # odd slots_y: a fallback row
-    cands = [(pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle,
-              float(np.hypot(x - mid[0], y - mid[1])), x, y)
-             for x in spots(*c['x'], half[0], st['slots_x']) for y in ys]
+    middle = ys[len(ys) // 2][0] if len(ys) % 2 and len(ys) > 1 else None   # odd slots_y: a fallback row
+
+    def solve(target, tilt, seed, once):
+        if once:
+            res = arm.ik(target, tilt, seed_q=seed, bounds=bounds, restarts=1)
+            if res[0]:
+                return res
+        return arm.ik(target, tilt, seed_q=seed, bounds=bounds)
+
+    def cand(x, y, inx, iny, again):
+        return (pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle, again,
+                rank(x, y), x, y, inx, iny)
+    cands = [cand(x, y, inx, iny, False) for x, inx in spots(*c['x'], half[0], st['slots_x']) for y, iny in ys]
+    heapq.heapify(cands)
     rejected = []
-    for pile, _, _, x, y in sorted(cands):
+    while cands:
+        pile, _, again, _, x, y, inx, iny = heapq.heappop(cands)
         if pile + ext[2] > c['rim'] - st['top_below_rim_m']:           # its top once it has landed
             return False, 'compartment_full', {}, {'pile': pile, 'rejected': rejected}   # sorted: the rest is higher
         tips_z = max(pile + st['drop_gap_m'] + half[2] - d[2], tips_min)
         target = np.array([x - d[0], y - d[1], tips_z])
         q, seed = None, q0
-        for _ in range(2):                                   # the item's offset turns with the wrist: re-aim
-            ok, q, err, tilt = arm.ik(target, cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds)
+        for aim in range(2):                                 # the item's offset turns with the wrist: re-aim
+            ok, q, err, tilt = solve(target, cfg['approach_max_tilt_deg'], seed, quick and aim == 0)
             q = align_item(arm, q, held, near_wrist=q0[-1] if nearest else None) if ok else None
             if q is None:
                 break
@@ -366,15 +387,27 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
         if (abs(ci[0] - x) > 0.015 or abs(ci[1] - y) > 0.015
                 or bar_under(q) < c['rim'] + st['bar_clearance_m'] - 0.005):
             continue
+        if st.get('inside_walls') and not (c['x'][0] <= ci[0] - e[0] / 2 and ci[0] + e[0] / 2 <= c['x'][1] and
+                                           c['y'][0] <= ci[1] - e[1] / 2 and ci[1] + e[1] / 2 <= c['y'][1]):
+            continue                                         # a tilted item at an edge spot reaches past the wall
         above = target + [0, 0, max(0.0, c['rim'] + cfg['unload']['rim_clearance_m'] - (ci[2] - e[2] / 2))]
-        ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds)
-        qa = align_item(arm, qa, held, near_wrist=q[-1] if nearest else None) if ok else None
-        if qa is None:
-            continue
+        why = None
+        if quick and check is not None:                      # a cheap seeded above first: most spots fail the
+            ok, qs, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds,
+                                       restarts=1)           # check anyway (the full solve only for the rest)
+            qs = align_item(arm, qs, held, near_wrist=q[-1] if nearest else None) if ok else None
+            why = check({'above': qs, 'release': q}) if qs is not None else None
+        if not why:
+            ok, qa, err, tilt = arm.ik(above, cfg['unload']['above_max_tilt_deg'], seed_q=q, bounds=bounds)
+            qa = align_item(arm, qa, held, near_wrist=q[-1] if nearest else None) if ok else None
+            if qa is None:
+                continue
+            why = check({'above': qa, 'release': q}) if check is not None else None
         info = {'slot': (x, y), 'pile': pile, 'drop': ci[2] - e[2] / 2 - pile, 'rejected': rejected}
-        why = check({'above': qa, 'release': q}) if check is not None else None
         if why:
             rejected.append(((x, y), why))
+            if retry and not again and (inx or iny) and 'basket_link' in why:
+                heapq.heappush(cands, cand(x + inx * retry, y + iny * retry, inx, iny, True))
             continue
         return True, '', {'above': qa, 'release': q}, info
     if rejected:

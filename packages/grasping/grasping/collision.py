@@ -75,8 +75,9 @@ class State:
 
 class Collision:
 
-    def __init__(self, arm, clearance, step, refine=None, refine_step=None):
+    def __init__(self, arm, clearance, step, refine=None, refine_step=None, first=None):
         self.arm, self.clearance, self.step = arm, float(clearance), float(step)
+        self.first = tuple(first or ())                          # phases checked before the rest (same verdict)
         self.refine = float(refine or 0.0)                       # 0: no refinement
         self.refine_step = float(refine_step or step)
         m = arm.model
@@ -108,7 +109,8 @@ class Collision:
         """From the grasping config's `collision` entry (None: no check)."""
         if not col:
             return None
-        return cls(arm, col['clearance_m'], col['step_rad'], col.get('refine_m'), col.get('refine_step_rad'))
+        return cls(arm, col['clearance_m'], col['step_rad'], col.get('refine_m'), col.get('refine_step_rad'),
+                   col.get('check_first'))
 
     # --- geometry of a state -------------------------------------------------------------------
 
@@ -120,9 +122,9 @@ class Collision:
         """(GeometryModel, GeometryData at clearance_m, GeometryData at clearance_m + refine_m)."""
         key = (id(state.items), frozenset(state.items) - state.excluded, id(state.bins),
                None if state.held is None else (state.held['id'], id(state.held)))
-        hit = self._cache.get(key)
-        if hit is not None:
-            return hit
+        hit = self._cache.get(key)                               # the entry keeps the keyed objects alive, so
+        if hit is not None:                                      # their ids can't be reused by a new state
+            return hit[:3]
         if len(self._cache) > 64:
             self._cache.clear()
         geom = self.base.copy()
@@ -150,8 +152,8 @@ class Collision:
             req.security_margin = self.clearance
         for req in near.collisionRequests:
             req.security_margin = self.clearance + self.refine
-        self._cache[key] = (geom, gdata, near)
-        return self._cache[key]
+        self._cache[key] = (geom, gdata, near, (state.items, state.bins, state.held))
+        return geom, gdata, near
 
     def full(self, arm_q, fingers):
         q = self.arm.full(arm_q)
@@ -308,8 +310,19 @@ class Collision:
     def check_steps(self, steps, start_q, state, measure=None):
         """Walk a step list (grasping.sequence) from arm pose start_q. Returns (failure, end pose, end
         state): failure None, or {'phase', 'index', 's', 'pair', 'distance'} of the first failing move.
-        measure(phase, qa, qb, state, fb): called for every move instead of stopping (sweeps)."""
+        measure(phase, qa, qb, state, fb): called for every move instead of stopping (sweeps).
+        Moves of the phases in `first` (collision.check_first) are checked before the others: the
+        verdict is the same, a failure may name a later move than the sequential walk would."""
         q = np.asarray(start_q, dtype=float)
+        if self.first and measure is None:
+            moves = []
+            _, end_q, end_state = self.check_steps(steps, start_q, state, lambda *m: moves.append(m))
+            index = [i for i, step in enumerate(steps) if step.kind in ('arm', 'fingers')]
+            for i, (phase, qa, qb, st, fb) in sorted(zip(index, moves), key=lambda m: m[1][0] not in self.first):
+                hit = self.check_move(qa, qb, st, fb)
+                if hit is not None:
+                    return dict(hit, phase=phase, index=i), qa, st
+            return None, end_q, end_state
         for i, step in enumerate(steps):
             if step.kind in ('arm', 'fingers'):
                 qb = np.asarray(step.value, dtype=float) if step.kind == 'arm' else q

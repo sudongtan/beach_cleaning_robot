@@ -322,9 +322,12 @@ def deepest_in_wall(arm, qa, qb, held, c, n=60):
 def test_store_lower_keeps_the_held_item_inside_the_walls(arm, comp, branch):
     """c1_axis s3: with wrist_branch any, `above` and `release` took wrist turns ~pi apart, so the
     bottle turned half a turn while lowered into the compartment (9 cm through the wall). nearest
-    keeps the turn; what is left is the joint-space arc (<= 6 mm of the bbox past the wall)."""
+    keeps the turn; what is left is the joint-space arc (<= 6 mm of the bbox past the wall). Unchecked,
+    on the centre-first slot order of 9ac4816: from a corner (B5.4) the first slot is 5 mm from two walls
+    and only the collision check keeps the arc inside (test_collision: checked stores stay inside)."""
     c = compartment(arm, comp)
-    cfg = {**CFG, 'wrist_branch': branch}
+    cfg = {**CFG, 'wrist_branch': branch,
+           'store': {**CFG['store'], 'fill_corner': None, 'wall_retry_m': None, 'inside_walls': False}}
     worst = (-np.inf, 0.0, '')
     for name, spec in OBJECTS['trash'].items():
         for yaw in np.linspace(-np.pi, np.pi, 7)[:-1]:
