@@ -55,7 +55,8 @@ grasping:
   # wall at 4.1-5.0 mm, the bottle went to the centre and left the jar no spot): slots_x 8 and fill_corner
   # [1, 1] (fill from the +x, +y corner; null = nearest the centre first), so a long item lies at one end
   # and leaves a free end; wall_retry_m: an edge spot the check rejected at the basket is tried once more
-  # that much further in (null = off); seeded_ik: the pre-aim solve (only finds the item's offset for the
+  # that much further in, before the next spot along (B5.4 run 2: tried after every plain spot, the bottle
+  # moved 3 cm in instead of 5 mm and left the jar 3 mm of slack; null = off); seeded_ik: the pre-aim solve (only finds the item's offset for the
   # re-aim) takes one try from its seed first (all ik_restarts if it fails); with the check on, a spot is first
   # checked with a one-try seeded above, and only a spot that passes gets the full above solve and the real
   # check (a seeded above alone tilted long items to 0-5 mm over the rim). 30 tries x 3 solves x the extra

@@ -361,13 +361,13 @@ def plan_store(arm, bin_id, held, others, cfg, check=None):
         return arm.ik(target, tilt, seed_q=seed, bounds=bounds)
 
     def cand(x, y, inx, iny, again):
-        return (pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle, again,
-                rank(x, y), x, y, inx, iny)
+        return (pile_top((x, y), half, others, c['floor'], st['overlap_tolerance_m']), y == middle,
+                rank(x, y), again, x, y, inx, iny)          # a retry 5 mm in before the next spot along
     cands = [cand(x, y, inx, iny, False) for x, inx in spots(*c['x'], half[0], st['slots_x']) for y, iny in ys]
     heapq.heapify(cands)
     rejected = []
     while cands:
-        pile, _, again, _, x, y, inx, iny = heapq.heappop(cands)
+        pile, _, _, again, x, y, inx, iny = heapq.heappop(cands)
         if pile + ext[2] > c['rim'] - st['top_below_rim_m']:           # its top once it has landed
             return False, 'compartment_full', {}, {'pile': pile, 'rejected': rejected}   # sorted: the rest is higher
         tips_z = max(pile + st['drop_gap_m'] + half[2] - d[2], tips_min)
