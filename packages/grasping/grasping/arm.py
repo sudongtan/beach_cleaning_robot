@@ -245,8 +245,11 @@ def plan_unload(arm, bin_id, centre, height, cfg, check=None):
         for k in list(range(1, n_via + 1)) + [None]:
             target = above.copy() if k is None else hover + (above - hover) * k / (n_via + 1)
             for aim in range(2):
-                ok, q, err, tilt = arm.ik(target, u['above_max_tilt_deg'], seed_q=seed, bounds=bounds,
-                                          restarts=1 if aim else None)
+                ok, q, err, tilt = arm.ik(target, cfg['approach_max_tilt_deg'], seed_q=seed, bounds=bounds,
+                                          restarts=1)       # one try from the point below at the hover's tilt
+                if not ok:                                  # first (plan time; a one-try 25 deg solve tilted
+                    ok, q, err, tilt = arm.ik(target, u['above_max_tilt_deg'], seed_q=seed, bounds=bounds,
+                                              restarts=1 if aim else None)   # the item into the walls)
                 q = align_jaws(arm, q, (1.0, 0.0), plan['hover'][-1] if nearest else None) if ok else None
                 if q is None:
                     return None
