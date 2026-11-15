@@ -12,8 +12,11 @@ spawns the item where a held item hangs (top hover_above_item_m below the jaw ti
 After each drop the item settles for 3 s; then the robot walks out and back
 with on-the-spot turns (through /cmd_vel_nav and the safety supervisor), and every item is
 checked again. The arm only moves while /safety/state is ok (as the grasping node).
+--one (B5b S1, landing error): one item per compartment per round, cycling through the compartment's
+item types; each stored item also records `planned_rel_cm`, where plan_store's model puts its centre
+at the release (same frame as `rel_cm`), so the drop and walk errors are rel_cm - planned_rel_cm.
 
-    store_drop_test.py [--mode planned] [--rounds 3] [--walk 2.0] [--out results/store_drop/run.json]
+    store_drop_test.py [--mode planned] [--rounds 3] [--walk 2.0] [--one] [--out results/store_drop/run.json]
 """
 
 import argparse
@@ -36,7 +39,7 @@ from std_msgs.msg import String
 
 import physics_grasp_test as pg
 from physics_grasp_test import REPO, TIPS, arm_pose, item_height, item_model_sdf, rc
-from grasping.arm import Arm, plan_store
+from grasping.arm import Arm, held_item, plan_store
 
 FILL = {'recyclable': ['pet_bottle_500', 'food_tin', 'can_330', 'glass_bottle_330', 'glass_jar'],
         'residual': ['food_container', 'poly_cup', 'cigarette_pack', 'food_container', 'poly_cup']}
@@ -170,6 +173,7 @@ def main():
     ap.add_argument('--world', default='beach')
     ap.add_argument('--seed', type=int, default=0, help='scene seed (unused; for nav_walk_test.sh)')
     ap.add_argument('--out', default=str(REPO / 'results' / 'store_drop' / 'run.json'))
+    ap.add_argument('--one', action='store_true', help='one item per compartment per round, types in turn')
     a = ap.parse_args()
     objects = yaml.safe_load(open(REPO / 'sim' / 'common' / 'objects.yaml'))
     gcfg = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
@@ -186,6 +190,9 @@ def main():
     for r in range(a.rounds):
         items = []
         for comp, models in FILL.items():
+            if a.one:
+                kinds = list(dict.fromkeys(models))
+                models = [kinds[r % len(kinds)]]
             for model in models:
                 spec = objects['trash'][model]
                 rig.arm(poses['up']['arm'])
@@ -201,6 +208,7 @@ def main():
                         rig.arm(poses['up']['arm'])
                         rig.arm(poses['rest']['arm'])
                         continue
+                    planned = held_item(model_arm, plan['release'], held)[0] - model_arm.frame(f'basket_{comp}_link')
                     rig.arm(plan['above'])
                     rig.arm(plan['release'])
                 else:
@@ -226,6 +234,8 @@ def main():
                 rig.spin(SETTLE_S)
                 st = in_compartment(rig, comp, name)
                 items.append({'name': name, 'model': model, 'comp': comp, 'drop': st})
+                if plan:
+                    items[-1]['planned_rel_cm'] = (np.asarray(planned) * 100).round(1).tolist()
                 print(f'round {r} {comp:10s} {model:18s} after drop: {st}', flush=True)
                 if plan:
                     rig.arm(plan['above'])

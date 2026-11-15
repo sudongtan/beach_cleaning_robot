@@ -12,7 +12,7 @@ pytest.importorskip('pinocchio')
 pytest.importorskip('coal')
 pytest.importorskip('ament_index_python')
 
-from test_arm import CFG, LIMITS, OBJECTS, ROW, box_size, picked, rz  # noqa: E402
+from test_arm import CFG, LIMITS, OBJECTS, ROW, box_size, landed, picked, rz  # noqa: E402
 
 from grasping.arm import (TIPS, Arm, compartment, first_plan_only, held_item, plan_pick,  # noqa: E402
                           plan_store, plan_unload)
@@ -188,10 +188,10 @@ def test_off_gives_the_9ac4816_plans():
                 assert np.asarray(plan[k]).tolist() == r[k], (kind, k)
 
 
-def unload_checker(arm, col, comp, obj):
+def unload_checker(arm, col, comp, obj, base=ROW):
     """node.unload_check offline: the unload of obj landed as box (alone in the basket), first plan only,
     checked from rest up to over_bin."""
-    rest, cfg = np.asarray(arm.poses['rest']['arm'], dtype=float), first_plan_only(ROW)
+    rest, cfg = np.asarray(arm.poses['rest']['arm'], dtype=float), first_plan_only(base)
 
     def unload_check(box, height):
         state = State({obj: box}, excluded={obj})
@@ -212,7 +212,7 @@ def test_margin_refuses_the_devb5b_corner_cube(arm, col):
     check_unload_margin the corner spot the exact check accepts is refused, naming the offset."""
     c = compartment(arm, 'residual')
     size = box_size(OBJECTS['trash']['poly_cup'])
-    uc = unload_checker(arm, col, 'residual', 'cup')
+    uc = unload_checker(arm, col, 'residual', 'cup', CFG)                      # the c076fa5 lift (straight up)
     at = lambda dy: {'centre': np.array([-0.223, -0.04 + dy, c['floor'] + size[2] / 2]),  # noqa: E731
                      'R': np.eye(3), 'size': tuple(size)}
     assert uc(at(0.0), size[2]) is None
@@ -220,10 +220,12 @@ def test_margin_refuses_the_devb5b_corner_cube(arm, col):
     held = picked(arm, OBJECTS['trash']['poly_cup'], 0.0)
     corner = {**CFG, 'store': {**CFG['store'], 'fill_corner': [-1, 1], 'check_unload': True,
                                'landing_margin_m': 0.009}}
-    ok, _, _, exact = plan_store(arm, 'residual', held, [], corner, unload_check=unload_checker(arm, col, 'residual', 'h'))
+    ok, _, _, exact = plan_store(arm, 'residual', held, [], corner,
+                                 unload_check=unload_checker(arm, col, 'residual', 'h', CFG))
     assert ok and exact['slot'][1] > c['y'][1] - 0.06                          # beside the divider
     margin = {**corner, 'store': {**corner['store'], 'check_unload_margin': True}}
-    ok, _, _, info = plan_store(arm, 'residual', held, [], margin, unload_check=unload_checker(arm, col, 'residual', 'h'))
+    ok, _, _, info = plan_store(arm, 'residual', held, [], margin,
+                                unload_check=unload_checker(arm, col, 'residual', 'h', CFG))
     assert any(xy == exact['slot'] and w.startswith('no_unload at (') for xy, w in info['rejected'])
     assert not ok or info['slot'] != exact['slot']
 
@@ -242,3 +244,21 @@ def test_a_narrow_bottle_at_the_centre_passes_the_margin(arm, col, comp):
     ok, why, _, info = plan_store(arm, comp, held, [], ROW, unload_check=counted)
     assert ok, (why, info.get('rejected'))
     assert len(seen) == 9
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_an_item_pushed_against_a_wall_unloads_with_the_lift_toward_the_middle(arm, col, comp):
+    """B5b S1: the walk pushes items up to 4.3 cm sideways, against a wall. Starting below clearance_m, a lift
+    straight up (c076fa5) drifts toward the wall and fails the separating-contacts rule; with
+    unload.lift_toward_middle_m the item moves away from it (wall_lift2.py: poly cup 0.1 mm from the divider)."""
+    assert ROW['unload']['lift_toward_middle_m'] > 0
+    c = compartment(arm, comp)
+    held = picked(arm, OBJECTS['trash']['poly_cup'], 0.0)
+    ok, why, plan, info = plan_store(arm, comp, held, [], {**ROW, 'store': {**ROW['store'], 'check_unload_margin': False}})
+    assert ok, why
+    o, Rb, e = landed(arm, plan['release'], held, info['drop'])
+    side = -1.0 if comp == 'recyclable' else 1.0                                 # toward the divider
+    gap = (o['centre'][1] - e[1] / 2 - c['y'][0]) if side < 0 else (c['y'][1] - o['centre'][1] - e[1] / 2)
+    box = {'centre': np.asarray(o['centre']) + [0.0, side * (gap - 0.0001), 0.0], 'R': Rb, 'size': tuple(held['size'])}
+    assert unload_checker(arm, col, comp, 'h', CFG)(box, float(e[2])) == 'collision:lift:basket_link/held:h'
+    assert unload_checker(arm, col, comp, 'h')(box, float(e[2])) is None

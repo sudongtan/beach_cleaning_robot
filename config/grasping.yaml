@@ -42,6 +42,12 @@ grasping:
     # edge spots (store.lower_vias, B5.4 run 3) cut unload success to 38.9 % in sweep 7: the joint line swung
     # the gripper and the held item into the walls. 12 second-store tasks: 148/384 (off) -> 294/384 (2).
     lift_vias: 2
+    # B5b: the lift re-aims the item centre this far toward the compartment's middle (clipped there; 0 = straight up
+    # over the item, c076fa5). An item the walk pushed against a wall (S1: up to 4.3 cm in y) starts its unload
+    # below clearance_m; straight up, the IK's sub-mm drift toward the wall failed the separating-contacts rule.
+    # Offline (wall_lift2.py, 2 compartments x 3 types, item 0.1 and 1 mm from either wall, 24 cases): first plan
+    # 0/24 -> 22/24, with restarts 4/24 -> 24/24 (0 -> 0.01).
+    lift_toward_middle_m: 0.01
   # Storing in the basket (attach mode): the item's long side along the compartment, at the lowest of
   # slots_x x slots_y spots (ground truth of the items already there, like the unload), released
   # drop_gap_m above what lies there. One fixed release point stacked the items up to the rim and
@@ -86,8 +92,10 @@ grasping:
   # compartment_full once that many items lie in the compartment, from ground truth, whatever the task counts
   # (null = off; world_model.yaml max_items_per_compartment is the task's limit). check_unload_margin: the
   # store-time unload check also with the item landed landing_margin_m off in x, y and both (9 checks; a
-  # number or [x, y]; false = off). landing_margin_m from the measured landing errors (drop + walk), B5b S1.
-  store: {placement: centre, max_items: 1, check_unload_margin: true, landing_margin_m: 0.015,
+  # number or [x, y]; false = off). landing_margin_m: B5b S1 p95 of |drop + walk error| per axis over 40 samples
+  # (store_drop_test.py --one, scene 101; the walk pushes items up to 4.3 cm in +y, results/store_drop/b5b_s1.json).
+  # margin_clip_walls: an offset beyond the item's free space to a wall is cut to touching it (false = not cut).
+  store: {placement: centre, max_items: 1, check_unload_margin: true, landing_margin_m: [0.015, 0.039], margin_clip_walls: true,
           slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
           drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01,
           support_margin_m: 0.03, check_unload: true}

@@ -238,8 +238,13 @@ def plan_unload(arm, bin_id, centre, height, cfg, check=None):
                                                             # store's edge spots (7d542b2) the joint line swung the
                                                             # gripper and the held item into the walls (sweep 7)
 
+    mid = np.array([sum(c['x']) / 2, sum(c['y']) / 2])
+    away = u.get('lift_toward_middle_m') or 0.0             # B5b: an item the walk pushed against a wall lifts this
+    goal = np.asarray(centre[:2], dtype=float)              # far toward the compartment's middle (0 = straight up)
+    goal = goal + np.clip(mid - goal, -away, away)
+
     def lift_vias(plan, seed):                              # top first; above and each re-aimed so the item centre
-        t, R = arm.pose(plan['hover'], TIPS)                # stays over `centre` (it hangs below the tips)
+        t, R = arm.pose(plan['hover'], TIPS)                # stays over `goal` (it hangs below the tips)
         p = R.T @ (np.asarray(centre, dtype=float) - t)
         out, seed = [], plan['hover']
         for k in list(range(1, n_via + 1)) + [None]:
@@ -254,7 +259,7 @@ def plan_unload(arm, bin_id, centre, height, cfg, check=None):
                 if q is None:
                     return None
                 t, R = arm.pose(q, TIPS)
-                target[:2] += np.asarray(centre[:2], dtype=float) - (t + R @ p)[:2]
+                target[:2] += goal - (t + R @ p)[:2]
                 seed = q
             out.append(q)
         plan['above'] = out.pop()
@@ -461,7 +466,12 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
         lo, hi = lc[:2] - le[:2] / 2, lc[:2] + le[:2] / 2    # or the divider first, stop at the first failure
         slack = lambda o: min(lo[0] + o[0] - c['x'][0], c['x'][1] - hi[0] - o[0],  # noqa: E731
                               lo[1] + o[1] - c['y'][0], c['y'][1] - hi[1] - o[1])
-        for dx, dy in sorted(offsets, key=slack):
+        offs = offsets
+        if st.get('margin_clip_walls'):                      # an item pushed further than its free space stops at the
+            room_lo = np.minimum(0.0, [c['x'][0] - lo[0], c['y'][0] - lo[1]])   # wall (B5b S1: the walk pushes
+            room_hi = np.maximum(0.0, [c['x'][1] - hi[0], c['y'][1] - hi[1]])   # items up to 4.3 cm into it)
+            offs = list(dict.fromkeys(tuple(float(v) for v in np.clip(o, room_lo, room_hi)) for o in offsets))
+        for dx, dy in sorted(offs, key=slack):
             u = unload_check({'centre': lc + [dx, dy, 0.0], 'R': Rb, 'size': tuple(held['size'])}, float(le[2]))
             if u:
                 return f'no_unload at ({dx:+.3f}, {dy:+.3f}): {u}' if dx or dy else f'no_unload: {u}'

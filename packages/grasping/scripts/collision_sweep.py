@@ -12,10 +12,15 @@
       bin, picks over the envelope.
   (c) second-store success rate (and third).
   (d) plan times with the check (p95).
+  B5b S3 (--row: the config file as is, centre store, one item, margin-checked unload; --parts single,bin):
+  single: every item x 12 yaws x both compartments stored into the empty compartment (check on), each
+      accepted store's unload measured at the planned spot, the 8 offsets at landing_margin_m and the 8 at
+      1.5 x landing_margin_m (the item landed that far off).
 
 Usage (sourced ~/wt/install, PYTHONPATH with packages/grasping):
   python3 packages/grasping/scripts/collision_sweep.py --out ~/wt/logs/b5_sweep.json [--jobs 7]
       [--set store.slots_x=4 --set store.slots_y=3]
+  python3 packages/grasping/scripts/collision_sweep.py --row --parts single,bin --out ~/wt/logs/b5b_sweep.json
 """
 
 import argparse
@@ -34,10 +39,10 @@ import yaml
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / 'packages' / 'grasping' / 'test'))
 
-from test_arm import CFG, LIMITS, OBJECTS, box_size, landed, picked, rz  # noqa: E402
+from test_arm import CFG, LIMITS, ROW, OBJECTS, box_size, landed, picked, rz  # noqa: E402
 
-from grasping.arm import (Arm, bin_release_target, compartment, held_item, near, plan_pick,  # noqa: E402
-                          plan_store, plan_unload, release_clearances)
+from grasping.arm import (Arm, bin_release_target, compartment, first_plan_only, held_item, near,  # noqa: E402
+                          plan_pick, plan_store, plan_unload, release_clearances)
 from grasping.collision import Collision, State, bin_boxes, reason  # noqa: E402
 from grasping.sequence import bin_steps, pick_steps, store_steps  # noqa: E402
 
@@ -103,13 +108,31 @@ def store(comp, held, hid, layout, check_on=True):
     state = State(items, held=dict(held, id=hid))
     steps_of = lambda plan: store_steps(arm.poses, comp, arm.finger_open, hid, plan)  # noqa: E731
     check = checker(steps_of, W['show'], state) if check_on else None
-    (ok, why, plan, info), dt = timed(plan_store, arm, comp, held, [o for _, o, *_ in layout], cfg, check)
+    uc = unload_checker(comp, hid, items) if check_on and cfg['store'].get('check_unload') else None
+    (ok, why, plan, info), dt = timed(plan_store, arm, comp, held, [o for _, o, *_ in layout], cfg, check, uc)
     rec = {'ok': ok, 'why': why, 'dt': dt, 'rejected': len(info.get('rejected', []))}
     if ok:
         rec['moves'] = measure(steps_of(plan), W['show'], state)
         o, Rb, e = landed(arm, plan['release'], held, info['drop'])
         rec['landed'] = (hid, o, Rb, e, held['size'])
     return rec
+
+
+def unload_checker(comp, obj, items):
+    """node.unload_check offline: obj landed as box among items, first plan only, checked from rest to over_bin."""
+    arm, cfg = W['arm'], first_plan_only(W['cfg'])
+
+    def unload_check(box, height):
+        state = State(dict(items, **{obj: box}), excluded={obj})
+
+        def check(plan):
+            steps = bin_steps(arm.poses, comp, plan, plan['above'], arm.finger_open, arm.finger_closed, obj)
+            failure, _, _ = W['col'].check_steps(steps[:next(i for i, st in enumerate(steps) if st.phase == 'over_bin')],
+                                                 W['rest'], state)
+            return None if failure is None else reason(failure)
+        ok, why, _ = plan_unload(arm, comp, box['centre'], height, cfg, check)
+        return None if ok else why
+    return unload_check
 
 
 def unload(comp, target, layout, bins=(), release=None):
@@ -247,6 +270,33 @@ def task_b_third(args):
     return {'k': k, 'names': names, 'comp': comp, 'stores': recs, 'unload': unl}
 
 
+def shifted(landed_rec, dx, dy):
+    """A landed record (store's 'landed') moved dx, dy in base_link."""
+    hid, o, Rb, e, size = landed_rec
+    o = dict(o, centre=np.asarray(o['centre'], dtype=float) + [dx, dy, 0.0])
+    return hid, o, Rb, e, size
+
+
+def task_single(args):
+    """(B5b S3) one item x 12 yaws into one empty compartment, then its unloads at the margin offsets."""
+    name, comp = args
+    arm, m = W['arm'], W['cfg']['store']['landing_margin_m']
+    mx, my = (m, m) if np.isscalar(m) else m
+    out = []
+    for yaw in np.linspace(-np.pi, np.pi, 13)[:-1]:
+        r = store(comp, picked(arm, OBJECTS['trash'][name], yaw), 'item', [])
+        rec = dict(slim(r), item=name, comp=comp, yaw=float(yaw), unload={})
+        if r['ok']:
+            for k in (1.0, 1.5):
+                for sx, sy in itertools.product((-1, 0, 1), repeat=2):
+                    if k == 1.5 and not (sx or sy):
+                        continue
+                    t = shifted(r['landed'], sx * k * mx, sy * k * my)
+                    rec['unload'][f'{k} {sx:+d} {sy:+d}'] = slim(unload(comp, t, [t]))
+        out.append(rec)
+    return out
+
+
 def bin_pose(along, lateral, heading, body_height):
     """Opening centre at the rim (base_link) and the bin's yaw relative to base_link, with base_link `along`
     out on the bin's axis, `lateral` beside it, `heading` off facing it (as test_cross_phase.arm_hits_off_axis)."""
@@ -337,8 +387,9 @@ def main():
     ap.add_argument('--set', action='append', default=[], help='config override key.sub=value (grasping.yaml)')
     ap.add_argument('--parts', default='a1,a2,second,third,bin,pick')
     ap.add_argument('--triples', type=int, default=200)
+    ap.add_argument('--row', action='store_true', help='the config file as is (B5b), not the c076fa5 test config')
     args = ap.parse_args()
-    cfg = copy.deepcopy(CFG)
+    cfg = copy.deepcopy(ROW if args.row else CFG)
     for kv in args.set:
         setting(cfg, kv)
     assert cfg.get('collision'), 'config collision is off'
@@ -388,6 +439,24 @@ def main():
             times['store'] = [r['dt'] for r in first + second]
             times['unload'] = [r['dt'] for r in unl]
             print('second', res['second'], '\nunload', res['unload_second'], flush=True)
+        if 'single' in parts:
+            sg = flat(run('single', task_single, [(n, c) for n in ITEMS for c in COMPS]))
+            stores = [{k: v for k, v in r.items() if k != 'unload'} for r in sg]
+            res['single'] = summary(stores, clr)
+            res['single']['refused_by_item'] = {n: {c: sum(not r['ok'] for r in sg if r['item'] == n and r['comp'] == c)
+                                                    for c in COMPS} for n in ITEMS}
+            res['single']['never_stored'] = [f'{n} {c}' for n in ITEMS for c in COMPS
+                                             if not any(r['ok'] for r in sg if r['item'] == n and r['comp'] == c)]
+            for k in ('1.0', '1.5'):
+                u = [dict(v, at=key) for r in sg for key, v in r['unload'].items() if key.startswith(k)]
+                res[f'unload_margin_{k}'] = summary(u, clr)
+                res[f'unload_margin_{k}']['failed_at'] = sorted({v['at'] for v in u if not v['ok']})
+            res['single']['all_9_unload'] = sum(all(v['ok'] for key, v in r['unload'].items() if key.startswith('1.0'))
+                                                for r in sg if r['ok'])
+            times['store'] = [r['dt'] for r in sg]
+            times['unload'] = [v['dt'] for r in sg for v in r['unload'].values()]
+            print('single', res['single'], '\nmargin', res['unload_margin_1.0'], '\n1.5', res['unload_margin_1.5'],
+                  flush=True)
         if 'third' in parts:
             rng = np.random.default_rng(5)
             tasks = [(k, [ITEMS[i] for i in rng.integers(0, len(ITEMS), 3)], [float(y) for y in rng.choice(YAWS4, 3)],

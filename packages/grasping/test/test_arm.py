@@ -17,7 +17,8 @@ from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, grasp
 REPO = Path(__file__).resolve().parents[3]
 ROW = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']   # as configured (B5b: centre, one item)
 CFG = {**ROW, 'store': {**ROW['store'], 'placement': 'grid', 'max_items': None,   # the slot grid (c076fa5) the
-                        'check_unload_margin': False}}                             # tests below were written for
+                        'check_unload_margin': False},                             # tests below were written for
+       'unload': {**ROW['unload'], 'lift_toward_middle_m': 0.0}}
 LIMITS = yaml.safe_load(open(REPO / 'config' / 'robot_limits.yaml'))['robot_limits']
 OBJECTS = yaml.safe_load(open(REPO / 'sim' / 'common' / 'objects.yaml'))
 MAX_H = 0.075                                    # = cross-phase limit: jaw length + tip height - bar clearance
@@ -500,3 +501,12 @@ def test_b5b_switches_off_give_the_c076fa5_plans():
         (ok_a, why_a, plan_a, info_a), (ok_b, why_b, plan_b, info_b) = out
         assert (ok_a, why_a, info_a.get('slot')) == (ok_b, why_b, info_b.get('slot')), name
         assert all(np.array_equal(plan_a[k], plan_b[k]) for k in ('above', 'release')), name
+    no_key = {**CFG, 'unload': {k: v for k, v in CFG['unload'].items() if k != 'lift_toward_middle_m'}}
+    c = compartment(Arm(LIMITS['variant'], CFG['ik_restarts'], CFG['ik_tolerance_m']), 'recyclable')
+    centre = (-0.15, c['y'][0] + 0.035, c['floor'] + 0.033)                     # off the middle: a lift that moves
+    out = []                                                                     # would show here
+    for cfg in (no_key, CFG):
+        arm = Arm(LIMITS['variant'], CFG['ik_restarts'], CFG['ik_tolerance_m'], seed=4)
+        out.append(plan_unload(arm, 'recyclable', centre, 0.066, cfg))
+    assert out[0][:2] == out[1][:2] and set(out[0][2]) == set(out[1][2])
+    assert all(np.array_equal(np.asarray(out[0][2][k]), np.asarray(out[1][2][k])) for k in out[0][2])

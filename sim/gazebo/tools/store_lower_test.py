@@ -7,9 +7,15 @@ p99 while still is <= 0.047 rad). Run on the full skeleton with the task stopped
 Per item: walk 0.49 m behind it facing +x (goto.py, through the supervisor), pick, store.
 
     store_lower_test.py --seed 3 --items trash_05,trash_06 [--bin recyclable] [--gap-limit 0.05]
+
+--plan (B5b S4, one item per compartment): steps in order, `<scene id>:<compartment>` picks and stores an
+item, `unload` takes every stored item to its bin: Nav2 to bin_standoff_m in front of it, goto.py onto the
+bin's axis at bin_place_distance_m facing it, /grasp/place BIN (the task's bin pose: centre, rim, yaw).
+    store_lower_test.py --seed 3 --plan trash_05:recyclable,trash_00:residual,unload,trash_06:recyclable,unload
 """
 
 import argparse
+import math
 import re
 import subprocess
 import sys
@@ -17,9 +23,11 @@ import time
 from pathlib import Path
 
 import rclpy
+import yaml
 from beach_interfaces.action import PickObject, PlaceObject
 from beach_interfaces.msg import WorldModel
 from control_msgs.msg import JointTrajectoryControllerState
+from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
@@ -39,7 +47,8 @@ def scene_pose(seed, scene_id):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--seed', type=int, required=True)
-    ap.add_argument('--items', required=True)
+    ap.add_argument('--items', default='')
+    ap.add_argument('--plan', help='steps <scene id>:<compartment> | unload (see the docstring)')
     ap.add_argument('--bin', default='recyclable')
     ap.add_argument('--gap-limit', type=float, default=0.05)
     a, _ = ap.parse_known_args()
@@ -74,7 +83,7 @@ def main():
         return cb
 
     def run(client, goal, prefix):
-        f = client.send_goal_async(goal, feedback_callback=feedback(prefix))
+        f = client.send_goal_async(goal, feedback_callback=None if prefix == 'nav' else feedback(prefix))
         rclpy.spin_until_future_complete(n, f)
         r = f.result().get_result_async()
         rclpy.spin_until_future_complete(n, r, timeout_sec=900.0)
@@ -85,8 +94,52 @@ def main():
         subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{x - 0.49},{y}', '--yaw', '0', '--tol', str(tol),
                         '--seed', str(a.seed), '--accel', '0.3', '--ang-accel', '0.5'], check=False)
 
-    worst, failed = (0.0, ''), []
-    for sid in a.items.split(','):
+    worst, failed, stored = (0.0, ''), [], []
+
+    def report(sid):
+        nonlocal worst
+        for ph, (gap, j) in st['gaps'].items():
+            end = ' '.join(f'{v:+.3f}' for v in st['end'].get(ph, []))
+            print(f'  {ph:22s} max gap {gap:.4f} rad ({j})  at end [{end}]', flush=True)
+            if ph.startswith(('store', 'unload', 'place')) and gap > worst[0]:
+                worst = (gap, f'{sid} {ph} {j}')
+
+    def unload_all():
+        from mapping.ground_truth import load as load_map
+        from task.node import bin_rims, pose_stamped
+        fsm = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']
+        objects = yaml.safe_load(open(REPO / 'sim' / 'common' / 'objects.yaml'))
+        bins = bin_rims(REPO, load_map(str(REPO), a.seed)[0], objects, fsm)
+        nav = ActionClient(n, NavigateToPose, '/nav/goal')
+        nav.wait_for_server(timeout_sec=60.0)
+        for sid, iid, comp in list(stored):
+            bx, by, rim, byaw = bins[comp]
+            out = lambda d: (bx + d * math.cos(byaw), by + d * math.sin(byaw))  # noqa: E731
+            face = byaw + math.pi
+            sx, sy = out(fsm['bin_standoff_m'])
+            r = run(nav, NavigateToPose.Goal(pose=pose_stamped('map', sx, sy, yaw=face)), 'nav')
+            print(f'{sid} nav to the {comp} bin standoff: {"done" if r is not None else "no result"}', flush=True)
+            px, py = out(fsm['bin_place_distance_m'])
+            subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{sx},{sy}', f'{px},{py}', '--yaw', str(face),
+                            '--tol', '0.03', '--speed', '0.15', '--seed', str(a.seed), '--accel', '0.3',
+                            '--ang-accel', '0.5'], check=False)
+            st['gaps'], st['end'] = {}, {}
+            r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.BIN, item_id=iid, bin_id=comp,
+                                            pose=pose_stamped('map', bx, by, rim, byaw)), 'unload')
+            print(f'{sid} unload into {comp}: {r.success if r else None} {r.message if r else "no result"}', flush=True)
+            if not r or not r.success:
+                failed.append(f'{sid} unload')
+            report(sid)
+            stored.remove((sid, iid, comp))
+            subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{sx},{sy}', '--seed', str(a.seed),
+                            '--accel', '0.3', '--ang-accel', '0.5'], check=False)
+
+    steps = a.plan.split(',') if a.plan else [f'{sid}:{a.bin}' for sid in a.items.split(',')]
+    for step in steps:
+        if step == 'unload':
+            unload_all()
+            continue
+        sid, comp = step.split(':')
         x, y = scene_pose(a.seed, sid)
         walk(x, y, 0.12)
         t0 = time.monotonic()
@@ -112,16 +165,14 @@ def main():
         if not r or not r.success:
             failed.append(f'{sid} pick')
             continue
-        r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.COMPARTMENT, item_id=it.id, bin_id=a.bin), 'store')
+        r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.COMPARTMENT, item_id=it.id, bin_id=comp), 'store')
         print(f'{sid} store: {r.success if r else None} {r.message if r else "no result"}', flush=True)
         if not r or not r.success:
             failed.append(f'{sid} store')
-        for ph, (gap, j) in st['gaps'].items():
-            end = ' '.join(f'{v:+.3f}' for v in st['end'].get(ph, []))
-            print(f'  {ph:22s} max gap {gap:.4f} rad ({j})  at end [{end}]', flush=True)
-            if ph.startswith('store') and gap > worst[0]:
-                worst = (gap, f'{sid} {ph} {j}')
-    print(f'RESULT worst store gap {worst[0]:.4f} rad at {worst[1]} (limit {a.gap_limit}), failed: '
+        else:
+            stored.append((sid, it.id, comp))
+        report(sid)
+    print(f'RESULT worst store/unload gap {worst[0]:.4f} rad at {worst[1]} (limit {a.gap_limit}), failed: '
           f'{failed or "none"}: {"PASS" if worst[0] <= a.gap_limit and not failed else "FAIL"}', flush=True)
     rclpy.try_shutdown()
 
