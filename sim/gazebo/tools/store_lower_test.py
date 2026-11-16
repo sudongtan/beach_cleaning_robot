@@ -107,7 +107,8 @@ def main():
         bR = quat_to_R(b.orientation.x, b.orientation.y, b.orientation.z, b.orientation.w)
         T = data.oMf[model.getFrameId('arm_jaw_tips_link')]
         tips, tR = np.array([b.position.x, b.position.y, b.position.z]) + bR @ T.translation, bR @ T.rotation
-        return st['poses'][sid].copy(), tR.T @ (st['poses'][sid] - tips)
+        base = np.array([b.position.x, b.position.y, math.atan2(bR[1, 0], bR[0, 0])])
+        return st['poses'][sid].copy(), tR.T @ (st['poses'][sid] - tips), base
 
     def feedback(prefix):
         def cb(fb):
@@ -121,13 +122,17 @@ def main():
         the planned hold is ~[4.5, 0, 0]: centred between the jaws, below the tips)."""
         gp = goal.pose.pose.position
         first = next((s[0] for _, s in st['snaps'] if s is not None), None)
+        b0 = next((s[2] for _, s in st['snaps'] if s is not None), None)
         if first is not None:
             print(f'  {sid} world model vs ground truth at the pick goal: '
                   f'{((np.array([gp.x, gp.y, gp.z]) - first) * 100).round(1).tolist()} cm', flush=True)
         for ph, s in st['snaps']:
             if s is not None:
+                d, c, sn = s[2] - b0, math.cos(b0[2]), math.sin(b0[2])      # body shift since the goal, goal frame
                 print(f'  {sid} pick:{ph:10s} item moved {((s[0] - first) * 100).round(1).tolist()} cm, '
-                      f'in tips {(s[1] * 100).round(1).tolist()} cm', flush=True)
+                      f'in tips {(s[1] * 100).round(1).tolist()} cm, body moved fwd {(c * d[0] + sn * d[1]) * 100:+.1f} '
+                      f'left {(-sn * d[0] + c * d[1]) * 100:+.1f} cm yaw {math.remainder(d[2], 2 * math.pi):+.3f} rad',
+                      flush=True)
         st['snaps'], st['track'] = [], None
 
     def run(client, goal, prefix):
@@ -198,7 +203,9 @@ def main():
                             '--tol', '0.03', '--speed', '0.15', '--seed', str(a.seed), '--accel', '0.3',
                             '--ang-accel', '0.5'], check=False)
             st['gaps'], st['end'] = {}, {}
-            rclpy.spin_once(n, timeout_sec=0.5)
+            t0 = time.monotonic()
+            while time.monotonic() - t0 < 1.0:               # drain the poses queued while goto.py ran
+                rclpy.spin_once(n, timeout_sec=0.1)
             if st['base'] is not None:                       # B5b S4 run 4: goto.py timed out 0.95 m out
                 b = st['base'].pose.pose
                 yaw = math.atan2(2 * (b.orientation.w * b.orientation.z + b.orientation.x * b.orientation.y),
@@ -234,6 +241,9 @@ def main():
             continue
         st['gaps'], st['end'] = {}, {}
         g = PickObject.Goal(id=it.id, pose=it.pose, size=it.size)
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < 1.0:                   # fresh base pose (the walk ran in a subprocess)
+            rclpy.spin_once(n, timeout_sec=0.1)
         st['snaps'], st['track'] = [('goal', in_tips(sid))], sid
         r = run(pick, g, 'pick')
         st['snaps'].append(('end', in_tips(sid)))
@@ -255,6 +265,10 @@ def main():
         print(f'{sid} store: {r.success if r else None} {r.message if r else "no result"}', flush=True)
         if not r or not r.success:
             failed.append(f'{sid} store')
+            # B5b S4 runs 4, 5: still held at `show`, the arm then walked to the bin and its unload check (right)
+            # refused the extended arm at the bin wall. Put it back like the task (fsm state_put_back).
+            r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.GROUND, item_id=it.id, bin_id=''), 'put_back')
+            print(f'{sid} put back: {r.success if r else None} {r.message if r else "no result"}', flush=True)
         else:
             stored.append((sid, it.id, comp))
             landed(sid, comp, 'after store')
