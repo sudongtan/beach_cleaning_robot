@@ -12,14 +12,14 @@ In this project a *baseline* reads the simulator's ground truth. Each baseline i
 |---|---|---|
 | Locomotion | [legubiao/quadruped_ros2_control](https://github.com/legubiao/quadruped_ros2_control) (pinned, two small patches) running the pretrained `robot_lab` policy (B4, see [B4](#b4-walking-controller-done-row-b4_robot_lab_flip)); fall detection makes the legs go passive. The basic model-based controller stays selectable (`locomotion:=legubiao`) | Later: an own Isaac Lab RL policy, trained with slow commands and the arm's weight |
 | Robot | Go2 + Interbotix WidowX 250 6DOF + custom wide jaws (2–15 cm) + 34 × 30 cm basket, own xacro | — |
-| World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), textured procedural meshes (C2) | — |
+| World | 10 seeded scenes (25 × 20 m, 8–15 trash items, 6–12 distractors, a walking person in 5 of them), textured procedural meshes (A1 add-on) | — |
 | Localization | Ground-truth pose published as `/odom`, `/odom/global` and TFs | C1: dual EKF + `navsat_transform` over noisy GNSS, leg odometry and IMU |
 | Mapping | Static traversability grid from the terrain (steep slopes and water are blocked) | — |
 | Perception | Ground-truth detections from the simulator | C3: a pretrained open-vocabulary model prompted with text (YOLOE), with no training, plus depth for 3D position; compared with a classical segmentation of our own |
-| Classifier | Ground-truth material + sorting rules from config | C4: zero-shot classifier on close-up crops; confusion matrix and contamination rate |
+| Classifier | Ground-truth material + sorting rules from config | C5: zero-shot classifier on close-up crops; confusion matrix and contamination rate |
 | World model | Removes duplicate detections, tracks the coverage grid and what is in each compartment | — |
 | Navigation | Nav2 (NavFn planner + Regulated Pure Pursuit) plus a camera-relative final approach | — |
-| Grasping | Own IK and reach-envelope module, scripted top-down pick, "attach on contact" in simulation | C5: picks by contact physics: segment the item, estimate its geometry, generate grasp candidates (`simple_grasping` and our own), plan the motion (MoveIt 2 / MTC and our own planner), guarded descent, check that the grasp worked |
+| Grasping | Own IK and reach-envelope module, scripted top-down pick, "attach on contact" in simulation | C6: picks by contact physics: segment the item, estimate its geometry, generate grasp candidates (`simple_grasping` and our own), plan the motion (MoveIt 2 / MTC and our own planner), guarded descent, check that the grasp worked |
 | Safety | Rule-based supervisor, the only publisher of `/cmd_vel`: person slow/stop, e-stop, geofence, arm interlock | — |
 | Task | State machine with retries, skips, pause on a safety state and fall handling; one event log per run | — |
 | Benchmark | `make bench`: 10 seeded scenes headless, one JSON per run, metrics from the final ground truth, one row per configuration in `results/results.md` | A row per upgrade |
@@ -35,6 +35,10 @@ The Go2 walks on `/cmd_vel` in Gazebo Harmonic with the legubiao controller. A W
 A seeded scene generator builds a 25 × 20 m beach: dune terrain with dry and wet sand zones, 8–15 trash items, 6–12 distractors (shells, rocks, seaweed, driftwood), two bins and, in half the scenes, a scripted walking person. Camera, depth, IMU and GNSS are bridged to ROS 2.
 
 **Physics-grasp feasibility study.** Can the custom gripper hold each trash item by friction alone, through a lift, a wrist turn and 1 m of walking? Every item stayed in the jaws in at least 6 of 10 valid trials. Cans, the glass jar and the cup succeeded 10 of 10 times; the food container (6/10) and the cigarette pack (7/9) are the weak cases. The study led to resizing two items and dropping the 1.5 L bottle from the item set. Data and method: [results/physics_grasp/](../results/physics_grasp/).
+
+### A1 add-on: realistic trash visuals (done 2026-11-10, no row; was C2)
+
+UV-mapped meshes with invented, brand-free labels, caps, lids and transparent PET and glass, so the detector in C3 has something realistic to see. The visual bounds match the collision boxes within 2 mm. The rendering cost in Gazebo is 1.45 % of the real-time factor, within the 5 % limit. It changes only what a camera sees (sizes, masses and collisions unchanged), so no A or B row is affected: they all read ground truth.
 
 ### A2 Walking skeleton (done 2026-11-03)
 
@@ -107,11 +111,43 @@ Both learned policies share one gap: their training sets every command below 0.2
 
 It also stands 9 cm lower and about 6° tilted with the arm and basket, which it never saw in training. One integration detail: upstream's config lists the leg joints in a different order from the policy's (front right first instead of front left), and with that order the robot fell as soon as the policy took over.
 
+### B5 Collision-checked arm moves (row `b5_single` running)
+
+Added after the localization work (C1): every arm safety violation found there was a contact the arm planner never checked. The B5 row runs every input on ground truth, so the EKF itself is off. It is built on top of the C1 branch, though, so it carries more than the check. Compared with the B4 row, it adds:
+
+**1. The collision check (B5's own change).** Every planned arm move is checked along its whole joint-space path against the arm, the held item, the robot's body, the basket, the items already in it and the target bin, with 5 mm of clearance. A move that fails takes the next option or is refused. Store and unload planning were rebuilt around it.
+
+**2. One item per compartment (the redesign the check forced).** Packing several items per compartment didn't survive the check. Items land 5–15 mm off their planned spot in the simulator, and a packed compartment then often held an item that no checked move could lift out again. Now:
+- one item, in the middle of each compartment (B4: up to 5 per compartment), so the robot walks to the bins after at most two items;
+- a store is accepted only if the unload still plans with the item landed anywhere within the measured drop and walking error (1.5–3.9 cm);
+- a refused middle spot is retried 5 mm off in each direction;
+- a pick is planned again just above the item if the item moved more than 1 cm since the plan (the walking policy turns the body slightly while the arm swings).
+
+**3. Arm and bin fixes from C1, all switched on.** Each was found as the cause of one C1 safety violation or stall, and each also acts with ground truth:
+
+| Fix | Why it was added |
+|---|---|
+| Arm joints capped at 0.3 rad/s | a move stopped for safety coasts on about 0.045 rad per rad/s of joint speed |
+| Wrist kept near its last turn | a wrist half turn with a bottle in the compartment |
+| Bounded pick solutions | a slow forearm spin with the item hanging |
+| A fresh approach before each place | the robot crept toward the bin over several places and the gripper hooked the rim |
+| Narrower distance window at the bin | places from 0.80–0.83 m hit the near wall |
+| Places only from straight in front of the bin | a place 0.32 m off the bin's axis hooked the wall corner |
+| Bin side step: no mixed back-and-sideways command, no forward part | the walking policy doesn't step at a mixed command, and a forward part walked the arm toward the wall |
+
+**4. Stricter margins from C1 (not fixes).** The geofence stop starts 0.5 m from the fence (was 0.3 m) and the search lanes stay 0.7 m inside it (was 0.5 m), set for the EKF's position error. Two detections of the same class within 0.55 m (was 0.3 m) count as one item. These came along only because B5 was built on top of C1, and they leave a little less area per scene.
+
+Every item above is a config switch that can be turned off. The row measures all four groups together. The check's own effect would need a row with group 1 off, but group 2 depends on the check, so that control isn't a single switch.
+
+### B6 Arm planner comparison (planned)
+
+MoveIt 2 against our own collision-checked planner, same ground-truth inputs, after B5's row.
+
 ## Part C: Ground truth → real
 
 Each step swaps one ground-truth baseline for a real component. A row is expected to be equal or worse than the ground-truth row: it reports what making that component real costs, judged by a component check with a pass rule, by safety, and by the gap to the row before.
 
-### C1 Localization (implemented, re-running its benchmark)
+### C1 Localization (implemented, paused until B5's row is in)
 
 Dual EKF (`robot_localization` + `navsat_transform`) over noisy GNSS, leg odometry and IMU, plus an own EKF for comparison that also estimates the leg odometry's scale online. Tuned offline on a recorded run: map error RMS 0.22 m (`robot_localization`) and 0.17 m (own EKF). Findings on the way:
 
@@ -122,21 +158,21 @@ Dual EKF (`robot_localization` + `navsat_transform`) over noisy GNSS, leg odomet
 
 First benchmark row, `c1_ekf`: 7 runs finished, 3 stalled, no falls, 87 of 110 items collected, mean localization error 0.157 m (max 0.611 m). It also broke the arm safety rule 5 times, so it does not count as clean. Part of the cause was the supervisor reading the robot's speed from the corrected map pose, which jumps with GNSS fixes. The speed now comes from leg odometry, and the benchmark is being re-run.
 
-### C2 Realistic trash visuals (done, no row)
-
-UV-mapped meshes with invented, brand-free labels, caps, lids and transparent PET and glass, so the detector in C3 has something realistic to see. The visual bounds match the collision boxes within 2 mm. The rendering cost in Gazebo is 1.45 % of the real-time factor, within the 5 % limit.
-
-### C3 Perception (built, failing its checks)
+### C3 Far detection (built, failing its checks)
 
 YOLOE, a pretrained open-vocabulary detector prompted with text, exported to OpenVINO for the CPU, with no training. Its masks plus the depth image give each item's 3D centre, size and yaw. A classical segmentation of our own (sand plane fit + blobs above it) is the comparison.
 
 Both checks fail so far, so there is no benchmark row. Running the `n` model next to the full stack costs 18.5 % of the real-time factor standing and 11.4 % walking, and the `s` model 28 % and 20 %, against a limit of 10 %. Within 4 m the models find 0.7 % (`n`), 1.7 % (`s`) and 2.7 % (`m`) of the trash, against a target of 70 %, and they miss plainly visible bottles. Other prompts and lower confidence thresholds are being tried.
 
-### C4 Classifier (built, narrowly failing its check)
+### C4 Close detection (planned)
+
+At the final approach, before the grasp, a close look decides whether the object is litter and gives the pick pose from depth. The far look (C3) only has to say "worth a closer look".
+
+### C5 Classifier (built, narrowly failing its check)
 
 A zero-shot classifier (MobileCLIP-S2 through OpenCLIP) on close-up crops of the held item, compared with an own classifier on colour features and nearest centroids. On 48 held-out crops, 13.0 % (own) and 12.0 % (MobileCLIP) of the items reaching the recyclable bin were wrong, against a limit of 10 %, one item too many in each case. No benchmark row yet.
 
-### C5 Perception + grasping pipeline (planned)
+### C6 Physics grasping (planned)
 
 The last and hardest step: picks by contact physics instead of the simulated attach, in the industry pattern look → plan → move → verify. The A1 feasibility study says the gripper can hold every item.
 
