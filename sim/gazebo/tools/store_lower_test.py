@@ -22,15 +22,22 @@ import sys
 import time
 from pathlib import Path
 
+import numpy as np
+import pinocchio as pin
 import rclpy
 import yaml
 from beach_interfaces.action import PickObject, PlaceObject
 from beach_interfaces.msg import WorldModel
 from control_msgs.msg import JointTrajectoryControllerState
+from gz.msgs10.pose_v_pb2 import Pose_V
+from gz.transport13 import Node as GzNode
+from nav_msgs.msg import Odometry
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+
+from physics_grasp_test import quat_to_R, rc
 
 REPO = Path(__file__).resolve().parents[3]
 TOOLS = Path(__file__).resolve().parent
@@ -51,10 +58,11 @@ def main():
     ap.add_argument('--plan', help='steps <scene id>:<compartment> | unload (see the docstring)')
     ap.add_argument('--bin', default='recyclable')
     ap.add_argument('--gap-limit', type=float, default=0.05)
+    ap.add_argument('--world', default='beach')
     a, _ = ap.parse_known_args()
     rclpy.init()
     n = Node('store_lower_test')
-    st = {'q': None, 'ref': None, 'phase': None, 'gaps': {}, 'wm': {}, 'end': {}}
+    st = {'q': None, 'ref': None, 'phase': None, 'gaps': {}, 'wm': {}, 'end': {}, 'poses': {}, 'base': None}
 
     def on_js(m):
         d = dict(zip(m.name, m.position))
@@ -72,6 +80,15 @@ def main():
     n.create_subscription(JointTrajectoryControllerState, '/arm_controller/controller_state',
                           lambda m: st.update(ref=dict(zip(m.joint_names, m.reference.positions))), 10)
     n.create_subscription(WorldModel, '/world_model', on_wm, 10)
+    n.create_subscription(Odometry, '/sim/ground_truth/pose', lambda m: st.update(base=m), 10)
+    gz = GzNode()
+    gz.subscribe(Pose_V, f'/world/{a.world}/pose/info', lambda m: st.update(poses={
+        p.name: np.array([p.position.x, p.position.y, p.position.z]) for p in reversed(m.pose)}))
+    model = rc.build_model('custom')
+    data = model.createData()
+    pin.framesForwardKinematics(model, data, pin.neutral(model))
+    margin = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']['store']['landing_margin_m']
+    margin = margin if isinstance(margin, list) else [margin, margin]
     pick = ActionClient(n, PickObject, '/grasp/pick')
     place = ActionClient(n, PlaceObject, '/grasp/place')
     pick.wait_for_server(timeout_sec=60.0)
@@ -91,10 +108,35 @@ def main():
         return r.result().result if r.done() else None
 
     def walk(x, y, tol):
-        subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{x - 0.49},{y}', '--yaw', '0', '--tol', str(tol),
+        # B5b S4 run 1: arriving from the side, the final turn to yaw 0 on wet sand moved the robot ~0.1 m and
+        # the item ended outside the reach band twice; a waypoint 0.3 m behind makes the robot arrive facing +x.
+        subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{x - 0.79},{y}', f'{x - 0.49},{y}', '--yaw', '0',
+                        '--tol', str(tol),
                         '--seed', str(a.seed), '--accel', '0.3', '--ang-accel', '0.5'], check=False)
 
     worst, failed, stored = (0.0, ''), [], []
+
+    def landed(sid, comp, when):
+        """B5b S4: the item's centre in its compartment frame (rim centre, base_link axes), as store_drop_test.py.
+        plan_store's centre placement plans it within 0.4 cm of (0, 0) in x and y (S1 planned_rel_cm), so the
+        landing error is taken against (0, 0) and checked per axis against landing_margin_m."""
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < 3.0:
+            rclpy.spin_once(n, timeout_sec=0.1)
+        if sid not in st['poses'] or st['base'] is None:
+            print(f'{sid} landed in {comp} ({when}): no pose', flush=True)
+            failed.append(f'{sid} landing {when}')
+            return
+        b = st['base'].pose.pose
+        bR = quat_to_R(b.orientation.x, b.orientation.y, b.orientation.z, b.orientation.w)
+        M = data.oMf[model.getFrameId(f'basket_{comp}_link')]
+        c = np.array([b.position.x, b.position.y, b.position.z]) + bR @ M.translation
+        rel = (bR @ M.rotation).T @ (st['poses'][sid] - c)
+        ok = abs(rel[0]) <= margin[0] and abs(rel[1]) <= margin[1]
+        print(f'{sid} landed in {comp} ({when}): rel_cm {(rel * 100).round(1).tolist()}, margin_cm '
+              f'{[round(m * 100, 1) for m in margin]}: {"ok" if ok else "OUTSIDE"}', flush=True)
+        if not ok:
+            failed.append(f'{sid} landing {when}')
 
     def report(sid):
         nonlocal worst
@@ -119,6 +161,7 @@ def main():
             sx, sy = out(fsm['bin_standoff_m'])
             r = run(nav, NavigateToPose.Goal(pose=pose_stamped('map', sx, sy, yaw=face)), 'nav')
             print(f'{sid} nav to the {comp} bin standoff: {"done" if r is not None else "no result"}', flush=True)
+            landed(sid, comp, 'before unload')
             px, py = out(fsm['bin_place_distance_m'])
             subprocess.run([sys.executable, str(TOOLS / 'goto.py'), f'{sx},{sy}', f'{px},{py}', '--yaw', str(face),
                             '--tol', '0.03', '--speed', '0.15', '--seed', str(a.seed), '--accel', '0.3',
@@ -171,6 +214,7 @@ def main():
             failed.append(f'{sid} store')
         else:
             stored.append((sid, it.id, comp))
+            landed(sid, comp, 'after store')
         report(sid)
     print(f'RESULT worst store/unload gap {worst[0]:.4f} rad at {worst[1]} (limit {a.gap_limit}), failed: '
           f'{failed or "none"}: {"PASS" if worst[0] <= a.gap_limit and not failed else "FAIL"}', flush=True)
