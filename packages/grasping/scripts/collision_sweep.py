@@ -277,6 +277,14 @@ def shifted(landed_rec, dx, dy):
     return hid, o, Rb, e, size
 
 
+def room(comp, landed_rec):
+    """(lo, hi): how far a landed item can move in x, y before it touches a wall (lo <= 0 <= hi)."""
+    c, o = compartment(W['arm'], comp), landed_rec[1]
+    lo, hi = np.asarray(o['centre'][:2]) - o['half'], np.asarray(o['centre'][:2]) + o['half']
+    return (np.minimum(0.0, [c['x'][0] - lo[0], c['y'][0] - lo[1]]),
+            np.maximum(0.0, [c['x'][1] - hi[0], c['y'][1] - hi[1]]))
+
+
 def task_single(args):
     """(B5b S3) one item x 12 yaws into one empty compartment, then its unloads at the margin offsets."""
     name, comp = args
@@ -291,8 +299,14 @@ def task_single(args):
                 for sx, sy in itertools.product((-1, 0, 1), repeat=2):
                     if k == 1.5 and not (sx or sy):
                         continue
-                    t = shifted(r['landed'], sx * k * mx, sy * k * my)
-                    rec['unload'][f'{k} {sx:+d} {sy:+d}'] = slim(unload(comp, t, [t]))
+                    d = np.array([sx * k * mx, sy * k * my])
+                    t = shifted(r['landed'], *d)
+                    rec['unload'][f'{k} {sx:+d} {sy:+d}'] = u = slim(unload(comp, t, [t]))
+                    dc = np.clip(d, *room(comp, r['landed']))   # cut at the walls (store.margin_clip_walls):
+                    if not np.allclose(dc, d):                  # an item can't land further than touching one
+                        t = shifted(r['landed'], *dc)
+                        u = slim(unload(comp, t, [t]))
+                    rec['unload'][f'clip {k} {sx:+d} {sy:+d}'] = u
         out.append(rec)
     return out
 
@@ -447,16 +461,17 @@ def main():
                                                     for c in COMPS} for n in ITEMS}
             res['single']['never_stored'] = [f'{n} {c}' for n in ITEMS for c in COMPS
                                              if not any(r['ok'] for r in sg if r['item'] == n and r['comp'] == c)]
-            for k in ('1.0', '1.5'):
+            for k in ('1.0', '1.5', 'clip 1.0', 'clip 1.5'):
                 u = [dict(v, at=key) for r in sg for key, v in r['unload'].items() if key.startswith(k)]
                 res[f'unload_margin_{k}'] = summary(u, clr)
                 res[f'unload_margin_{k}']['failed_at'] = sorted({v['at'] for v in u if not v['ok']})
-            res['single']['all_9_unload'] = sum(all(v['ok'] for key, v in r['unload'].items() if key.startswith('1.0'))
-                                                for r in sg if r['ok'])
+            for k in ('1.0', 'clip 1.0'):
+                res['single'][f'all_9_unload {k}'] = sum(all(v['ok'] for key, v in r['unload'].items()
+                                                             if key.startswith(k)) for r in sg if r['ok'])
             times['store'] = [r['dt'] for r in sg]
             times['unload'] = [v['dt'] for r in sg for v in r['unload'].values()]
             print('single', res['single'], '\nmargin', res['unload_margin_1.0'], '\n1.5', res['unload_margin_1.5'],
-                  flush=True)
+                  '\nclip margin', res['unload_margin_clip 1.0'], '\nclip 1.5', res['unload_margin_clip 1.5'], flush=True)
         if 'third' in parts:
             rng = np.random.default_rng(5)
             tasks = [(k, [ITEMS[i] for i in rng.integers(0, len(ITEMS), 3)], [float(y) for y in rng.choice(YAWS4, 3)],
