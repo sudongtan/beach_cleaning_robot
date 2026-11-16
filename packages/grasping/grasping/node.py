@@ -425,7 +425,9 @@ class GraspingNode(Node):
                         f"{info.get('pile', float('nan')):.3f} drop {info.get('drop', float('nan')):.3f} held bbox "
                         f"{np.round(info.get('ext', ()), 3).tolist()} (over the compartment); in basket "
                         + ', '.join(f"({o['centre'][0]:.3f} {o['centre'][1]:.3f} top {o['top']:.3f})" for o in scene[1])
-                        + ''.join(f"; rejected slot {np.round(xy, 3).tolist()}: {w}" for xy, w in info.get('rejected', [])))
+                        + ''.join(f"; rejected slot {np.round(xy, 3).tolist()}: {w}" for xy, w in info.get('rejected', []))
+                        + f"; held p {np.round(scene[0]['p'], 5).tolist()} R {np.round(scene[0]['R'], 5).tolist()} "
+                        f"size {np.round(scene[0]['size'], 4).tolist()} start q {np.round(self.start_q(), 4).tolist()}")
                     if why == 'compartment_full':                 # still held: the task puts it back
                         last = info['rejected'][-1][1] if info.get('rejected') else ''
                         return self.refuse(goal_handle, result, f"compartment_full (pile {info['pile']:.3f}"
