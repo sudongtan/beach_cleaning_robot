@@ -95,7 +95,11 @@ grasping:
   # number or [x, y]; false = off). landing_margin_m: B5b S1 p95 of |drop + walk error| per axis over 40 samples
   # (store_drop_test.py --one, scene 101; the walk pushes items up to 4.3 cm in +y, results/store_drop/b5b_s1.json).
   # margin_clip_walls: an offset beyond the item's free space to a wall is cut to touching it (false = not cut).
+  # centre_nudge_m: placement centre, the middle rejected for a basket contact: try it this far off in +-y, +-x
+  # before compartment_full (B5b S4 run 2: two empty-compartment stores refused by 0.1 mm; off-ideal held poses
+  # 310/336 stored without, 323/336 with 0.005, none lost; ~/wt/logs/b5b_perturb2_*; null or 0 = off).
   store: {placement: centre, max_items: 1, check_unload_margin: true, landing_margin_m: [0.015, 0.039], margin_clip_walls: true,
+          centre_nudge_m: 0.005,
           slots_x: 8, slots_y: 3, wall_clearance_m: 0.005, wall_retry_m: 0.005, wall_retries: 3, lower_vias: 2, fill_corner: [1, 1], seeded_ik: true, inside_walls: true,
           drop_gap_m: 0.01, bar_clearance_m: 0.01, bar_box_exact: true, overlap_tolerance_m: 0.01, top_below_rim_m: 0.01,
           support_margin_m: 0.03, check_unload: true}

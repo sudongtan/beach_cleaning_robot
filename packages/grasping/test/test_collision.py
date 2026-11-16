@@ -262,3 +262,29 @@ def test_an_item_pushed_against_a_wall_unloads_with_the_lift_toward_the_middle(a
     box = {'centre': np.asarray(o['centre']) + [0.0, side * (gap - 0.0001), 0.0], 'R': Rb, 'size': tuple(held['size'])}
     assert unload_checker(arm, col, comp, 'h', CFG)(box, float(e[2])) == 'collision:lift:basket_link/held:h'
     assert unload_checker(arm, col, comp, 'h')(box, float(e[2])) is None
+
+
+def test_a_centre_store_the_basket_rejects_by_a_hair_is_stored_5_mm_off_the_middle():
+    """B5b S4 run 2: two stores into an empty compartment were refused, the one centre spot 0.1 mm under
+    clearance_m with the item held a little off the ideal pose (perturb.py: 310/336 stored with off-ideal
+    held poses, 323/336 with store.centre_nudge_m 0.005, none lost). A held bottle 8 mm off and 6 deg tilted
+    (perturb.py case pet_bottle_500 recyclable k 0 yaw -60 deg): refused at the middle, stored 5 mm off it."""
+    assert ROW['store']['centre_nudge_m'] == 0.005
+    tx, ty = np.radians(-5.91), np.radians(-1.94)
+    Rx = np.array([[1, 0, 0], [0, np.cos(tx), -np.sin(tx)], [0, np.sin(tx), np.cos(tx)]])
+    Ry = np.array([[np.cos(ty), 0, np.sin(ty)], [0, 1, 0], [-np.sin(ty), 0, np.cos(ty)]])
+    out = []
+    for nudge in (0.0, ROW['store']['centre_nudge_m']):
+        arm = Arm(LIMITS['variant'], ROW['ik_restarts'], ROW['ik_tolerance_m'], seed=4)
+        col = Collision.from_config(arm, ROW['collision'])
+        held = picked(arm, OBJECTS['trash']['pet_bottle_500'], np.radians(-60.0))
+        held = dict(held, p=held['p'] + [0.0085, 0.0084, -0.0042], R=Rx @ Ry @ held['R'])
+        state = State({}, held=dict(held, id='h'))
+        cfg = {**ROW, 'store': {**ROW['store'], 'centre_nudge_m': nudge}}
+        out.append(plan_store(arm, 'recyclable', held, [], cfg, store_check(arm, col, 'recyclable', state, 'h'),
+                              unload_checker(arm, col, 'recyclable', 'h')))
+    (ok0, why0, _, _), (ok1, _, _, info1) = out
+    assert not ok0 and why0 == 'compartment_full'
+    c = compartment(Arm(LIMITS['variant'], ROW['ik_restarts'], ROW['ik_tolerance_m']), 'recyclable')
+    mid = np.array([sum(c['x']) / 2, sum(c['y']) / 2])
+    assert ok1 and np.isclose(np.linalg.norm(np.asarray(info1['slot']) - mid), 0.005)

@@ -420,6 +420,7 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
     n_via = st.get('lower_vias') or 0                        # IK points between above and release: the joint line
                                                              # drifted the item 2-3 cm sideways (B5.4 run 3)
     centre = st.get('placement', 'grid') == 'centre'
+    nudge = st.get('centre_nudge_m') or 0.0                  # centre: a basket contact tries the middle this far off
     corner = st.get('fill_corner')                           # [sx, sy]: from the (sx x, sy y) corner; null: centre first
     rank = (lambda x, y: (-corner[0] * x, -corner[1] * y)) if corner else \
         (lambda x, y: (float(np.hypot(x - mid[0], y - mid[1])), 0.0))
@@ -535,6 +536,9 @@ def plan_store(arm, bin_id, held, others, cfg, check=None, unload_check=None):
             rejected.append(((x, y), why))
             if retry and again < retries and (inx or iny) and 'basket_link' in why:
                 heapq.heappush(cands, cand(x + inx * retry, y + iny * retry, inx, iny, again + 1))
+            if centre and nudge and not again and 'basket_link' in why:   # B5b S4 run 2: the one spot failed by
+                for dx, dy in ((0, nudge), (0, -nudge), (nudge, 0), (-nudge, 0)):   # 0.1 mm (finger at the divider)
+                    heapq.heappush(cands, cand(x + dx, y + dy, 0.0, 0.0, 1))
             continue
         return True, '', dict({'above': qa, 'release': q}, **({'via': qv} if qv else {})), info
     if rejected or centre:                                   # centre: never the fixed-pose release (node)

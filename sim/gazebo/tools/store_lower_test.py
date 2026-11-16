@@ -184,7 +184,7 @@ def main():
             continue
         sid, comp = step.split(':')
         x, y = scene_pose(a.seed, sid)
-        walk(x, y, 0.12)
+        walk(x, y, 0.04)                                     # B5b S4 run 2: 0.12 m left both items 0.57-0.60 m ahead
         t0 = time.monotonic()
         while sid not in st['wm'] and time.monotonic() - t0 < 30.0:
             rclpy.spin_once(n, timeout_sec=0.1)

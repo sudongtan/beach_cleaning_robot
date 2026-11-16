@@ -490,7 +490,8 @@ def test_b5b_switches_off_give_the_c076fa5_plans():
     """placement grid, max_items null, check_unload_margin false = the store config without these keys
     (c076fa5), plan for plan on fixed seeds."""
     old = {**CFG, 'store': {k: v for k, v in CFG['store'].items()
-                            if k not in ('placement', 'max_items', 'check_unload_margin', 'landing_margin_m')}}
+                            if k not in ('placement', 'max_items', 'check_unload_margin', 'landing_margin_m',
+                                         'centre_nudge_m')}}
     lying = {'centre': (-0.2, 0.075, 0.14), 'half': (0.03, 0.03), 'top': 0.17}
     for name in ('pet_bottle_500', 'poly_cup', 'food_container'):
         out = []
