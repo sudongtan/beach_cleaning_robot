@@ -94,10 +94,41 @@ def main():
     pick.wait_for_server(timeout_sec=60.0)
     place.wait_for_server(timeout_sec=60.0)
 
+    def in_tips(sid):
+        """B5b S4 run 4 (held 6.7-9 cm off the jaw centre): sid's centre (map, ground truth) and in the jaw-tips
+        frame (ground-truth base pose + measured arm joints); None if not known yet."""
+        if sid not in st['poses'] or st['base'] is None or st['q'] is None:
+            return None
+        qv = pin.neutral(model)
+        for j in ARM:
+            qv[model.joints[model.getJointId(j)].idx_q] = st['q'][j]
+        pin.framesForwardKinematics(model, data, qv)
+        b = st['base'].pose.pose
+        bR = quat_to_R(b.orientation.x, b.orientation.y, b.orientation.z, b.orientation.w)
+        T = data.oMf[model.getFrameId('arm_jaw_tips_link')]
+        tips, tR = np.array([b.position.x, b.position.y, b.position.z]) + bR @ T.translation, bR @ T.rotation
+        return st['poses'][sid].copy(), tR.T @ (st['poses'][sid] - tips)
+
     def feedback(prefix):
         def cb(fb):
             st['phase'] = (f'{prefix}:{fb.feedback.phase}', time.monotonic())
+            if prefix == 'pick' and st.get('track'):
+                st['snaps'].append((fb.feedback.phase, in_tips(st['track'])))
         return cb
+
+    def pick_report(sid, goal):
+        """Per pick phase start: how far the item moved (map, cm) and where it sat in the jaw-tips frame (cm;
+        the planned hold is ~[4.5, 0, 0]: centred between the jaws, below the tips)."""
+        gp = goal.pose.pose.position
+        first = next((s[0] for _, s in st['snaps'] if s is not None), None)
+        if first is not None:
+            print(f'  {sid} world model vs ground truth at the pick goal: '
+                  f'{((np.array([gp.x, gp.y, gp.z]) - first) * 100).round(1).tolist()} cm', flush=True)
+        for ph, s in st['snaps']:
+            if s is not None:
+                print(f'  {sid} pick:{ph:10s} item moved {((s[0] - first) * 100).round(1).tolist()} cm, '
+                      f'in tips {(s[1] * 100).round(1).tolist()} cm', flush=True)
+        st['snaps'], st['track'] = [], None
 
     def run(client, goal, prefix):
         f = client.send_goal_async(goal, feedback_callback=None if prefix == 'nav' else feedback(prefix))
@@ -167,6 +198,15 @@ def main():
                             '--tol', '0.03', '--speed', '0.15', '--seed', str(a.seed), '--accel', '0.3',
                             '--ang-accel', '0.5'], check=False)
             st['gaps'], st['end'] = {}, {}
+            rclpy.spin_once(n, timeout_sec=0.5)
+            if st['base'] is not None:                       # B5b S4 run 4: goto.py timed out 0.95 m out
+                b = st['base'].pose.pose
+                yaw = math.atan2(2 * (b.orientation.w * b.orientation.z + b.orientation.x * b.orientation.y),
+                                 1 - 2 * (b.orientation.y ** 2 + b.orientation.z ** 2))
+                d = np.array([b.position.x - bx, b.position.y - by])
+                along, lateral = d @ [math.cos(byaw), math.sin(byaw)], d @ [-math.sin(byaw), math.cos(byaw)]
+                print(f'{sid} at the {comp} bin: along {along:.3f} m (planned {fsm["bin_place_distance_m"]}), '
+                      f'lateral {lateral:+.3f} m, heading {math.remainder(yaw - face, 2 * math.pi):+.3f} rad', flush=True)
             r = run(place, PlaceObject.Goal(target=PlaceObject.Goal.BIN, item_id=iid, bin_id=comp,
                                             pose=pose_stamped('map', bx, by, rim, byaw)), 'unload')
             print(f'{sid} unload into {comp}: {r.success if r else None} {r.message if r else "no result"}', flush=True)
@@ -194,7 +234,10 @@ def main():
             continue
         st['gaps'], st['end'] = {}, {}
         g = PickObject.Goal(id=it.id, pose=it.pose, size=it.size)
+        st['snaps'], st['track'] = [('goal', in_tips(sid))], sid
         r = run(pick, g, 'pick')
+        st['snaps'].append(('end', in_tips(sid)))
+        pick_report(sid, g)
         print(f'{sid} ({it.id}) pick: {r.success if r else None} {r.message if r else "no result"}', flush=True)
         if r and not r.success and r.message.startswith('outside_envelope'):
             # B5.4 runs 5, 6: the 0.12 m walk tolerance is wider than the reach band (reach_x_m 0.42-0.56):

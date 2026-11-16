@@ -486,6 +486,11 @@ class GraspingNode(Node):
                         k = next(i for i, st in enumerate(steps) if st.phase == 'over_bin')
                         return self.check('bin release', steps[k:], after['q'], after['state'])[0]
                 ok, why, plan = plan_unload(self.arm, g.bin_id, centre, height, self.cfg, check)
+                op = self.to_base(g.pose)                         # B5b S4 run 4: a wrist/bin reject at rest
+                if op is not None:
+                    self.get_logger().info(
+                        f'unload {obj}: {why or "ok"}; bin opening in {self.base_frame} x {op.position.x:.3f} '
+                        f'y {op.position.y:.3f} z {op.position.z:.3f}; start q {np.round(self.start_q(), 4).tolist()}')
                 if not ok:
                     return self.refuse(goal_handle, result, f'unload {why} (item at x {centre[0]:.3f} '
                                                             f'y {centre[1]:.3f} z {centre[2]:.3f})')
