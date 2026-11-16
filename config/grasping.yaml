@@ -14,6 +14,11 @@ grasping:
   # inside, then stands still). Physics-grasp tests used x = 0.48 m.
   reach_x_m: [0.42, 0.56]
   reach_y_max_m: 0.10
+  # B5b S4: once the arm is at `above` the item is looked up again in base_link; if it moved more than
+  # this since the plan, the rest of the pick (above, descend, ..., show) is planned and checked again from
+  # there (null = off: one plan at the goal). robot_lab yaws up to 0.13-0.15 rad while the arm swings to
+  # `up` and sometimes stays there (b5b_s4g): the jaws closed 3-7 cm beside the planned hold.
+  pick_reaim_m: 0.01
   # IK (numerical, Pinocchio): random restarts and convergence
   ik_restarts: 30
   ik_tolerance_m: 0.005

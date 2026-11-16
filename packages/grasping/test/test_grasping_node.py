@@ -40,6 +40,7 @@ class Fakes:
         self.n = node
         self.arm_goals, self.arm_secs, self.cancelled, self.sim_calls = [], [], 0, []
         self.fail_goal = None                       # number of the arm goal that fails (1 = first)
+        self.on_goal = {}                           # arm goal number -> called when it ends (before succeed)
         cb = ReentrantCallbackGroup()
         for name in ('arm_controller', 'gripper_controller'):
             ActionServer(node, FollowJointTrajectory, f'/{name}/follow_joint_trajectory',
@@ -62,6 +63,8 @@ class Fakes:
                     goal_handle.canceled()
                     return FollowJointTrajectory.Result()
                 time.sleep(0.01)
+            if name == 'arm_controller' and len(self.arm_goals) in self.on_goal:
+                self.on_goal.pop(len(self.arm_goals))()
             goal_handle.succeed()
             if name == 'arm_controller' and len(self.arm_goals) == self.fail_goal:
                 return FollowJointTrajectory.Result(error_code=-5)   # GOAL_TOLERANCE_VIOLATED
@@ -247,6 +250,54 @@ def test_pick_hovers_over_the_item_height_from_the_goal(system):
     tips_z = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0][2]          # hover
     top = g.pose.pose.position.z + g.size.z / 2
     assert tips_z == pytest.approx(top + grasping.cfg['hover_above_item_m'], abs=grasping.cfg['ik_tolerance_m'])
+
+
+def base_in_odom(grasping, y):
+    """odom -> base_link: the body y m to the left of the odom origin (static: lookups take the newest)."""
+    from geometry_msgs.msg import TransformStamped
+    t = TransformStamped()
+    t.header.frame_id, t.child_frame_id = 'odom', 'base_link'
+    t.transform.translation.y, t.transform.rotation.w = y, 1.0
+    grasping.tf_buffer.set_transform_static(t, 'test')
+
+
+def odom_pick(grasping, fakes, reaim):
+    """Pick an item given in odom while the body moves 3 cm to the left once the arm is at `above`
+    (robot_lab yaws during the swing to `up`, b5b_s4g)."""
+    grasping.cfg['pick_reaim_m'] = reaim
+    base_in_odom(grasping, 0.0)
+    g = pick_goal()
+    g.pose.header.frame_id = 'odom'
+    fakes.on_goal[2] = lambda: base_in_odom(grasping, 0.03)          # goal 2 = above
+    return g
+
+
+def test_pick_reaims_when_the_body_moved_before_the_descent(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', odom_pick(grasping, fakes, 0.01))
+    assert r.success, r.message
+    assert len(fakes.arm_goals) == 6                       # up, above, above again, hover, lift, show
+    tips = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]
+    assert tips[1] == pytest.approx(-0.03, abs=grasping.cfg['ik_tolerance_m'])
+
+
+def test_pick_without_reaim_descends_to_the_planned_spot(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', odom_pick(grasping, fakes, None))
+    assert r.success, r.message
+    assert len(fakes.arm_goals) == 5
+    tips = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0]
+    assert tips[1] == pytest.approx(0.0, abs=grasping.cfg['ik_tolerance_m'])
+
+
+def test_pick_keeps_its_plan_when_the_body_moved_less_than_the_threshold(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', odom_pick(grasping, fakes, 0.05))
+    assert r.success, r.message
+    assert len(fakes.arm_goals) == 5
 
 
 def gt_objects(*objs):

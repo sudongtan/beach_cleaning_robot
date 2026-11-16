@@ -264,13 +264,18 @@ class GraspingNode(Node):
                 best, best_d = d.id, dist
         return best
 
-    def run(self, goal_handle, steps, result):
+    def run(self, goal_handle, steps, result, then=None):
+        """then: called after steps, returns (more steps, None) to run next or (None, failure message)."""
         def feedback(phase):
             msg = (PickObject.Feedback() if isinstance(goal_handle.request, PickObject.Goal)
                    else PlaceObject.Feedback())
             msg.phase = phase
             goal_handle.publish_feedback(msg)
         ok, message = self.runner.run(steps, feedback, lambda: goal_handle.is_cancel_requested)
+        if ok and then is not None:
+            more, failure = then()
+            ok, message = (False, failure) if more is None else \
+                self.runner.run(more, feedback, lambda: goal_handle.is_cancel_requested)
         if not ok and self.runner.held:
             # never walk on with an item attached (A2b a2b_bin2: the next try found it "already
             # attached", and the recovery dragged it along); it drops where it is
@@ -363,20 +368,7 @@ class GraspingNode(Node):
                 return self.refuse(goal_handle, result, 'no_transform')
             c = (pose.position.x, pose.position.y, pose.position.z)
             height = g.size.z if g.size.z > 0 else self.cfg['assumed_item_height_m']
-            check = None
-            if self.collision:
-                o = pose.orientation
-                items = self.basket_boxes()
-                if g.size.z > 0:                          # the item to be picked: no obstacle until attached
-                    items['target'] = {'centre': np.array(c), 'R': quat_matrix(o.x, o.y, o.z, o.w),
-                                       'size': (g.size.x, g.size.y, g.size.z)}
-                state, start = State(items, excluded={'target'}), self.start_q()
-
-                def check(plan):
-                    steps = pick_steps(plan, self.arm.poses, self.cfg['show_pose'], self.arm.finger_open,
-                                       self.arm.finger_closed, 'target')
-                    return self.check('pick', steps, start, state)[0]
-            ok, why, plan = plan_pick(self.arm, c, height, self.cfg, check)
+            ok, why, plan = self.plan_pick(pose, height, g.size, self.start_q())
             if not ok:
                 return self.refuse(goal_handle, result, f'{why} (item at x {c[0]:.3f} y {c[1]:.3f} z {c[2]:.3f} '
                                                         f'in {self.base_frame})')
@@ -387,9 +379,49 @@ class GraspingNode(Node):
             self.picks[g.id] = plan
             steps = pick_steps(plan, self.arm.poses, self.cfg['show_pose'], self.arm.finger_open,
                                self.arm.finger_closed, obj)
-            return self.run(goal_handle, steps, result)
+            reaim = self.cfg.get('pick_reaim_m')
+            if reaim is None:
+                return self.run(goal_handle, steps, result)
+
+            def again():
+                """At `above`: the rest of the pick, planned again if the item moved in base_link."""
+                now = self.to_base(g.pose)
+                if now is None:
+                    return steps[3:], None
+                c2 = (now.position.x, now.position.y, now.position.z)
+                moved = math.dist(c, c2)
+                if moved <= reaim:
+                    return steps[3:], None
+                ok2, why2, plan2 = self.plan_pick(now, height, g.size, plan['above'], skip=2)
+                self.get_logger().info(f'pick {g.id}: item moved {moved * 100:.1f} cm in {self.base_frame} since '
+                                       f'the plan (x {c2[0]:.3f} y {c2[1]:.3f} z {c2[2]:.3f}): re-plan {why2 or "ok"}')
+                if not ok2:
+                    return None, f'reaim_{why2}'
+                self.picks[g.id] = plan2
+                return pick_steps(plan2, self.arm.poses, self.cfg['show_pose'], self.arm.finger_open,
+                                  self.arm.finger_closed, obj)[2:], None
+            return self.run(goal_handle, steps[:3], result, then=again)
         finally:
             self.busy.release()
+
+    def plan_pick(self, pose, height, size, start, skip=0):
+        """plan_pick for an item pose in base_link, collision-checked (if on) from start; skip: leading pick
+        steps already run (2 = from `above`: the re-aim)."""
+        c = (pose.position.x, pose.position.y, pose.position.z)
+        check = None
+        if self.collision:
+            o = pose.orientation
+            items = self.basket_boxes()
+            if size.z > 0:                                # the item to be picked: no obstacle until attached
+                items['target'] = {'centre': np.array(c), 'R': quat_matrix(o.x, o.y, o.z, o.w),
+                                   'size': (size.x, size.y, size.z)}
+            state = State(items, excluded={'target'})
+
+            def check(plan):
+                steps = pick_steps(plan, self.arm.poses, self.cfg['show_pose'], self.arm.finger_open,
+                                   self.arm.finger_closed, 'target')[skip:]
+                return self.check('pick', steps, start, state)[0]
+        return plan_pick(self.arm, c, height, self.cfg, check)
 
     def execute_place(self, goal_handle):
         g, result = goal_handle.request, PlaceObject.Result()
