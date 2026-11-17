@@ -125,3 +125,14 @@ def test_held_item_ignored_when_the_arm_tf_lags():
         assert got and len(got[-1].items) == 0
     finally:
         rclpy.try_shutdown()
+
+
+def test_planar_pose_detection():
+    """B4: a planar localization (robot_localization two_d_mode) has z, roll, pitch exactly 0."""
+    from geometry_msgs.msg import Transform
+    from world_model.node import planar
+    t = Transform()
+    t.rotation.z, t.rotation.w = 0.38, 0.92
+    assert planar(t)
+    t.translation.z = 0.31
+    assert not planar(t)

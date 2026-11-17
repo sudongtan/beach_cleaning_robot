@@ -11,7 +11,7 @@ BENCH = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BENCH))
 import metrics  # noqa: E402
 from recording import Recording, coverage_share, duplicates, inside_polygon, tilt_deg  # noqa: E402
-from runner import decide_end, parse_seeds  # noqa: E402
+from runner import decide_end, make_vars, parse_components, parse_seeds  # noqa: E402
 
 CFG = yaml.safe_load(open(BENCH / 'bench.yaml'))
 MCFG, RCFG = CFG['metrics'], dict(CFG['recorder'], stall_move_m=0.5)
@@ -192,6 +192,53 @@ def test_arm_rule():
     assert len(rec.arm_viol.items) == 1
 
 
+def test_arm_trace_around_a_change_away_from_ok():
+    """C1 item 24: joints + controller reference from trace_pre_s before to trace_post_s after the change."""
+    names = RCFG['arm_joints']
+    rec = Recording(RCFG, 1.5)
+    rec.on_safety('ok')
+    rec.on_arm_reference(dict(zip(names, [0.1] * 6)))
+    for k in range(320):                               # 0.01 s samples, slow from t 1.5
+        t = 0.01 * k
+        if k == 150:
+            rec.sim_t = t
+            rec.on_safety('slow')
+        if k == 170:
+            rec.sim_t = t
+            rec.on_safety('stop')
+        rec.on_joints(t, dict(zip(names, [t] * 6)))
+    assert rec.trace is None and len(rec.traces_done) == 1
+    tr = rec.traces_done[0]
+    assert tr['t_change'] == pytest.approx(1.5) and tr['state'] == 'slow'
+    assert [c[1] for c in tr['changes']] == ['slow', 'stop']
+    ts = [s[0] for s in tr['samples']]
+    assert ts[0] == pytest.approx(1.5 - RCFG['trace_pre_s'], abs=0.011)
+    assert ts[-1] == pytest.approx(1.5 + RCFG['trace_post_s'], abs=0.011)
+    assert tr['samples'][0][2] == [0.1] * 6           # the reference rides along
+    rec.on_safety('ok')
+    rec.on_safety('slow')                              # a new trace opens after ok
+    assert rec.trace is not None
+
+
+def test_pose_track():
+    """C1 bin-side stall: true pose, EKF position, task state and the arm's gap to its reference, ~1 Hz."""
+    names = RCFG['arm_joints']
+    rec = Recording(RCFG, 1.5)
+    rec.on_task('PLACE', wall=0)
+    rec.on_arm_reference(dict(zip(names, [0.1] * 6)))
+    rec.on_joints(0.0, dict(zip(names, [0.1, 0.1, 0.4, 0.1, 0.1, 0.1])))
+    rec.on_pose(0.0, (2.0, 14.0, 0.3), (0, 0, 0, 1), wall=0)           # no EKF yet
+    rec.on_odom_global(0.5, 2.1, 14.05)
+    walk(rec, 0.5, 2.5, 2.0, 0.1, y=14.0)
+    every = RCFG['pose_track_every_s']
+    assert len(rec.pose_track) == int(2.5 / every) + 1
+    assert rec.pose_track[0] == [0.0, 2.0, 14.0, 0.0, None, None, 'PLACE', 0.3]
+    assert rec.pose_track[1][4:6] == [2.1, 14.05]
+    rec2 = Recording({**RCFG, 'pose_track_every_s': 0}, 1.5)
+    walk(rec2, 0.0, 2.0, 2.0, 0.1)
+    assert rec2.pose_track == []
+
+
 def test_arm_slow_creep_is_reported_not_counted():
     """b2 reading: 0.038 rad over 5 s (A3 dev scene: held arm in slow) is no violation, but the
     change since the state switch is reported."""
@@ -263,3 +310,22 @@ def test_parse_seeds():
     assert parse_seeds('0-3', []) == [0, 1, 2, 3]
     assert parse_seeds('101', []) == [101]
     assert parse_seeds('2,5-6', []) == [2, 5, 6]
+
+
+def test_components_reach_make_run():
+    """B4: the launched implementations are bench.yaml's components (or --components overrides)."""
+    comps = {'locomotion': 'legubiao', 'localization': 'ground_truth', 'perception': 'ground_truth',
+             'classifier': 'ground_truth', 'navigation': 'nav2', 'grasp_mode': 'attach'}
+    assert make_vars(comps) == ['LOCO=legubiao', 'LOC=ground_truth', 'PERC=ground_truth', 'CLS=ground_truth']
+    over = parse_components('localization=ekf, perception=yoloe', comps)
+    assert over['localization'] == 'ekf' and over['perception'] == 'yoloe' and comps['localization'] == 'ground_truth'
+    assert parse_components('', comps) == comps
+    with pytest.raises(SystemExit):
+        parse_components('lidar=on', comps)
+
+
+def test_drift_percentile():
+    from recording import percentile
+    assert percentile([], 95) is None
+    assert percentile([0.1] * 19 + [5.0], 95) == 0.1
+    assert percentile(list(range(1, 101)), 95) == 95

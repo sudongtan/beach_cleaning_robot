@@ -19,9 +19,11 @@ from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDesc
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, SetRemap
 
-# component -> {implementation: (package, executable)}
+# component -> {implementation: (package, executable)}, or (package, 'launch/<file>') for several nodes
 IMPLEMENTATIONS = {
-    'localization': {'ground_truth': ('localization', 'ground_truth')},
+    'localization': {'ground_truth': ('localization', 'ground_truth'),
+                     'ekf': ('localization', 'launch/ekf.launch.py'),
+                     'own_ekf': ('localization', 'launch/own_ekf.launch.py')},
     'mapping': {'ground_truth': ('mapping', 'ground_truth')},
     'perception': {'ground_truth': ('perception', 'ground_truth_detector')},
     'classifier': {'ground_truth': ('perception', 'ground_truth_classifier')},
@@ -45,6 +47,11 @@ def launch_setup(context):
         if choice not in impls:
             raise RuntimeError(f'{comp}:={choice} unknown (available: {", ".join(impls)})')
         pkg, exe = impls[choice]
+        if exe.startswith('launch/'):
+            nodes.append(IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(os.path.join(get_package_share_directory(pkg), exe)),
+                launch_arguments={'repo': repo, 'seed': str(seed)}.items()))
+            continue
         params = scene if comp != 'localization' else common
         nodes.append(Node(package=pkg, executable=exe, name=comp, output='screen', parameters=[params]))
     if cfg['navigation'] not in NAVIGATION:
@@ -56,7 +63,8 @@ def launch_setup(context):
     nodes += [
         Node(package='world_model', executable='world_model', output='screen', parameters=[scene]),
         Node(package='safety', executable='supervisor', name='safety_supervisor', output='screen',
-             parameters=[safety_cfg, common]),
+             parameters=[safety_cfg, common,
+                         {'speed_scale': 1.0} if cfg['localization'] == 'ground_truth' else {}]),
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('navigation'), 'launch', 'navigation.launch.py'))),
         Node(package='grasping', executable='grasping', output='screen',

@@ -5,7 +5,8 @@ task:
     # view_distance_m ahead (2 * d * tan(hfov / 2), hfov from config/sensors.yaml) * (1 - overlap).
     view_distance_m: 2.0
     overlap: 0.2
-    edge_margin_m: 0.5         # lanes and waypoints stay this far inside the geofence
+    edge_margin_m: 0.7         # lanes and waypoints stay this far inside the geofence (> safety.yaml
+                               # geofence_margin_m 0.5; B4: was 0.5 with the 0.3 m margin)
     waypoint_spacing_m: 5.0    # waypoints along a lane (progress checks; lethal ones are dropped)
   fsm:
     rate_hz: 10.0
@@ -22,6 +23,30 @@ task:
     # so the near wall (0.30 m from the centre) must be >= 0.57 m ahead (A2b: at 0.7 m the arm hit
     # the bin and tipped the robot over). Checked by sim/common/tests/test_cross_phase.py.
     bin_place_distance_m: 0.87
+    # C1: every further place at the same bin starts with the bin's final approach again (it backs up too):
+    # robot_lab creeps towards the bin while the arm places (devpose s3: 0.805 -> 0.70 m over 3 places, then
+    # the stowed gripper hooked on the rim and held the robot at the bin). false = one approach per bin (B4)
+    reapproach_before_place: true
+    # B5: unload each compartment in the reverse order it was filled (the item stacked on top first). In order
+    # (first_first) the collision check refused the bottom item's unload past the one on it 3 times (devb5 s8);
+    # the bottom item then stayed in the basket as stuck.
+    unload_order: last_first     # last_first | first_first
+    # C1: the bin final approach's settle accepts a mean distance at most this far short of bin_place_distance_m
+    # (long side unchanged: tolerance 0.03 + settle_band_m). The symmetric window let PLACE start at 0.80-0.83
+    # (devreap, devreap2: the task's own estimate was right within 1 cm) and the arm's rest <-> up move hit the
+    # near wall below 0.84 m. Both window ends are checked by sim/common/tests/test_cross_phase.py.
+    # null = symmetric (B4)
+    bin_settle_short_m: 0.02
+    # C1: the bin final approach ends on the bin's axis: base_link bin_place_distance_m out along the bin's x (not
+    # just that far from its centre), within lateral_tol_m of the axis (mean + settle_band_m) and heading_tol_rad of
+    # facing along it. Nav2 accepts any heading at the standoff (nav2_params yaw_goal_tolerance) and the approach
+    # that steered at the centre placed up to 0.62 m off the axis (c1_win: every residual place); at 0.80 m along
+    # the axis and 0.32 m to the side the arm hooked the near wall's corner (c1_win s3). Tolerances: half the
+    # off-axis envelope in sim/common/tests/test_cross_phase.py, and their corrections (gain 0.8) above robot_lab's
+    # dead band. null = steer at the centre (B4)
+    bin_axis:
+      lateral_tol_m: 0.10
+      heading_tol_rad: 0.15
     # From one bin to the other (they stand side by side; A3: 3 of 7 falls on the walk between them):
     # `step` = straight sideways (vy, heading held) from one place pose to the other, then PLACE;
     # `walk` = back out to bin_standoff_m, then a Nav2 goal (baseline A3). The arm can't reach into
@@ -32,6 +57,14 @@ task:
       along_tolerance_m: 0.10    # step only to a bin beside this one: same yaw (within 0.1 rad), offset
       max_lateral_m: 1.5         # along the bin's x below along_tolerance_m, sideways at most max_lateral_m
                                  # no progress (final_approach progress_*) -> back out and walk (Nav2)
+      # robot_lab stands at a backward part with a sideways one (the step's (-0.02, -0.10) moved 1 of 3,
+      # front-right and pure back 3/3; C1 log h3-h3d) and drifts forward stepping sideways: up to this far
+      # past the place pose is left to the final approach, beyond it the step backs straight. 0 = off (B2)
+      # (0.08 until devref: with the drift and the trunk's sway the robot came to 0.74 m from the bin line)
+      back_band_m: 0.04
+      # no forward command in the step (short of the pose is left to the final approach): it started each step with
+      # +0.08 (min speed) and walked the arm towards the near wall (devref, devband2). false = as B2
+      no_forward: true
     bin_leave_timeout_s: 20.0    # after placing, back straight out to bin_standoff_m (Nav2 won't start facing
                                  # the bin); give up after this long and let Nav2 try anyway
     final_approach:              # APPROACH step 2: small /cmd_vel_nav steps until the item is in reach
@@ -70,6 +103,9 @@ task:
     escape:
       trail_step_m: 0.05         # the own moves are recorded as poses this far apart
       max_m: 2.0                 # move at most this far in all (then Nav2 tries anyway)
+      # max_m is summed on this pose: `odom` (smooth) or `map` (B3 baseline). With the EKF the map pose adds up
+      # 2.18 m per 10 s standing still (truth 0.05, devesc s1), so `map` ended every escape after about 9 s
+      travel_frame: odom
       # 1. retrace the own moves (newest first, each pose's heading); 2. else straight along the current heading,
       # forward or back, to the nearest turn-free pose within straight_max_m with the outline clear all the way;
       # 3. else (e.g. b2_bins seed 8, Nav2 itself stopped in a corridor) turn on the spot to the nearest heading
@@ -91,3 +127,19 @@ task:
     item_timeout_s: 180.0        # no progress on one item for this long -> skipped (no_progress)
     nav_timeout_s: 120.0         # one navigation goal
     fall_tilt_deg: 30.0          # body tilt beyond this = fallen: stop everything, end the run (FELL)
+    # body tilt for the fall check: `imu` (/imu orientation; B4: a planar EKF publishes roll = pitch = 0
+    # on /odom/global) | `odom` (/odom/global orientation, baseline A3-B3; the true tilt with ground truth)
+    tilt_source: imu
+    # B4, "map gets you near, camera finishes the job": final approaches, picks and placements on the
+    # latest detection of the item / bin in the smooth odom frame (`odom`), or on the world model's
+    # averaged map positions and the scene's bin poses (`map`, baseline A3-B3). With ground-truth
+    # localization map = odom, so both give the same targets.
+    close_range: odom
+    # C1: a bin's pose for its final approach, PLACE, the bin step and leaving: `freshest` = derived from the most
+    # recently seen bin (the layout is known; odom drifts while the robot walks away and back: devband2 s0 stepped
+    # to a residual seen ~470 s before, aimed 0.16 m into the bin row and caught the arm on the recyclable bin);
+    # `own` = the bin's own latest detection (B4 baseline)
+    bin_reference: freshest
+    close_range_max_age_s:       # older detections aren't used (odom drifts with the distance walked)
+      item: 60.0                 # the item leaves the camera's view in the last ~0.3 m of the final approach
+      bin: 600.0                 # the robot stands at the bins while placing (a few minutes)

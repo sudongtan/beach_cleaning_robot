@@ -16,6 +16,36 @@ COMPARTMENTS = ('recyclable', 'residual')
 TRANSITIONS = {SEEN: {COLLECTED, SKIPPED}, COLLECTED: {PLACED, SEEN}, SKIPPED: set(), PLACED: set()}
 
 
+class DetectionQueue:
+    """Detections waiting for the transform at their stamp. An estimator's map -> odom arrives after
+    the camera frame it belongs to (C1: most detections were dropped with the EKF); falling back to
+    the latest transform would bring the A2b phantom items back, so a detection waits instead."""
+
+    def __init__(self, max_wait_s):
+        self.max_wait_s = max_wait_s
+        self.pending = []                               # [stamp s, message, attempts], oldest first
+        self.first_try, self.after_wait, self.dropped = 0, 0, 0
+
+    def add(self, stamp_s, msg):
+        self.pending.append([stamp_s, msg, 0])
+
+    def process(self, now_s, handle):
+        """handle(msg) -> True when the message's transform was there and it has been used."""
+        keep = []
+        for entry in self.pending:
+            if handle(entry[1]):
+                if entry[2] == 0:
+                    self.first_try += 1
+                else:
+                    self.after_wait += 1
+            elif now_s - entry[0] > self.max_wait_s:
+                self.dropped += 1
+            else:
+                entry[2] += 1
+                keep.append(entry)
+        self.pending = keep
+
+
 @dataclass
 class Item:
     id: str

@@ -38,8 +38,9 @@ class Fakes:
 
     def __init__(self, node):
         self.n = node
-        self.arm_goals, self.cancelled, self.sim_calls = [], 0, []
+        self.arm_goals, self.arm_secs, self.cancelled, self.sim_calls = [], [], 0, []
         self.fail_goal = None                       # number of the arm goal that fails (1 = first)
+        self.on_goal = {}                           # arm goal number -> called when it ends (before succeed)
         cb = ReentrantCallbackGroup()
         for name in ('arm_controller', 'gripper_controller'):
             ActionServer(node, FollowJointTrajectory, f'/{name}/follow_joint_trajectory',
@@ -52,7 +53,9 @@ class Fakes:
     def execute(self, name):
         def cb(goal_handle):
             if name == 'arm_controller':
-                self.arm_goals.append(list(goal_handle.request.trajectory.points[0].positions))
+                p = goal_handle.request.trajectory.points[0]
+                self.arm_goals.append(list(p.positions))
+                self.arm_secs.append(p.time_from_start.sec + p.time_from_start.nanosec * 1e-9)
             end = time.monotonic() + 0.3
             while time.monotonic() < end:
                 if goal_handle.is_cancel_requested:
@@ -60,6 +63,8 @@ class Fakes:
                     goal_handle.canceled()
                     return FollowJointTrajectory.Result()
                 time.sleep(0.01)
+            if name == 'arm_controller' and len(self.arm_goals) in self.on_goal:
+                self.on_goal.pop(len(self.arm_goals))()
             goal_handle.succeed()
             if name == 'arm_controller' and len(self.arm_goals) == self.fail_goal:
                 return FollowJointTrajectory.Result(error_code=-5)   # GOAL_TOLERANCE_VIOLATED
@@ -200,6 +205,32 @@ def test_stop_holds_the_controller_reference(system):
     assert result['r'].success, result['r'].message
 
 
+def test_moves_are_stretched_to_the_joint_speed_cap(system):
+    """max_joint_speed_radps: a move from the controller reference takes at least max |dq| / cap."""
+    grasping, node, fakes = system
+    vmax, base = grasping.cfg['max_joint_speed_radps'], grasping.cfg['move_time_s']
+    assert vmax > 0
+    pub = node.create_publisher(JointTrajectoryControllerState, '/arm_controller/controller_state', 10)
+    msg = JointTrajectoryControllerState(joint_names=list(ARM))
+    msg.reference.positions = [0.0] * len(ARM)              # every move starts at zero (fake)
+    running = threading.Event()
+    running.set()
+
+    def publish():
+        while running.is_set():
+            pub.publish(msg)
+            time.sleep(0.02)
+    threading.Thread(target=publish, daemon=True).start()
+    time.sleep(0.3)
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', pick_goal())
+    running.clear()
+    assert r.success, r.message
+    for q, secs in zip(fakes.arm_goals, fakes.arm_secs):
+        assert secs == pytest.approx(max(base, max(abs(v) for v in q) / vmax), abs=1e-6)
+    assert max(fakes.arm_secs) > base                      # at least one move was stretched
+
+
 def test_unreachable_pick_is_refused(system):
     grasping, node, fakes = system
     set_safety(grasping, fakes, 'ok')
@@ -219,6 +250,54 @@ def test_pick_hovers_over_the_item_height_from_the_goal(system):
     tips_z = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0][2]          # hover
     top = g.pose.pose.position.z + g.size.z / 2
     assert tips_z == pytest.approx(top + grasping.cfg['hover_above_item_m'], abs=grasping.cfg['ik_tolerance_m'])
+
+
+def base_in_odom(grasping, y):
+    """odom -> base_link: the body y m to the left of the odom origin (static: lookups take the newest)."""
+    from geometry_msgs.msg import TransformStamped
+    t = TransformStamped()
+    t.header.frame_id, t.child_frame_id = 'odom', 'base_link'
+    t.transform.translation.y, t.transform.rotation.w = y, 1.0
+    grasping.tf_buffer.set_transform_static(t, 'test')
+
+
+def odom_pick(grasping, fakes, reaim):
+    """Pick an item given in odom while the body moves 3 cm to the left once the arm is at `above`
+    (robot_lab yaws during the swing to `up`, b5b_s4g)."""
+    grasping.cfg['pick_reaim_m'] = reaim
+    base_in_odom(grasping, 0.0)
+    g = pick_goal()
+    g.pose.header.frame_id = 'odom'
+    fakes.on_goal[2] = lambda: base_in_odom(grasping, 0.03)          # goal 2 = above
+    return g
+
+
+def test_pick_reaims_when_the_body_moved_before_the_descent(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', odom_pick(grasping, fakes, 0.01))
+    assert r.success, r.message
+    assert len(fakes.arm_goals) == 6                       # up, above, above again, hover, lift, show
+    tips = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]
+    assert tips[1] == pytest.approx(-0.03, abs=grasping.cfg['ik_tolerance_m'])
+
+
+def test_pick_without_reaim_descends_to_the_planned_spot(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', odom_pick(grasping, fakes, None))
+    assert r.success, r.message
+    assert len(fakes.arm_goals) == 5
+    tips = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0]
+    assert tips[1] == pytest.approx(0.0, abs=grasping.cfg['ik_tolerance_m'])
+
+
+def test_pick_keeps_its_plan_when_the_body_moved_less_than_the_threshold(system):
+    grasping, node, fakes = system
+    set_safety(grasping, fakes, 'ok')
+    r = send(node, PickObject, '/grasp/pick', odom_pick(grasping, fakes, 0.05))
+    assert r.success, r.message
+    assert len(fakes.arm_goals) == 5
 
 
 def gt_objects(*objs):
@@ -278,7 +357,8 @@ def test_bin_place_takes_the_item_from_inside_the_compartment(system):
     r = send(node, PlaceObject, '/grasp/place', bin_goal())
     assert r.success, r.message
     assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]
-    hover = grasping.arm.fk(fakes.arm_goals[3], TIPS)[0]                     # up, over, above, hover
+    n = grasping.cfg['unload'].get('lift_vias') or 0
+    hover = grasping.arm.fk(fakes.arm_goals[3 + n], TIPS)[0]                 # up, over, above, vias, hover
     assert hover[2] == pytest.approx(item[2] + 0.011 + grasping.cfg['hover_above_item_m'], abs=0.006)
     assert hover[:2] == pytest.approx(item[:2], abs=0.01)
     release = fakes.arm_goals[-3]
@@ -292,7 +372,8 @@ def test_failed_bin_place_releases_the_item(system):
     c = compartment(grasping.arm, 'recyclable')
     grasping.gt = gt_objects(('trash_03', ((c['x'][0] + c['x'][1]) / 2, 0.07, c['floor'] + 0.03)))
     grasping.gt.detections[0].bbox.size.z = 0.06
-    fakes.fail_goal = 5                         # up, over, above, hover, then the lift out fails
+    fakes.fail_goal = 5 + (grasping.cfg['unload'].get('lift_vias') or 0)   # up, over, above, vias, hover,
+                                                                            # then the lift out fails
     r = send(node, PlaceObject, '/grasp/place', bin_goal())
     assert not r.success and 'item released' in r.message
     assert fakes.sim_calls == [('attach', 'trash_03'), ('detach', 'trash_03')]
@@ -323,6 +404,8 @@ def hold_at_show_pose(grasping, size, yaw=0.6):
     tf.transform.rotation.y = (R[0, 2] - R[2, 0]) / (4 * w)
     tf.transform.rotation.z = (R[1, 0] - R[0, 1]) / (4 * w)
     grasping.tf_buffer.set_transform_static(tf, 'test')
+    # the arm is at the show pose (a pick ends there): the collision check starts the store from it
+    grasping.arm_reference = (dict(zip(ARM, grasping.cfg['show_pose'])), time.monotonic() + 60.0)
     c = t + R @ np.array([size[2] / 2 + grasping.cfg['hover_above_item_m'], 0.0, 0.0])   # tool x = down
     grasping.gt = gt_objects(('trash_03', tuple(c)))
     d = grasping.gt.detections[0]
@@ -342,7 +425,7 @@ def test_store_lowers_the_item_to_a_spot_in_the_compartment(system):
     r = send(node, PlaceObject, '/grasp/place', store_goal())
     assert r.success, r.message
     over = grasping.arm.fk(grasping.arm.poses['over_recyclable']['arm'], TIPS)[0]
-    low = grasping.arm.fk(fakes.arm_goals[2], TIPS)[0]                 # up, above, lower
+    low = min((grasping.arm.fk(q, TIPS)[0] for q in fakes.arm_goals), key=lambda t: t[2])   # the release
     assert low[2] < over[2] - 0.05
     assert fakes.sim_calls == [('detach', 'trash_03')]
 

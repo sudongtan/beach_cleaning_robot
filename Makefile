@@ -7,9 +7,9 @@
 #                                  needs `colcon build` first
 #   make run SEED=3                scene 3 + the A2 skeleton (the robot cleans the beach);
 #                                  HEADLESS / RVIZ as for scene; RUN_ID names the event log
-#                                  LOCO=legubiao (default) | legubiao_rl (HIMLoco policy) |
-#                                  legubiao_robot_lab (robot_lab policy) for
-#                                  scene and run
+#                                  LOCO=legubiao | legubiao_rl (HIMLoco policy) |
+#                                  legubiao_robot_lab (robot_lab policy, default) for
+#                                  scene and run; LOC= / PERC= / CLS= component implementations (run)
 #   make world SEED=3              Gazebo GUI with scene 3, no robot
 #   make world-headless SEED=3     same, server only, headless rendering
 #   make assets                    regenerate meshes and textures in sim/common
@@ -28,7 +28,13 @@ VARIANT ?= custom
 RVIZ ?= false
 RUN_ID ?=
 LOCO ?= legubiao_robot_lab
+# component implementations for `make run` (B4: localization ekf | own_ekf; B6: perception yoloe | classical)
+LOC ?= ground_truth
+PERC ?= ground_truth
+CLS ?= ground_truth
 ROW ?=
+# bench.yaml component overrides for `make bench`, e.g. COMPONENTS=localization=ekf (B4)
+COMPONENTS ?=
 # Optional own Gazebo transport partition (e.g. GZ_PARTITION=a1) to keep parallel
 # simulations apart; empty = the normal shared partition.
 GZ_PARTITION ?=
@@ -66,7 +72,8 @@ scene: $(WORLD)
 run: $(WORLD)
 	@[ "$(SIM)" = gazebo ] || { echo "SIM=$(SIM): only gazebo exists so far (isaac comes in B0)"; exit 1; }
 	source $(ROS_SETUP) && source $(WS_SETUP) && $(GZ_ENV) ros2 launch bringup sim.launch.py sim:=$(SIM) \
-	  scene:=$(MANIFEST) headless:=$(HEADLESS) rviz:=$(RVIZ) locomotion:=$(LOCO) skeleton:=true run_id:=$(RUN_ID)
+	  scene:=$(MANIFEST) headless:=$(HEADLESS) rviz:=$(RVIZ) locomotion:=$(LOCO) skeleton:=true run_id:=$(RUN_ID) \
+	  localization:=$(LOC) perception:=$(PERC) classifier:=$(CLS)
 
 world: $(WORLD)
 	source $(ROS_SETUP) && $(GZ_ENV) gz sim -r $(WORLD)
@@ -75,10 +82,11 @@ world-headless: $(WORLD)
 	source $(ROS_SETUP) && $(GZ_ENV) gz sim -s -r --headless-rendering $(WORLD)
 
 bench:
-	$(PYTHON) bench/runner.py --sim $(SIM) --seeds $(SEEDS) $(if $(ROW),--row $(ROW))
+	$(PYTHON) bench/runner.py --sim $(SIM) --seeds $(SEEDS) $(if $(ROW),--row $(ROW)) \
+	  $(if $(COMPONENTS),--components '$(COMPONENTS)')
 
 bench-detached:
-	bench/start_detached.sh SIM=$(SIM) SEEDS=$(SEEDS) $(if $(ROW),ROW=$(ROW))
+	bench/start_detached.sh SIM=$(SIM) SEEDS=$(SEEDS) $(if $(ROW),ROW=$(ROW)) $(if $(COMPONENTS),COMPONENTS=$(COMPONENTS))
 
 clean:
 	rm -rf sim/gazebo/worlds/generated sim/common/generated

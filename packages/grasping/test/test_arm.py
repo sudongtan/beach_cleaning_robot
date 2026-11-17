@@ -10,12 +10,15 @@ import yaml
 pytest.importorskip('pinocchio')
 pytest.importorskip('ament_index_python')
 
-from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item,  # noqa: E402
+from grasping.arm import (TCP, TIPS, Arm, bin_release_target, compartment, graspable, held_item, supported,  # noqa: E402
                           in_basket, in_envelope, item_yaw, near, plan_pick, plan_store, plan_unload,
                           release_clearances)
 
 REPO = Path(__file__).resolve().parents[3]
-CFG = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
+ROW = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']   # as configured (B5b: centre, one item)
+CFG = {**ROW, 'store': {**ROW['store'], 'placement': 'grid', 'max_items': None,   # the slot grid (c076fa5) the
+                        'check_unload_margin': False},                             # tests below were written for
+       'unload': {**ROW['unload'], 'lift_toward_middle_m': 0.0}}
 LIMITS = yaml.safe_load(open(REPO / 'config' / 'robot_limits.yaml'))['robot_limits']
 OBJECTS = yaml.safe_load(open(REPO / 'sim' / 'common' / 'objects.yaml'))
 MAX_H = 0.075                                    # = cross-phase limit: jaw length + tip height - bar clearance
@@ -70,6 +73,25 @@ def test_pick_plan_phases(arm):
     for q in plan.values():
         axis = arm.fk(q, TIPS)[1]
         assert np.degrees(np.arccos(-axis[2])) <= CFG['approach_max_tilt_deg'] + 0.5
+
+
+@pytest.mark.parametrize('spread', ['config', None])
+def test_pick_moves_stay_on_one_side(arm, spread):
+    """No pick move swings the waist or turns the forearm roll: bounded (config), over the envelope;
+    unbounded (None, the old solve), at least one lift turns either by more than 3 rad."""
+    cfg = CFG if spread == 'config' else dict(CFG, pick_joint_spread_rad=None)
+    worst = np.zeros(6)
+    for x in np.linspace(*CFG['reach_x_m'], 4):
+        for y in np.linspace(-CFG['reach_y_max_m'], CFG['reach_y_max_m'], 3):
+            for h in (0.022, 0.075):
+                ok, why, plan = plan_pick(arm, (x, y, -0.285 + h / 2), h, cfg)
+                assert ok, why
+                for a, b in (('above', 'hover'), ('hover', 'lift')):
+                    worst = np.maximum(worst, np.abs(np.subtract(plan[b], plan[a])))
+    if spread == 'config':
+        assert worst[0] <= 0.1 and worst[3] <= 0.2, worst
+    else:
+        assert max(worst[0], worst[3]) > 3.0, worst
 
 
 def test_outside_envelope_is_refused(arm):
@@ -140,8 +162,30 @@ def test_unload_moves_stay_on_one_side(arm, comp):
                                             c['floor'] + 0.033), 0.066, CFG)
     assert ok, why
     over = np.array(arm.poses[f'over_{comp}']['arm'])
-    for q in plan.values():
+    for q in [plan['above'], plan['hover']] + list(plan.get('via', [])):
         assert abs(q[0] - over[0]) <= 1.0 + 1e-6 and abs(q[3] - over[3]) <= 1.0 + 1e-6
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_unload_lift_keeps_the_item_over_its_spot(arm, comp):
+    """unload.lift_vias: the item (it hangs below the tips) stays over the spot it lay on from
+    hover up through the waypoints to above, on the plan's IK points (sweep 7: the joint line
+    from hover to above swung it into the walls)."""
+    c = compartment(arm, comp)
+    assert CFG['unload']['lift_vias'] > 0
+    centre = np.array([c['x'][0] + 0.04, c['y'][0] + 0.04, c['floor'] + 0.035])
+    ok, why, plan = plan_unload(arm, comp, centre, 0.07, CFG)
+    assert ok, why
+    assert len(plan['via']) == CFG['unload']['lift_vias']
+    t0, R0 = arm.pose(plan['hover'], TIPS)
+    p = R0.T @ (centre - t0)
+    zs = []
+    for q in list(plan['via'])[::-1] + [plan['above']]:
+        t, R = arm.pose(q, TIPS)
+        item = t + R @ p
+        assert np.linalg.norm(item[:2] - centre[:2]) < 0.004
+        zs.append(item[2])
+    assert zs == sorted(zs) and zs[0] > centre[2]
 
 
 def test_release_clearances_step_down_to_the_minimum():
@@ -225,7 +269,11 @@ def test_store_lays_every_item_along_the_compartment_on_its_floor(arm, comp):
             assert ok, (name, yaw, why)
             item, Rb, e = landed(arm, plan['release'], held, info['drop'])
             # drop_gap_m, more only for items so flat that the gripper bar would reach the rim (cigarette pack)
-            assert st['drop_gap_m'] - 0.006 <= info['drop'] <= 0.03, (name, yaw, info['drop'])
+            assert st['drop_gap_m'] - 0.006 <= info['drop'], (name, yaw, info['drop'])
+            under = arm.bar_underside if st.get('bar_box_exact') else \
+                (lambda q: arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2)
+            if info['drop'] > 0.03:                                              # only with the bar at its limit
+                assert under(plan['release']) <= c['rim'] + st['bar_clearance_m'] + 0.006, (name, yaw, info['drop'])
             assert item['centre'][2] - e[2] / 2 == pytest.approx(c['floor'], abs=0.006), (name, yaw)
             if abs(held['size'][0] - held['size'][1]) > 0.01:                     # square: any yaw
                 assert abs(np.sin(item_yaw(Rb, held['size']))) < np.sin(np.radians(5)), (name, yaw)   # along x
@@ -233,8 +281,7 @@ def test_store_lays_every_item_along_the_compartment_on_its_floor(arm, comp):
             assert c['x'][0] - 1e-3 <= x - e[0] / 2 and x + e[0] / 2 <= c['x'][1] + 1e-3, (name, yaw)
             assert c['y'][0] - 1e-3 <= y - e[1] / 2 and y + e[1] / 2 <= c['y'][1] + 1e-3, (name, yaw)
             for q in (plan['release'], plan['above']):
-                bar = arm.fk(q, 'arm_gripper_bar_link')[0][2] - arm.bar[0] / 2
-                assert bar >= c['rim'] + st['bar_clearance_m'] - 0.006, (name, yaw)
+                assert under(q) >= c['rim'] + st['bar_clearance_m'] - 0.006, (name, yaw)
 
 
 FILL = {'recyclable': ['pet_bottle_500', 'food_tin', 'can_330', 'glass_bottle_330', 'glass_jar'],
@@ -281,3 +328,186 @@ def test_store_move_keeps_the_held_item_above_the_rim(arm, comp):
             ok, why, plan, _ = plan_store(arm, comp, held, [], CFG)
             assert ok, why
             assert lowest_over_basket(arm, up, plan['above'], held, c['rim']) > 0.005, (name, yaw)
+
+
+def deepest_in_wall(arm, qa, qb, held, c, n=60):
+    """Deepest the held item's bbox reaches through a compartment's inner walls (m, > 0 = through)
+    along a joint-space move, while its bottom is below the rim."""
+    worst = -np.inf
+    for f in np.linspace(0.0, 1.0, n):
+        ci, _, e = held_item(arm, np.asarray(qa) + f * (np.asarray(qb) - np.asarray(qa)), held)
+        if ci[2] - e[2] / 2 <= c['rim']:
+            worst = max(worst, c['x'][0] - (ci[0] - e[0] / 2), ci[0] + e[0] / 2 - c['x'][1],
+                        c['y'][0] - (ci[1] - e[1] / 2), ci[1] + e[1] / 2 - c['y'][1])
+    return worst
+
+
+@pytest.mark.parametrize('branch', ['nearest', 'any'])
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_store_lower_keeps_the_held_item_inside_the_walls(arm, comp, branch):
+    """c1_axis s3: with wrist_branch any, `above` and `release` took wrist turns ~pi apart, so the
+    bottle turned half a turn while lowered into the compartment (9 cm through the wall). nearest
+    keeps the turn; what is left is the joint-space arc (<= 6 mm of the bbox past the wall). Unchecked,
+    on the centre-first slot order of 9ac4816: from a corner (B5.4) the first slot is 5 mm from two walls
+    and only the collision check keeps the arc inside (test_collision: checked stores stay inside)."""
+    c = compartment(arm, comp)
+    cfg = {**CFG, 'wrist_branch': branch,
+           'store': {**CFG['store'], 'fill_corner': None, 'wall_retry_m': None, 'inside_walls': False}}
+    worst = (-np.inf, 0.0, '')
+    for name, spec in OBJECTS['trash'].items():
+        for yaw in np.linspace(-np.pi, np.pi, 7)[:-1]:
+            held = picked(arm, spec, yaw)
+            ok, why, plan, _ = plan_store(arm, comp, held, [], cfg)
+            assert ok, (name, yaw, why)
+            turn = abs(plan['release'][-1] - plan['above'][-1])
+            worst = max(worst, (deepest_in_wall(arm, plan['above'], plan['release'], held, c), turn, name))
+    if branch == 'nearest':
+        assert worst[0] <= 0.006 and worst[1] <= 0.1, worst
+    else:
+        assert worst[0] > 0.03, worst                  # the old behaviour: reproduces the half turn
+
+
+def test_unload_keeps_the_wrist_turn(arm):
+    """wrist_branch nearest: the jaws don't turn between hovering in the compartment and lifting."""
+    cfg = {**CFG, 'wrist_branch': 'nearest'}
+    for comp in ('recyclable', 'residual'):
+        c = compartment(arm, comp)
+        for x in np.linspace(c['x'][0] + 0.05, c['x'][1] - 0.05, 3):
+            centre = (x, np.mean(c['y']), c['floor'] + 0.033)
+            ok, why, plan = plan_unload(arm, comp, centre, 0.066, cfg)
+            assert ok, (comp, x, why)
+            assert abs(plan['above'][-1] - plan['hover'][-1]) <= 0.1, (comp, x)
+
+
+def test_a_stacked_item_rests_flat_on_what_lies_there():
+    """devb5 s8: a 0.23 m bottle stacked over the end of a 0.12 m one (its centre 4 mm inside the one
+    below) tipped; a spot over the middle of an item of that height is fine, the floor always."""
+    short = {'centre': (-0.034, 0.100), 'half': (0.059, 0.034), 'top': 0.170}
+    m = CFG['store']['support_margin_m']
+    assert not supported((-0.089, 0.107), [short], 0.170, 0.105, m)
+    assert supported((-0.034, 0.107), [short], 0.170, 0.105, m)
+    assert supported((-0.200, 0.040), [short], 0.105, 0.105, m)
+    assert not supported((-0.034, 0.107), [short], 0.200, 0.105, m)   # nothing of that height
+
+
+def test_a_spot_the_item_cannot_be_unloaded_from_is_skipped(arm):
+    """devb5b s2: a cube in a corner stored fine but no unload planned from there. With unload_check
+    the first spot that fails it is rejected (no_unload) and the next spot is used; the landed box
+    handed to it is the one the item will be."""
+    held = picked(arm, OBJECTS['trash'][next(iter(OBJECTS['trash']))], 0.0)
+    ok, _, plan, info = plan_store(arm, 'recyclable', held, [], CFG)
+    assert ok
+    first = info['slot']
+    seen = []
+
+    def unload_check(box, height):
+        seen.append((box, height))
+        return 'unreachable (above)' if len(seen) == 1 else None
+    ok, _, plan2, info2 = plan_store(arm, 'recyclable', held, [], CFG, unload_check=unload_check)
+    assert ok and info2['slot'] != first
+    assert any(xy == first and w.startswith('no_unload') for xy, w in info2['rejected'])
+    item, _, e = landed(arm, plan2['release'], held, info2['drop'])
+    box, height = seen[-1]
+    assert np.allclose(box['centre'], item['centre'], atol=1e-6) and abs(height - e[2]) < 1e-6
+
+
+# --- B5b: one centred item per compartment -------------------------------------------------------
+
+CENTRE = {**CFG, 'store': {**CFG['store'], 'placement': 'centre'}}
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_centre_placement_is_the_middle_of_the_floor(arm, comp):
+    """B5b: one spot, the middle of the compartment floor (with slots_x/y 1 the grid's linspace gives the edge
+    spot, not the middle)."""
+    c = compartment(arm, comp)
+    held = picked(arm, OBJECTS['trash']['pet_bottle_500'], 0.0)
+    ok, why, plan, info = plan_store(arm, comp, held, [], CENTRE)
+    assert ok, why
+    assert info['slot'] == pytest.approx((np.mean(c['x']), np.mean(c['y'])), abs=1e-9)
+    item, _, _ = landed(arm, plan['release'], held, info['drop'])
+    assert item['centre'][:2] == pytest.approx(info['slot'], abs=0.015)
+    one = {**CFG, 'store': {**CFG['store'], 'slots_x': 1, 'slots_y': 1}}
+    ok, _, _, info = plan_store(arm, comp, held, [], one)                          # grid n = 1: the edge spot
+    assert not ok or info['slot'][0] < np.mean(c['x']) - 0.03                   # (or none at all)
+
+
+def test_centre_placement_never_falls_back_to_the_grid(arm):
+    held = picked(arm, OBJECTS['trash']['pet_bottle_500'], 0.0)
+    ok, why, plan, info = plan_store(arm, 'recyclable', held, [], CENTRE, check=lambda plan: 'collision:lower:x/y')
+    assert (ok, why) == (False, 'compartment_full') and len(info['rejected']) == 1
+    ok, why, _, info = plan_store(arm, 'recyclable', held, [], CENTRE, unload_check=lambda box, h: 'unreachable')
+    assert (ok, why) == (False, 'compartment_full') and info['rejected'][0][1].startswith('no_unload')
+
+
+@pytest.mark.parametrize('comp', ['recyclable', 'residual'])
+def test_max_items_refuses_an_occupied_compartment(arm, comp):
+    """Defence in depth: whatever the task counts, a compartment with an item lying in it (ground truth) takes
+    no other; an item in the other compartment doesn't count."""
+    c, o = compartment(arm, comp), compartment(arm, 'residual' if comp == 'recyclable' else 'recyclable')
+    cfg = {**CENTRE, 'store': {**CENTRE['store'], 'max_items': 1}}
+    held = picked(arm, OBJECTS['trash']['can_330'], 0.0)
+    lying = lambda k: {'centre': (np.mean(k['x']), np.mean(k['y']), k['floor'] + 0.03), 'half': (0.06, 0.03),  # noqa: E731
+                       'top': k['floor'] + 0.06}
+    ok, why, _, info = plan_store(arm, comp, held, [lying(c)], cfg)
+    assert (ok, why) == (False, 'compartment_full') and info['rejected'][0][1].startswith('max_items 1')
+    assert plan_store(arm, comp, held, [lying(o)], cfg)[0]
+    assert plan_store(arm, comp, held, [lying(c)], CENTRE)[0]                  # null = off: it stacks
+
+
+def test_margin_check_tries_each_offset_nearest_wall_first(arm):
+    """check_unload_margin: the planned spot and the 8 offsets of landing_margin_m (a number or [x, y]), the
+    least slack to a wall or the divider first; the first failure refuses the store and names the offset."""
+    m = (0.015, 0.01)
+    cfg = {**CENTRE, 'store': {**CENTRE['store'], 'check_unload_margin': True, 'landing_margin_m': list(m)}}
+    held = picked(arm, OBJECTS['trash']['pet_bottle_500'], 0.0)
+    seen = []
+
+    def unload_check(box, height):
+        seen.append(np.asarray(box['centre'][:2]))
+        return None
+    ok, _, _, info = plan_store(arm, 'recyclable', held, [], cfg, unload_check=unload_check)
+    assert ok and len(seen) == 9
+    spot = np.mean(seen, axis=0)                                                 # the offsets are symmetric
+    offs = {tuple(np.round(s - spot, 4)) for s in seen}
+    assert offs == {(sx * m[0], sy * m[1]) for sx in (-1, 0, 1) for sy in (-1, 0, 1)}
+    c = compartment(arm, 'recyclable')
+    side = lambda p: min(p[1] - c['y'][0], c['y'][1] - p[1])  # noqa: E731
+    assert side(seen[0]) <= side(seen[-1])                                       # nearest a wall first
+    seen.clear()
+
+    def second_fails(box, height):
+        seen.append(box)
+        return 'collision:lift' if len(seen) == 2 else None
+    ok, why, _, info = plan_store(arm, 'recyclable', held, [], cfg, unload_check=second_fails)
+    assert not ok and len(seen) == 2 and info['rejected'][0][1].startswith('no_unload at (')
+    off = {**cfg, 'store': {**cfg['store'], 'check_unload_margin': False}}
+    seen.clear()
+    assert plan_store(arm, 'recyclable', held, [], off, unload_check=unload_check)[0] and len(seen) == 1
+
+
+def test_b5b_switches_off_give_the_c076fa5_plans():
+    """placement grid, max_items null, check_unload_margin false = the store config without these keys
+    (c076fa5), plan for plan on fixed seeds."""
+    old = {**CFG, 'store': {k: v for k, v in CFG['store'].items()
+                            if k not in ('placement', 'max_items', 'check_unload_margin', 'landing_margin_m',
+                                         'centre_nudge_m')}}
+    lying = {'centre': (-0.2, 0.075, 0.14), 'half': (0.03, 0.03), 'top': 0.17}
+    for name in ('pet_bottle_500', 'poly_cup', 'food_container'):
+        out = []
+        for cfg in (old, CFG):
+            arm = Arm(LIMITS['variant'], CFG['ik_restarts'], CFG['ik_tolerance_m'], seed=4)
+            held = picked(arm, OBJECTS['trash'][name], 0.5)
+            out.append(plan_store(arm, 'recyclable', held, [lying], cfg, unload_check=lambda box, h: None))
+        (ok_a, why_a, plan_a, info_a), (ok_b, why_b, plan_b, info_b) = out
+        assert (ok_a, why_a, info_a.get('slot')) == (ok_b, why_b, info_b.get('slot')), name
+        assert all(np.array_equal(plan_a[k], plan_b[k]) for k in ('above', 'release')), name
+    no_key = {**CFG, 'unload': {k: v for k, v in CFG['unload'].items() if k != 'lift_toward_middle_m'}}
+    c = compartment(Arm(LIMITS['variant'], CFG['ik_restarts'], CFG['ik_tolerance_m']), 'recyclable')
+    centre = (-0.15, c['y'][0] + 0.035, c['floor'] + 0.033)                     # off the middle: a lift that moves
+    out = []                                                                     # would show here
+    for cfg in (no_key, CFG):
+        arm = Arm(LIMITS['variant'], CFG['ik_restarts'], CFG['ik_tolerance_m'], seed=4)
+        out.append(plan_unload(arm, 'recyclable', centre, 0.066, cfg))
+    assert out[0][:2] == out[1][:2] and set(out[0][2]) == set(out[1][2])
+    assert all(np.array_equal(np.asarray(out[0][2][k]), np.asarray(out[1][2][k])) for k in out[0][2])

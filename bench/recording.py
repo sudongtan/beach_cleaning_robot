@@ -66,6 +66,14 @@ class Episodes:
         return e
 
 
+def percentile(values, q):
+    """q-th percentile (nearest rank) of a list, None if empty."""
+    if not values:
+        return None
+    v = sorted(values)
+    return v[min(len(v) - 1, max(0, math.ceil(q / 100 * len(v)) - 1))]
+
+
 class Recording:
     def __init__(self, cfg, stop_distance_m, geofence=None):
         self.cfg = cfg
@@ -94,10 +102,19 @@ class Recording:
         self.arm_max_at = None                        # {'t', 'joint', 'state'} of that maximum
         self.arm_viol = Episodes(cfg['episode_gap_s'])
         self.arm_window = deque()                     # (t, q) of the last arm_window_s while not ok
+        # C1 item 24: arm joints + controller reference from trace_pre_s before to trace_post_s after each
+        # change away from ok, for the cause of an arm violation (the bench kept only the violation's window)
+        self.arm_ctrl_ref = None                      # latest /arm_controller/controller_state reference
+        self.arm_ring = deque()                       # [t, q, ref] of the last trace_pre_s
+        self.trace = None                             # the open trace
+        self.traces_done = []                         # closed traces, taken by the recorder node
         self.outside = Episodes(cfg['episode_gap_s'])
         self.outside_s = 0.0
-        self.drift = {'n': 0, 'sum': 0.0, 'max': 0.0, 'last': None}
+        self.drift = {'n': 0, 'sum': 0.0, 'max': 0.0, 'last': None, 'samples': []}
         self.drift_next = None
+        # C1 bin-side stall: [t, true x, y, yaw, EKF x, y, task state, max |arm q - controller reference|]
+        # every pose_track_every_s (0 = off), taken by the recorder node like the arm traces
+        self.pose_track, self.pose_track_next = [], None
         self.odom_global = None                       # (t, x, y)
         self.task_state, self.task_changes = '', 0
         self.wm = None                                # last world model summary
@@ -148,6 +165,7 @@ class Recording:
             self.outside.add(t, robot=[round(x, 3), round(y, 3)])
         self.check_person(t)
         self.sample_drift(t)
+        self.sample_pose(t)
 
     def on_cmd(self, vx, vy, wz):
         self.cmd = (vx, vy, wz)
@@ -165,7 +183,34 @@ class Recording:
             elif self.safety in ('ok', None):
                 self.arm_ref = self.arm
                 self.arm_window.clear()
+                if self.trace is None and self.safety == 'ok' and len(self.traces_done) < self.cfg['trace_max']:
+                    self.trace = {'t_change': self.sim_t, 'state': state, 'task': self.task_state,
+                                  'person_d': self.transitions[-1][2], 'samples': list(self.arm_ring), 'changes': []}
+            if self.trace is not None:
+                self.trace['changes'].append([self.sim_t, state])
         self.safety = state
+
+    def on_arm_reference(self, positions):
+        """positions: {joint name: rad} of the arm controller's reference (what the joints are told to be at)."""
+        names = self.cfg['arm_joints']
+        if all(n in positions for n in names):
+            self.arm_ctrl_ref = [positions[n] for n in names]
+
+    def record_trace(self, t):
+        r = lambda v: None if v is None else [round(x, 4) for x in v]   # noqa: E731
+        sample = [round(t, 3), r(self.arm), r(self.arm_ctrl_ref)]
+        self.arm_ring.append(sample)
+        while self.arm_ring and t - self.arm_ring[0][0] > self.cfg['trace_pre_s']:
+            self.arm_ring.popleft()
+        if self.trace is None:
+            return
+        if self.trace['t_change'] is None:                # no pose yet (sim_t unset): the first sample after
+            self.trace['t_change'] = t
+        if t - self.trace['t_change'] > self.cfg['trace_post_s']:
+            self.traces_done.append(self.trace)
+            self.trace = None
+        else:
+            self.trace['samples'].append(sample)
 
     def on_joints(self, t, positions):
         """positions: {joint name: rad}. Arm rule (b2 reading, decision 2026-11-04): a joint changes by
@@ -175,6 +220,7 @@ class Recording:
         if not all(n in positions for n in names):
             return
         self.arm = [positions[n] for n in names]
+        self.record_trace(t)
         if self.safety == 'ok' or self.safety is None:
             self.arm_window.clear()
             return
@@ -274,6 +320,18 @@ class Recording:
         d['sum'] += e
         d['max'] = max(d['max'], e)
         d['last'] = e
+        d['samples'].append(round(e, 3))           # for the p95 (B4); ~1 Hz, a few thousand per run
+
+    def sample_pose(self, t):
+        every = self.cfg.get('pose_track_every_s', 0)
+        if not every or (self.pose_track_next is not None and t < self.pose_track_next):
+            return
+        self.pose_track_next = t + every
+        x, y, _, yaw = self.pose
+        ekf = [None, None] if self.odom_global is None else [round(v, 3) for v in self.odom_global[1:]]
+        arm = (None if self.arm is None or self.arm_ctrl_ref is None
+               else round(max(abs(a - b) for a, b in zip(self.arm, self.arm_ctrl_ref)), 3))
+        self.pose_track.append([round(t, 2), round(x, 3), round(y, 3), round(yaw, 3), *ekf, self.task_state, arm])
 
     def snapshot(self, wall, final=False):
         d = self.drift
@@ -293,7 +351,8 @@ class Recording:
             'geofence_source': self.geofence_source, 'outside_geofence_s': self.outside_s,
             'outside_geofence': self.outside.items,
             'drift': {'samples': d['n'], 'mean_m': d['sum'] / d['n'] if d['n'] else None,
-                      'max_m': d['max'] if d['n'] else None, 'last_m': d['last']},
+                      'max_m': d['max'] if d['n'] else None, 'last_m': d['last'],
+                      'p95_m': percentile(d['samples'], 95)},
             'world_model': self.wm, 'wm_ids': self.wm_ids,
             'objects_t': self.objects_t, 'objects': self.objects, 'objects_robot': self.objects_robot,
         }

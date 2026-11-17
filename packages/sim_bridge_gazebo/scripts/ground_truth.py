@@ -4,8 +4,12 @@
   /sim/ground_truth/objects  vision_msgs/Detection3DArray, map frame: every trash
                              item and distractor (id from scenes.yaml, class =
                              material or distractor type), from Gazebo's pose stream
-  /people                    vision_msgs/Detection3DArray, map frame: the walking
-                             person, or an empty array if the scene has none
+  /people                    vision_msgs/Detection3DArray, base_link frame: the walking
+                             person relative to the robot's TRUE pose (an on-board person
+                             detector measures relative to the robot; in the map frame the
+                             safety supervisor would see the person through the estimated
+                             localization, B4), or an empty array if the scene has none
+  /sim/ground_truth/people   the same in the map frame (benchmark recorder only)
 
 (/sim/ground_truth/pose comes from Gazebo's OdometryPublisher via ros_gz_bridge.)
 
@@ -29,6 +33,7 @@ import math
 import rclpy
 import yaml
 from geometry_msgs.msg import Pose
+from gz.msgs10.odometry_pb2 import Odometry as GzOdometry
 from gz.msgs10.pose_v_pb2 import Pose_V
 from gz.transport13 import Node as GzNode
 from builtin_interfaces.msg import Time
@@ -86,8 +91,16 @@ class GroundTruth(Node):
         self.next_obj = self.next_people = 0.0
         self.pub_obj = self.create_publisher(Detection3DArray, '/sim/ground_truth/objects', 10)
         self.pub_people = self.create_publisher(Detection3DArray, '/people', 10)
+        self.pub_people_map = self.create_publisher(Detection3DArray, '/sim/ground_truth/people', 10)
+        self.robot = None                          # true (position, quaternion) of base_link in the map
         self.gz = GzNode()
+        self.gz.subscribe(GzOdometry, self.declare_parameter('robot_odom_topic', '/sim/gz/ground_truth/odom').value,
+                          self.on_robot)
         self.gz.subscribe(Pose_V, f"/world/{m['world_name']}/pose/info", self.on_poses)
+
+    def on_robot(self, msg):
+        p, q = msg.pose.position, msg.pose.orientation
+        self.robot = ((p.x, p.y, p.z), (q.x, q.y, q.z, q.w))
 
     def on_poses(self, msg):
         """Called from a gz-transport thread for every pose update (sim time in the header)."""
@@ -131,13 +144,23 @@ class GroundTruth(Node):
                 a[3] + f * (b[3] - a[3]), a[4] + f * dyaw]
 
     def publish_people(self, t, stamp):
-        arr = Detection3DArray()
+        if self.robot is None:
+            return                                 # no "nobody there" before the robot's pose is known
+        arr, rel = Detection3DArray(), Detection3DArray()
         arr.header.stamp, arr.header.frame_id = stamp, 'map'
+        rel.header.stamp, rel.header.frame_id = stamp, 'base_link'
         if self.person:
             x, y, ground_z, yaw = self.person_pose(t)
             arr.detections.append(detection(self.person['id'], 'person', (x, y, ground_z),
                                             yaw_quat(yaw), self.person['size'], stamp, 'map'))
-        self.pub_people.publish(arr)
+            (rx, ry, rz), (qx, qy, qz, qw) = self.robot
+            inv = (-qx, -qy, -qz, qw)
+            pos = rotate(inv, (x - rx, y - ry, ground_z - rz))
+            ryaw = math.atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz))
+            rel.detections.append(detection(self.person['id'], 'person', pos, yaw_quat(yaw - ryaw),
+                                            self.person['size'], stamp, 'base_link'))
+        self.pub_people_map.publish(arr)
+        self.pub_people.publish(rel)
 
 
 def main():

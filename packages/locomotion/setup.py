@@ -23,6 +23,7 @@ setup(
     entry_points={
         'console_scripts': [
             'legubiao_adapter = locomotion.legubiao_adapter:main',
+            'leg_odometry = locomotion.leg_odometry:main',
         ],
     },
 )

@@ -19,6 +19,11 @@ with no move first gives the stand-sway floor.
 grasping show_pose to `up` (the first store step, B4 rerun s3). Fractions > 1 stop after the
 trajectory's end, while the joints still settle.
 
+--load-steps N (with --item; no moves after it): N times attach the item at `ground_front`, then
+detach it, the arm standing still. After each load change the arm rule is applied as if a stop
+came --delays seconds later (the C1 arm violations: `c1_ekf` s3 right after attach, `c1_nf` s3
+right after detach).
+
 Prints one line per trial and a RESULT line (worst change vs arm_change_rad).
 """
 import argparse
@@ -65,6 +70,8 @@ def main():
     ap.add_argument('--item', help='attach this scene object first (robot standing 0.49 m behind it, GOTO)')
     ap.add_argument('--targets', choices=('front', 'store', 'show'), default='front')
     ap.add_argument('--hold-s', type=float, default=0.1, help='hold_ref: time_from_start of the hold point')
+    ap.add_argument('--load-steps', type=int, default=0)
+    ap.add_argument('--delays', default='0,0.05,0.1,0.2,0.3,0.5')
     a, _ = ap.parse_known_args()      # turn_walk_test.sh passes its own args too
     rule = yaml.safe_load(open(REPO / 'bench' / 'bench.yaml'))['recorder']
     limit, window = rule['arm_change_rad'], rule['arm_window_s']
@@ -123,6 +130,35 @@ def main():
     client.wait_for_server(timeout_sec=30.0)
     while st['q'] is None:
         rclpy.spin_once(n, timeout_sec=0.1)
+    if a.load_steps:
+        poses = arm_pose.load_poses('custom')
+        closed, opened = arm_pose.finger_limits('custom')
+        sim = {k: n.create_client(SimAttach, f'/sim/{k}') for k in ('attach', 'detach')}
+
+        def load_step(kind):
+            fut = sim[kind].call_async(SimAttach.Request(object_id=a.item))
+            rclpy.spin_until_future_complete(n, fut)
+            tl = now()
+            spin(a.after_s)
+            res = [(d, *measure(tl + d)) for d in (float(v) for v in a.delays.split(','))]
+            d, ch, j, dev = max(res, key=lambda r: r[1])
+            print(f'{kind}: {fut.result().message}; worst change {ch:.4f} rad ({j}) for a stop {d:.2f} s after, '
+                  f'deviation {dev:.4f}; by delay ' + ' '.join(f'{r[0]:.2f}:{r[1]:.4f}' for r in res), flush=True)
+            return ch, f'{kind}+{d:.2f}'
+        worst = (0.0, '')
+        for i in range(a.load_steps):
+            arm_pose.move_to(n, 'custom', 'ground_front', poses, fingers=opened)
+            spin(1.0)
+            st['log'] = []
+            ch = load_step('attach')
+            arm_pose.set_fingers(n, closed)
+            spin(1.0)
+            st['log'] = []
+            worst = max(worst, ch, load_step('detach'))
+        print(f'RESULT worst change {worst[0]:.4f} rad at {worst[1]} (rule {limit} rad / {window} s): '
+              f'{"PASS" if worst[0] <= limit else "FAIL"}', flush=True)
+        rclpy.try_shutdown()
+        return
     if a.item:
         poses = arm_pose.load_poses('custom')
         closed, _ = arm_pose.finger_limits('custom')
@@ -152,6 +188,8 @@ def main():
             h = send(q, a.move_s)
             spin(f * a.move_s)
             tc = now()
+            lags = [abs(st['ref'][j] - q) for j, q in zip(ARM, st['q'])]    # reference - measured at the stop
+            lag = (max(lags), ARM[lags.index(max(lags))])
             if a.mode == 'cancel':
                 rclpy.spin_until_future_complete(n, h.cancel_goal_async(), timeout_sec=5.0)
             else:
@@ -161,7 +199,8 @@ def main():
             status = h.get_result_async()          # timeout: a cancel racing the goal's end can leave no result
             rclpy.spin_until_future_complete(n, status, timeout_sec=10.0)
             code = status.result().status if status.done() else 'no result'
-            print(f'{name} {a.mode} at {f:.1f}: change {ch:.4f} rad ({j}), deviation {dev:.4f}, '
+            print(f'{name} {a.mode} at {f:.2f}: change {ch:.4f} rad ({j}), deviation {dev:.4f}, '
+                  f'lag at stop {lag[0]:.4f} ({lag[1]}), '
                   f'{"canceled" if code == GoalStatus.STATUS_CANCELED else "status " + str(code)}', flush=True)
             if ch > worst[0]:
                 worst = (ch, f'{name}@{f:.1f}')

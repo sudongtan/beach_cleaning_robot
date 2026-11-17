@@ -12,7 +12,7 @@ commands zero velocity.
 
 `state_source: imu` is for a controller without odometry (rl_quadruped_controller): ready =
 IMU messages on `imu` and a subscriber on `control_input`; tilt from the IMU orientation;
-no /leg_odom.
+/leg_odom then comes from the leg_odometry node.
 
 Fall: if the body tilt (from the controller's own orientation estimate or the IMU) stays above
 `fall_tilt_deg` for `fall_hold_s`, it sends PASSIVE (command 1: legs limp) and ignores

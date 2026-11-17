@@ -1,6 +1,7 @@
 """Task node: runs task.fsm on ROS (notes/architecture.md).
 
-  in:  /odom/global (robot pose), /world_model, /safety/state, /camera/rgb (for /classify)
+  in:  /odom/global (robot pose), /world_model, /safety/state, /camera/rgb (for /classify),
+       /detections + /odom + /tf_static (close range, B4), /imu (body tilt, B4)
   out: /nav/goal (NavigateToPose), /grasp/pick, /grasp/place, /classify,
        /world_model/update_item, /cmd_vel_nav (final approach), /task/state
   log: results/runs/<run_id>.jsonl, one JSON object per line (first line: run metadata)
@@ -8,6 +9,15 @@
 The search path comes from the scene's geofence and the same /map grid the mapping node
 publishes (mapping.ground_truth.load). Bin positions come from bench/scenes.yaml (bins are
 static map features, like the obstacles in /map). Parameters: repo, seed, run_id.
+
+Close range (B4, task.yaml close_range: odom): the final approaches, picks and placements work on
+the latest detection of the item / bin in the smooth odom frame, not on the map: the map estimate
+can move between seeing an item and reaching it (GNSS), odom doesn't (architecture.md
+"Localization"). A detection's pose in odom / map = the /odom / /odom/global pose at its stamp
+times the camera's fixed mount (/tf_static only: a full TF listener in Python costs ~1/3 of a
+core for the arm and leg transforms). Detections are matched to world-model items as the world model does (scene id,
+else the nearest item of the class within dedup_radius_m in the map). Tilt for the fall check
+comes from /imu (task.yaml tilt_source): a planar EKF publishes roll = pitch = 0.
 """
 
 import json
@@ -31,11 +41,18 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallb
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
-from sensor_msgs.msg import Image
+from rclpy.time import Time
+from sensor_msgs.msg import Image, Imu
 from std_msgs.msg import String
+from tf2_geometry_msgs import do_transform_pose
+from tf2_msgs.msg import TFMessage
+from tf2_ros import Buffer, TransformException
+from vision_msgs.msg import Detection3DArray
 
 from mapping.ground_truth import load as load_map
 from mapping.grid import lethal_at
+from perception.logic import BIN_CLASSES
+from perception.true_pose import PoseHistory, pose_matrix, to_transform_stamped, transform_matrix
 from task.fsm import Capacity, ItemView, Snapshot, Task
 from task.search import lane_spacing, plan
 
@@ -55,6 +72,31 @@ def pose_stamped(frame, x, y, z=0.0, yaw=0.0):
     p.pose.position.x, p.pose.position.y, p.pose.position.z = float(x), float(y), float(z)
     p.pose.orientation.z, p.pose.orientation.w = math.sin(yaw / 2), math.cos(yaw / 2)
     return p
+
+
+def stamp_s(stamp):
+    return stamp.sec + stamp.nanosec * 1e-9
+
+
+def tilt_deg(q):
+    """Angle between the body's z axis and the vertical."""
+    return math.degrees(math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * (q.x * q.x + q.y * q.y)))))
+
+
+def match_item(items, scene_of, object_class, x, y, scene_id, radius):
+    """World-model item id a detection belongs to: the one with its scene id (ground truth), else the
+    nearest SEEN item of its class within radius in the map (as world_model.model), else None."""
+    if scene_id:
+        for iid, sid in scene_of.items():
+            if sid == scene_id and iid in items:
+                return iid
+    best, best_d = None, radius
+    for it in items.values():
+        if it.status == 0 and it.object_class == object_class:
+            d = math.hypot(it.x - x, it.y - y)
+            if d <= best_d:
+                best, best_d = it.id, d
+    return best
 
 
 def bin_rims(repo, scene, objects, fsm):
@@ -172,6 +214,11 @@ class TaskNode(Node):
 
         self.robot = None
         self.tilt = 0.0
+        self.fsm_cfg, self.dedup_radius = cfg['fsm'], wmc['dedup_radius_m']
+        self.scene_of = {}                          # world-model item id -> scene id (ground truth only)
+        self.local_items, self.local_bins = {}, {}  # id -> (sim t, (x, y, z, yaw)) in odom
+        self.tf_buffer = Buffer()                   # static transforms only (camera mount)
+        self.odom_hist, self.map_hist = PoseHistory(), PoseHistory()
         self.items, self.compartments, self.load = {}, {}, 0.0
         self.safety = 'stop'
         self.image = Image()
@@ -195,6 +242,13 @@ class TaskNode(Node):
         self.create_subscription(WorldModel, '/world_model', self.on_world_model, 10, callback_group=io)
         self.create_subscription(String, '/safety/state', self.on_safety, LATCHED, callback_group=io)
         self.create_subscription(Image, '/camera/rgb', self.on_image, 1, callback_group=io)
+        self.create_subscription(Detection3DArray, '/detections', self.on_detections, 10, callback_group=io)
+        self.create_subscription(Odometry, '/odom', self.on_local_odom, 20, callback_group=io)
+        self.create_subscription(TFMessage, '/tf_static', self.on_tf_static, LATCHED, callback_group=io)
+        if cfg['fsm']['tilt_source'] == 'imu':
+            self.create_subscription(Imu, '/imu', self.on_imu, 10, callback_group=io)
+        elif cfg['fsm']['tilt_source'] != 'odom':
+            raise ValueError(f"task.yaml tilt_source: {cfg['fsm']['tilt_source']!r} (imu | odom)")
         self.create_timer(1.0 / cfg['fsm']['rate_hz'], self.tick, callback_group=MutuallyExclusiveCallbackGroup())
         self.last_state = None
         self.started = False
@@ -212,8 +266,70 @@ class TaskNode(Node):
     def on_odom(self, msg):
         p = msg.pose.pose
         q = p.orientation
+        self.map_hist.add(stamp_s(msg.header.stamp), pose_matrix(p.position, q))
         self.robot = (p.position.x, p.position.y, yaw_of(q))
-        self.tilt = math.degrees(math.acos(max(-1.0, min(1.0, 1.0 - 2.0 * (q.x * q.x + q.y * q.y)))))
+        if self.fsm_cfg['tilt_source'] == 'odom':
+            self.tilt = tilt_deg(q)
+
+    def on_local_odom(self, msg):
+        p = msg.pose.pose
+        self.odom_hist.add(stamp_s(msg.header.stamp), pose_matrix(p.position, p.orientation))
+
+    def on_tf_static(self, msg):
+        for tf in msg.transforms:
+            self.tf_buffer.set_transform_static(tf, 'tf_static')
+
+    def on_imu(self, msg):
+        self.tilt = tilt_deg(msg.orientation)
+
+    def lookup(self, target, source, stamp):
+        """target <- source at stamp for target odom / map: that frame's pose history (/odom, /odom/global)
+        times the fixed base_link <- source (/tf_static); None if not available."""
+        T_base = (self.odom_hist if target == 'odom' else self.map_hist).at(stamp_s(stamp))
+        if T_base is None:
+            return None
+        try:
+            mount = transform_matrix(self.tf_buffer.lookup_transform('base_link', source, Time()).transform)
+        except TransformException:
+            return None
+        return to_transform_stamped(T_base @ mount, target, source, stamp)
+
+    def on_detections(self, msg):
+        """Latest detection of each world-model item and of each bin, in odom (close range, B4)."""
+        if self.fsm_cfg['close_range'] != 'odom' or not msg.detections:
+            return
+        to_odom = self.lookup('odom', msg.header.frame_id, msg.header.stamp)
+        to_map = self.lookup('map', msg.header.frame_id, msg.header.stamp)
+        if to_odom is None or to_map is None:
+            return
+        t = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        with self.lock:
+            for d in msg.detections:
+                cls = d.results[0].hypothesis.class_id if d.results else ''
+                o = do_transform_pose(d.bbox.center, to_odom)
+                yaw = yaw_of(o.orientation)
+                if cls in BIN_CLASSES:
+                    # rim = top of the box (bins stand upright)
+                    self.local_bins[BIN_CLASSES[cls]] = (t, (o.position.x, o.position.y,
+                                                             o.position.z + d.bbox.size.z / 2, yaw))
+                    continue
+                m = do_transform_pose(d.bbox.center, to_map).position
+                iid = match_item(self.items, self.scene_of, cls, m.x, m.y, d.id, self.dedup_radius)
+                if iid is not None:
+                    self.local_items[iid] = (t, (o.position.x, o.position.y, o.position.z, yaw))
+
+    def local_view(self, now):
+        """(robot pose in odom, fresh item tracks, fresh bin tracks, their detection times) for the snapshot."""
+        if self.fsm_cfg['close_range'] != 'odom':
+            return None, {}, {}, {}
+        T = self.odom_hist.at()
+        if T is None:
+            return None, {}, {}, {}
+        age = self.fsm_cfg['close_range_max_age_s']
+        items = {k: v for k, (t, v) in self.local_items.items() if now - t <= age['item']}
+        bins = {k: v for k, (t, v) in self.local_bins.items() if now - t <= age['bin']}
+        seen = {k: t for k, (t, _) in self.local_bins.items() if k in bins}
+        return (float(T[0, 3]), float(T[1, 3]), math.atan2(T[1, 0], T[0, 0])), items, bins, seen
 
     def on_world_model(self, msg):
         with self.lock:
@@ -227,6 +343,7 @@ class TaskNode(Node):
                     view = old                    # our own update hasn't reached /world_model yet
                 fresh[it.id] = view
             self.items = fresh
+            self.scene_of = {it.id: it.scene_id for it in msg.items if it.scene_id}
             self.compartments = {'recyclable': list(msg.compartment_recyclable),
                                  'residual': list(msg.compartment_residual)}
             self.load = msg.basket_load_kg
@@ -248,17 +365,17 @@ class TaskNode(Node):
         if self.nav_handle is not None:
             self.nav_handle.cancel()
 
-    def pick(self, item_id, pose, size):
-        goal = PickObject.Goal(id=item_id, pose=pose_stamped('map', *pose))
+    def pick(self, item_id, pose, size, frame='map'):
+        goal = PickObject.Goal(id=item_id, pose=pose_stamped(frame, *pose))
         goal.size.x, goal.size.y, goal.size.z = (float(v) for v in size)
         return ActionHandle(self.pick_client, goal,
                             lambda r: (False, 'no_server') if r is None else (r.result.success, r.result.message))
 
-    def place(self, target, item_id, bin_id, pose):
+    def place(self, target, item_id, bin_id, pose, frame='map'):
         goal = PlaceObject.Goal(target=TARGETS[target], item_id=item_id, bin_id=bin_id)
         if pose is not None:
             x, y, z, yaw = pose
-            goal.pose = pose_stamped('map', x, y, z, yaw)
+            goal.pose = pose_stamped(frame, x, y, z, yaw)
         return ActionHandle(self.place_client, goal,
                             lambda r: (False, 'no_server') if r is None else (r.result.success, r.result.message))
 
@@ -315,9 +432,10 @@ class TaskNode(Node):
             self.started = True
             self.log({'event': 'servers_ready'})
         with self.lock:
+            local_robot, local_items, local_bins, local_bins_seen = self.local_view(self.now())
             snap = Snapshot(self.now(), self.robot, dict(self.items),
                             {k: list(v) for k, v in self.compartments.items()}, self.load, self.safety == 'ok',
-                            self.tilt)
+                            self.tilt, local_robot, local_items, local_bins, local_bins_seen)
         self.task.tick(snap)
         state = f'{self.task.state} {self.task.item}'.strip()
         if state != self.last_state:

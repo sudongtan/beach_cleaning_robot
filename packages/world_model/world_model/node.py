@@ -2,6 +2,7 @@
 
   /detections (camera frame) --TF--> map; de-duplicated into items (world_model.model)
   camera pose (TF map -> camera_link) -> coverage grid of the geofence
+  (detections of other classes than item_classes, e.g. the bins, are not items)
   /world_model (beach_interfaces/WorldModel, 2 Hz), /world_model/update_item (UpdateItem)
 
 Detections within ignore_near_gripper_m of the gripper TCP are dropped: that is the item
@@ -30,7 +31,7 @@ from vision_msgs.msg import Detection3DArray
 
 from mapping.grid import inside_polygon
 from perception.logic import Fov
-from world_model.model import COMPARTMENTS, Coverage, WorldModel
+from world_model.model import COMPARTMENTS, Coverage, DetectionQueue, WorldModel
 
 
 def rotation(q):
@@ -38,6 +39,12 @@ def rotation(q):
     return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
                      [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
                      [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]])
+
+
+def planar(tf):
+    """Is this map -> base_link from a planar (2D) localization: z, roll and pitch exactly zero?"""
+    q = tf.rotation
+    return tf.translation.z == 0.0 and q.x == 0.0 and q.y == 0.0
 
 
 class WorldModelNode(Node):
@@ -51,6 +58,7 @@ class WorldModelNode(Node):
         seed = self.declare_parameter('seed', 0).value
         self.map_frame = self.declare_parameter('map_frame', 'map').value
         self.camera_frame = self.declare_parameter('camera_frame', 'camera_link').value
+        self.base_frame = self.declare_parameter('base_frame', 'base_link').value
         self.tcp_frame = self.declare_parameter('tcp_frame', 'arm_ee_gripper_link').value
         cfg = yaml.safe_load(open(repo / 'config' / 'world_model.yaml'))['world_model']
         limits = yaml.safe_load(open(repo / 'config' / 'robot_limits.yaml'))['robot_limits']
@@ -61,6 +69,8 @@ class WorldModelNode(Node):
         self.wm = WorldModel(cfg['dedup_radius_m'], cfg['max_items_per_compartment'],
                              limits['basket_load_max_kg'], cfg['default_item_mass_kg'], masses)
         self.ignore_near_gripper = cfg['ignore_near_gripper_m']
+        self.queue = DetectionQueue(cfg['detection_tf_wait_s'])
+        self.last_counts = 0.0
 
         sys.path.insert(0, str(repo / 'sim' / 'common'))
         import terrain as terrain_mod
@@ -71,6 +81,9 @@ class WorldModelNode(Node):
         X, Y = np.meshgrid(xs, ys)
         poly = scene['geofence']['polygon']
         self.coverage = Coverage(w, h, res, inside_polygon(X, Y, poly), terrain_mod.height_at(scene['terrain'], X, Y))
+        self.terrain_z = lambda x, y: float(terrain_mod.height_at(scene['terrain'], x, y))
+        self.planar_base_height = cfg['planar_base_height_m']
+        self.classes = set(cfg['item_classes'])
         self.fence = None
         if cfg['ignore_outside_geofence']:
             self.fence = lambda x, y: bool(inside_polygon(np.array([[x]]), np.array([[y]]), poly)[0, 0])
@@ -82,6 +95,7 @@ class WorldModelNode(Node):
         self.create_subscription(Detection3DArray, '/detections', self.on_detections, 10)
         self.create_service(UpdateItem, '/world_model/update_item', self.on_update)
         self.create_timer(0.5, self.tick)
+        self.create_timer(0.05, self.flush)
 
     def now(self):
         return self.get_clock().now().nanoseconds * 1e-9
@@ -99,10 +113,23 @@ class WorldModelNode(Node):
     def on_detections(self, msg):
         if not msg.detections:
             return
+        self.queue.add(msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9, msg)
+        self.flush()
+
+    def flush(self):
+        if self.queue.pending:
+            self.queue.process(self.now(), self.use_detections)
+        if self.now() - self.last_counts >= 60.0:
+            self.last_counts = self.now()
+            q = self.queue
+            self.get_logger().info(f'detection messages: {q.first_try} at once, {q.after_wait} after waiting '
+                                   f'for the transform, {q.dropped} dropped')
+
+    def use_detections(self, msg):
         # the robot's pose when the camera saw them, not the latest (A2b run 3: phantom items)
-        to_map = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp)
+        to_map = self.lookup(self.map_frame, msg.header.frame_id, msg.header.stamp, warn=False)
         if to_map is None:
-            return
+            return False
         # the arm's TFs often lag the camera's: without a fallback the held item became a new item
         # (A2b: phantoms next to every picked item, then picks of the item already in the basket)
         tcp = (self.lookup(msg.header.frame_id, self.tcp_frame, msg.header.stamp, warn=False)
@@ -119,9 +146,12 @@ class WorldModelNode(Node):
             if self.fence is not None and not self.fence(p.x, p.y):
                 continue                                  # outside the geofence: not ours to collect
             hyp = d.results[0].hypothesis
+            if hyp.class_id not in self.classes:
+                continue                                  # bins (B4): the task uses them directly
             yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
             size = (d.bbox.size.x, d.bbox.size.y, d.bbox.size.z)
             self.wm.add_detection(self.now(), hyp.class_id, p.x, p.y, p.z, hyp.score, d.id, yaw, size)
+        return True
 
     def on_update(self, req, res):
         res.success, res.message = self.wm.update(req.id, req.status, req.material, req.bin_id, req.skip_reason)
@@ -132,9 +162,15 @@ class WorldModelNode(Node):
 
     def tick(self):
         cam = self.lookup(self.map_frame, self.camera_frame)
+        base = self.lookup(self.map_frame, self.base_frame, warn=False)
         if cam is not None:
             t = cam.translation
-            self.coverage.mark(rotation(cam.rotation), (t.x, t.y, t.z), self.fov)
+            z = t.z
+            if base is not None and planar(base):
+                # a planar localization (robot_localization two_d_mode, B4) puts base_link at z 0;
+                # the coverage test needs the camera's real height over the terrain
+                z += self.terrain_z(base.translation.x, base.translation.y) + self.planar_base_height
+            self.coverage.mark(rotation(cam.rotation), (t.x, t.y, z), self.fov)
         self.publish()
 
     def publish(self):

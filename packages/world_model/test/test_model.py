@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 from perception.logic import Fov
-from world_model.model import COLLECTED, PLACED, SEEN, SKIPPED, Coverage, WorldModel
+from world_model.model import COLLECTED, PLACED, SEEN, SKIPPED, Coverage, DetectionQueue, WorldModel
 
 REPO = Path(__file__).resolve().parents[3]
 CFG = yaml.safe_load(open(REPO / 'config' / 'world_model.yaml'))['world_model']
@@ -47,8 +47,9 @@ def test_different_class_is_a_different_item():
 def test_detection_merges_into_the_nearest_item():
     m = wm()
     a = m.add_detection(0, 'trash', 5.0, 3.0, 0, 1)
-    b = m.add_detection(0, 'trash', 5.5, 3.0, 0, 1)
-    assert m.add_detection(1, 'trash', 5.4, 3.0, 0, 1) == b and m.items[a].times_seen == 1
+    x = 5.0 + CFG['dedup_radius_m'] + 0.05
+    b = m.add_detection(0, 'trash', x, 3.0, 0, 1)
+    assert m.add_detection(1, 'trash', x - 0.1, 3.0, 0, 1) == b and m.items[a].times_seen == 1
 
 
 def test_collected_item_no_longer_matches():
@@ -95,7 +96,7 @@ def test_compartment_count_limit():
     m.items[ids[n]].mass_kg = 0.01
     assert not m.update(ids[n], COLLECTED, 'pet', 'recyclable')[0]
     assert m.update(ids[n], COLLECTED, 'residual', 'residual')[0]   # the other compartment has room
-    assert not m.basket_full()
+    assert m.basket_full() == (n == 1)                              # B5b: one item each fills both
 
 
 def test_load_limit_with_ground_truth_masses():
@@ -158,3 +159,37 @@ def test_position_averaged_yaw_and_size_from_latest():
 def test_size_unknown_by_default():
     m = wm()
     assert m.items[m.add_detection(0, 'trash', 5, 3, 0, 1)].size == (0.0, 0.0, 0.0)
+
+
+def queue_with(*stamps):
+    q = DetectionQueue(0.3)
+    for s in stamps:
+        q.add(s, f'm{s}')
+    return q
+
+
+def test_queue_uses_a_ready_message_at_once():
+    q, used = queue_with(1.0), []
+    q.process(1.0, lambda m: used.append(m) or True)
+    assert used == ['m1.0'] and (q.first_try, q.after_wait, q.dropped) == (1, 0, 0) and not q.pending
+
+
+def test_queue_waits_for_a_late_transform():
+    q = queue_with(1.0)
+    q.process(1.0, lambda m: False)
+    assert q.pending and q.dropped == 0
+    q.process(1.1, lambda m: True)
+    assert (q.first_try, q.after_wait, q.dropped) == (0, 1, 0) and not q.pending
+
+
+def test_queue_drops_after_the_wait():
+    q = queue_with(1.0)
+    q.process(1.2, lambda m: False)
+    q.process(1.31, lambda m: False)
+    assert (q.first_try, q.after_wait, q.dropped) == (0, 0, 1) and not q.pending
+
+
+def test_queue_keeps_the_order():
+    q, used = queue_with(1.0, 1.05), []
+    q.process(1.1, lambda m: used.append(m) or True)
+    assert used == ['m1.0', 'm1.05']

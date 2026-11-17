@@ -234,6 +234,98 @@ def test_arm_moves_at_the_bin_clear_its_wall(body_height, rim):
                     f'{name}: {f} at {p.round(3)} hits the bin wall (x {wall:.3f}, rim {rim:.3f}) at s={s:.2f}'
 
 
+FA = yaml.safe_load(open(REPO / 'config' / 'task.yaml'))['task']['fsm']['final_approach']
+
+
+def settle_window():
+    """(shortest, longest) place distance the bin final approach's settle accepts (task fsm.settle)."""
+    d, long_ = TASK['bin_place_distance_m'], 0.03 + FA['settle_band_m']
+    short = TASK.get('bin_settle_short_m')
+    return d - (long_ if short is None else short), d + long_
+
+
+@pytest.mark.parametrize('end', [0, 1])
+def test_settle_window_ends_reach_and_clear_the_wall(end, monkeypatch):
+    """C1: PLACE starts anywhere in the settle window (devreap: at 0.80 m the arm's rest <-> up move hit the
+    near wall), so both checks above must hold at its ends too."""
+    monkeypatch.setitem(TASK, 'bin_place_distance_m', settle_window()[end])
+    scene_rim_offsets.cache_clear()
+    try:
+        for body_height, rim in RIM_CASES:
+            test_jaw_tips_reach_over_the_bin(body_height, rim)
+            test_arm_moves_at_the_bin_clear_its_wall(body_height, rim)
+    finally:
+        monkeypatch.undo()
+        scene_rim_offsets.cache_clear()
+
+
+def arm_hits_off_axis(along, lateral, heading, body_height, dz=0.0):
+    """None, or where the arm hits a bin wall (rest -> up -> over the bin -> up -> rest) with base_link `along`
+    out on the bin's axis, `lateral` beside it and `heading` (rad) off facing the bin. The release pose as the
+    grasping node solves it (grasping.arm: seeded at `up`, within release_joint_spread_rad); every arm frame
+    against all four walls, grown by arm_wall_clearance_m, below the rim + that clearance."""
+    import pinocchio as pin
+    arm = pytest.importorskip('grasping.arm')
+    rc, model, data, q0 = arm_model()
+    poses = yaml.safe_load(open(DESC / 'config' / 'arm_poses_custom.yaml'))['poses']
+    spread = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']['release_joint_spread_rad']
+    bd = LIMITS['bin_drop']
+    clear = bd['arm_wall_clearance_m']
+    walls = [p for p in OBJECTS['bins']['bin_recyclable']['collision'] if p['type'] == 'box' and p['size'][2] > 0.1]
+    half = (max(abs(p['pose'][0]) + p['size'][0] / 2 for p in walls), max(abs(p['pose'][1]) + p['size'][1] / 2 for p in walls))
+    rim = max(p['pose'][2] + p['size'][2] / 2 for p in walls) + dz - body_height
+    yaw = math.pi + heading                                       # robot in the bin frame (bin x towards the robot)
+    c, s = math.cos(yaw), math.sin(yaw)
+    bx, by = -(c * along + s * lateral), s * along - c * lateral  # bin centre in base_link
+    depth = abs(math.cos(yaw)) * half[0] + abs(math.sin(yaw)) * half[1]
+    up, rest = np.array(poses['up']['arm']), np.array(poses['rest']['arm'])
+    for clearance in arm.release_clearances(bd):
+        target = arm.bin_release_target((bx, by, rim), bx - depth, bd, 0.0, clearance)
+        ok, rel, err, _ = arm_ik().ik(target, bd['max_tilt_deg'], seed_q=up, bounds=arm.near(up, spread))
+        if ok:
+            break
+    if not ok:
+        return f'no release pose for {target.round(3)} (error {err * 100:.1f} cm)'
+    idx = [model.joints[model.getJointId(n)].idx_q for n in rc.ARM]
+    frames = [f.name for f in model.frames if f.name.startswith('arm_') and f.type == pin.FrameType.BODY]
+    rel = np.asarray(rel)
+    for name, a, b in (('rest->up', rest, up), ('up->bin', up, rel), ('bin->up', rel, up), ('up->rest', up, rest)):
+        for k in np.linspace(0, 1, 81):
+            q = q0.copy()
+            q[idx] = a + k * (b - a)
+            pin.framesForwardKinematics(model, data, q)
+            for f in frames:
+                p = data.oMf[model.getFrameId(f)].translation
+                u, v = c * p[0] - s * p[1] + along, s * p[0] + c * p[1] + lateral
+                for w in walls:
+                    if (p[2] < rim + clear and abs(u - w['pose'][0]) < w['size'][0] / 2 + clear
+                            and abs(v - w['pose'][1]) < w['size'][1] / 2 + clear):
+                        return f'{name} s={k:.2f}: {f} at bin ({u:.3f}, {v:.3f}), {p[2] - rim:+.3f} to the rim'
+    return None
+
+
+@lru_cache(maxsize=None)
+def arm_ik():
+    return pytest.importorskip('grasping.arm').Arm(VARIANT)
+
+
+def test_off_axis_model_finds_the_c1_win_s3_hook():
+    """c1_win s3: placed 0.795 m out on the bin's axis, 0.321 m beside it, 0.26 rad off; the arm's return to rest
+    hooked the near wall's corner (the model flags it at the low body height)."""
+    assert arm_hits_off_axis(0.795, -0.321, -0.26, LIMITS['bin_drop']['body_heights_m'][0]) is not None
+
+
+@pytest.mark.parametrize('end', [0, 1])
+def test_bin_axis_settle_corners_clear_the_walls(end):
+    """C1 bin_axis: PLACE starts anywhere within the along-axis settle window, lateral_tol_m + settle_band_m beside
+    the axis and heading_tol_rad off it; the arm reaches over the rim and clears every wall at each corner."""
+    ax = TASK['bin_axis']
+    lat, head = ax['lateral_tol_m'] + FA['settle_band_m'], ax['heading_tol_rad']
+    bad = [(body_height, rim, sl, sh, r) for body_height, rim in RIM_CASES for sl in (1, -1) for sh in (1, -1)
+           if (r := arm_hits_off_axis(settle_window()[end], sl * lat, sh * head, body_height, rim_dz(rim)))]
+    assert not bad, bad
+
+
 def footprint():
     """Nav2's robot footprint polygon (base_link), from the local costmap parameters."""
     p = yaml.safe_load(open(REPO / 'packages' / 'navigation' / 'config' / 'nav2_params.yaml'))
@@ -277,3 +369,16 @@ def test_bin_step_corridor_is_clear():
                 assert near_bin or not lethal_at(occ, res, wx, wy), \
                     f'seed {sc["seed"]}: lethal cell at ({wx:.2f}, {wy:.2f}) in the step corridor'
         assert clear > margin, f'seed {sc["seed"]}: footprint {clear:.3f} m from a bin (margin {margin})'
+
+
+def test_collision_clearance_fits_the_store_and_pick_gaps():
+    """B5: a store releases the item drop_gap_m above what lies there and a pick hovers
+    hover_above_item_m above the item; a collision clearance at or above either gap would refuse
+    every plan (and must never be raised to make a row pass)."""
+    g = yaml.safe_load(open(REPO / 'config' / 'grasping.yaml'))['grasping']
+    if not g.get('collision'):
+        pytest.skip('collision check off')
+    clearance = g['collision']['clearance_m']
+    assert 0 < clearance < g['store']['drop_gap_m']
+    assert clearance < g['hover_above_item_m']
+    assert 0 < g['collision']['step_rad'] <= 0.05

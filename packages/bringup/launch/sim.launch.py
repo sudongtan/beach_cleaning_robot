@@ -6,7 +6,8 @@
   ros2 launch bringup sim.launch.py sim:=gazebo scene:=<...> skeleton:=true        (`make run SEED=N`)
 
 Starts the simulator bridge (world, robot, controllers) and the locomotion adapter
-(/cmd_vel -> controller, controller odometry -> /leg_odom). Only sim:=gazebo exists so far.
+(/cmd_vel -> controller, controller odometry -> /leg_odom; the leg_odometry node for a
+controller without odometry). Only sim:=gazebo exists so far.
 """
 import os
 
@@ -20,6 +21,7 @@ from launch_ros.actions import Node
 
 SIMS = ('gazebo',)
 LOCOMOTION = {'gazebo': ('legubiao', 'legubiao_rl', 'legubiao_robot_lab', 'legubiao_tuned')}   # *_rl / *_robot_lab: learned policies
+SKELETON_COMPONENTS = ('localization', 'perception', 'classifier')   # passed on to skeleton.launch.py (C1)
 CLOCK = '/sim/clock_throttled'   # 100 Hz sim-time clock for our nodes (sim_bridge_gazebo clock_throttle)
 
 
@@ -47,6 +49,13 @@ def launch_setup(context):
                     {'use_sim_time': True, 'publish_tf': cfg['publish_odom_tf'] == 'true' and not skeleton}],
         remappings=[('/clock', CLOCK), ('imu', '/imu_sensor_broadcaster/imu')])
     nodes = [bridge, adapter]
+    share = get_package_share_directory('locomotion')
+    with open(os.path.join(share, 'config', f'{loco}_adapter.yaml')) as f:
+        adapter_params = next(iter(yaml.safe_load(f).values()))['ros__parameters']
+    if adapter_params.get('state_source') == 'imu':     # the controller publishes no odometry (C1.1)
+        nodes.append(Node(package='locomotion', executable='leg_odometry', output='screen',
+                          parameters=[os.path.join(share, 'config', 'leg_odometry.yaml'), {'use_sim_time': True}],
+                          remappings=[('/clock', CLOCK)]))
     if skeleton:
         with open(cfg['scene']) as f:
             seed = yaml.safe_load(f)['seed']
@@ -54,7 +63,8 @@ def launch_setup(context):
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('bringup'), 'launch', 'skeleton.launch.py')),
             launch_arguments={'seed': str(seed), 'run_id': cfg['run_id'], 'clock_topic': CLOCK,
-                              'locomotion': loco}.items()))
+                              'locomotion': loco,
+                              **{c: cfg[c] for c in SKELETON_COMPONENTS}}.items()))
     if cfg['rviz'] == 'true':
         nodes.append(Node(package='rviz2', executable='rviz2', output='log',
                           arguments=['-d', os.path.join(get_package_share_directory('sim_bridge_gazebo'),
@@ -77,6 +87,8 @@ def generate_launch_description():
                               description='legubiao (basic controller) | legubiao_rl (HIMLoco policy) | legubiao_robot_lab (robot_lab policy, default) | '
                                           'legubiao_tuned (basic, tuned gains)'),
         DeclareLaunchArgument('rviz', default_value='false', description='RViz with robot, TF, camera images'),
+        *[DeclareLaunchArgument(c, default_value='ground_truth', description=f'{c} implementation (skeleton)')
+          for c in SKELETON_COMPONENTS],
         DeclareLaunchArgument('skeleton', default_value='false',
                               description='true: also start the A2 skeleton (skeleton.launch.py) for the scene'),
         DeclareLaunchArgument('run_id', default_value='', description='task event log name (skeleton only)'),

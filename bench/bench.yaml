@@ -2,7 +2,7 @@
 # Run limits: notes/benchmark.md "Run limits" (decision 2026-11-03). Thresholds live here, not in code.
 bench:
   seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-  row: baseline                 # run ids <row>_s<seed>
+  row: c1_ekf                   # run ids <row>_s<seed>
   limits:
     sim_s: 3600                 # sim-time cap per run
     wall_min: 200               # wall-time backstop (3600 s sim at RTF 0.3)
@@ -22,7 +22,7 @@ bench:
   # components of the stack the row was run with (launch defaults; reported in the row)
   components:
     locomotion: legubiao_robot_lab
-    localization: ground_truth
+    localization: ekf               # B4 (robot_localization dual EKF); baseline rows: ground_truth
     mapping: ground_truth
     perception: ground_truth
     classifier: ground_truth
@@ -49,6 +49,14 @@ recorder:
   drift_every_s: 1.0            # localization drift sample interval (sim)
   joints_every: 10             # decode every 10th /joint_states message (~47 Hz of ~470)
   arm_joints: [arm_waist, arm_shoulder, arm_elbow, arm_forearm_roll, arm_wrist_angle, arm_wrist_rotate]
+  # arm traces (C1 item 24): decoded joints + controller reference from trace_pre_s before to trace_post_s
+  # after each change away from ok (sim), at most trace_max per run, in <log dir>/recorder_arm_traces.jsonl
+  trace_pre_s: 1.0
+  trace_post_s: 1.5
+  trace_max: 200
+  # pose track (C1 bin-side stall): [t, true x, y, yaw, EKF x, y, task state, max |arm q - reference|] every
+  # this many sim s in <log dir>/recorder_poses.jsonl; 0 = off
+  pose_track_every_s: 1.0
 
 metrics:
   # bin inner box (sim/common/objects.yaml: outer 0.60 x 0.45 x 0.50 m, 2 cm walls)

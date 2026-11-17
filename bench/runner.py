@@ -48,6 +48,25 @@ def parse_seeds(text, default):
     return out
 
 
+# bench.yaml components -> `make run` variables (the launched implementations, B4)
+MAKE_VARS = {'locomotion': 'LOCO', 'localization': 'LOC', 'perception': 'PERC', 'classifier': 'CLS'}
+
+
+def make_vars(components):
+    return [f'{MAKE_VARS[k]}={v}' for k, v in components.items() if k in MAKE_VARS]
+
+
+def parse_components(text, components):
+    """--components 'localization=ekf,perception=yoloe' over bench.yaml's components."""
+    out = dict(components)
+    for part in filter(None, (p.strip() for p in text.split(','))):
+        k, _, v = part.partition('=')
+        if k not in out or not v:
+            raise SystemExit(f'--components: {part!r} (known: {", ".join(out)})')
+        out[k] = v
+    return out
+
+
 def decide_end(now, t_start, rec_start, snap, flags, lim, launch_alive):
     """End reason of a running run, or None. flags: done / fell / fall_line / dead_line (bools) from the
     event log and the launch log; snap: last recorder snapshot or None."""
@@ -100,6 +119,7 @@ class Runner:
             self.lim['sim_s'] = args.sim_cap
         if args.ac_path:
             self.cfg['ac_path'] = args.ac_path
+        self.cfg['components'] = parse_components(args.components, self.cfg['components'])
         self.row = args.row or self.cfg['row']
         self.seeds = parse_seeds(args.seeds, self.cfg['seeds'])
         self.dir = REPO / 'results' / 'bench' / self.row
@@ -218,7 +238,7 @@ class Runner:
         self.log(f'{run_id}: launching (attempt {attempt}), logs in {work}')
         launch = subprocess.Popen(
             ['make', 'run', f'SEED={seed}', 'HEADLESS=true', f'GZ_PARTITION={self.env["GZ_PARTITION"]}',
-             f'RUN_ID={run_id}', f'LOCO={self.cfg["components"]["locomotion"]}'],
+             f'RUN_ID={run_id}', *make_vars(self.cfg['components'])],
             cwd=REPO, env=self.env, stdout=open(launch_log, 'w'), stderr=subprocess.STDOUT, start_new_session=True)
         tail = Tail(launch_log)
         flags = {}
@@ -337,6 +357,7 @@ def main():
     ap.add_argument('--no-report', action='store_true')
     ap.add_argument('--sim-cap', type=float, default=0, help='override the sim-time cap (failure-path tests only)')
     ap.add_argument('--ac-path', default='', help='override the AC "online" file (failure-path tests only)')
+    ap.add_argument('--components', default='', help="override bench.yaml components, e.g. 'localization=ekf'")
     args = ap.parse_args()
     if args.sim != 'gazebo':
         sys.exit(f'--sim {args.sim}: only gazebo exists so far (isaac comes in B0)')

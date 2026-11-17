@@ -82,7 +82,7 @@ class FakeWorld:
     def cancel_nav(self):
         pass
 
-    def pick(self, iid, pose, size):
+    def pick(self, iid, pose, size, frame='map'):
         self._call()
         if self.pick_fail.get(iid, 0) > 0:
             self.pick_fail[iid] -= 1
@@ -98,7 +98,7 @@ class FakeWorld:
         conf = self.confidence.get(self.held, 1.0)
         return Handle(self, 2, (m, 'residual' if m == 'residual' else 'recyclable', conf))
 
-    def place(self, target, iid, bin_id, pose):
+    def place(self, target, iid, bin_id, pose, frame='map'):
         self._call()
         if target == 'compartment' and iid in self.store_full:
             self.store_full.discard(iid)
@@ -340,6 +340,17 @@ def test_settle_accepts_only_a_mean_error_inside_the_band():
     assert r is True
 
 
+@pytest.mark.parametrize('short_x,accepted', [(None, True), (0.02, False)])
+def test_settle_short_side(short_x, accepted):
+    """bin_settle_short_m (C1): a mean 0.04 short of the target passes the symmetric window, not short_x 0.02."""
+    fa = CFG['final_approach']
+    t = make(FakeWorld({}, {}), PATH)
+    snap = lambda s: Snapshot(s, (0.0, 0.0, 0.0), {}, {}, 0.0, True)       # noqa: E731
+    for k in range(int(fa['settle_s'] / DT) + 1):                            # sways -0.02 .. -0.06: mean -0.04
+        r = t.settle(snap(k * DT), -0.02 - (0.04 if k % 2 else 0.0), 0.0, 0.03, 0.03, short_x)
+    assert r is (True if accepted else None)
+
+
 def test_no_progress_times_out():
     cfg = dict(CFG, item_timeout_s=5.0)
     w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
@@ -389,6 +400,49 @@ def test_bin_approach_ends_at_the_place_distance():
     bx, by, _, _ = BINS['recyclable']
     assert math.hypot(w.robot[0] - bx, w.robot[1] - by) == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
     assert w.cmd == (0.0, 0.0, 0.0)
+
+
+@pytest.mark.parametrize('on_axis', [True, False])
+def test_bin_approach_from_an_off_axis_standoff_ends_on_the_axis(on_axis):
+    """c1_win s3: Nav2 accepts any heading at the standoff (arrived 0.18 m to the side, 1.03 rad off), and the
+    approach that steers at the bin centre placed 0.32 m off the bin's axis. bin_axis ends on the axis."""
+    cfg = CFG if on_axis else {**CFG, 'bin_axis': None}
+    w = FakeWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    real_nav = w.nav_to
+
+    def nav_to(x, y, yaw):
+        h = real_nav(x, y, yaw)
+        if math.hypot(x - BINS['recyclable'][0], y - BINS['recyclable'][1]) < CFG['bin_standoff_m'] + 0.01:
+            w.robot = [x - 0.1, y - 0.18, yaw - 1.03]
+        return h
+    w.nav_to = nav_to
+    t = make(w, [], cfg=cfg)
+    while t.state != 'PLACE' and w.tick_no < 10000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.state == 'PLACE'
+    bx, by, _, _ = BINS['recyclable']                            # bin yaw 0: its axis is +x
+    along, lateral, heading = w.robot[0] - bx, w.robot[1] - by, math.atan2(math.sin(w.robot[2] - math.pi),
+                                                                           math.cos(w.robot[2] - math.pi))
+    if on_axis:
+        tol = CFG['final_approach']['settle_band_m']
+        assert along == pytest.approx(CFG['bin_place_distance_m'], abs=0.03 + tol)
+        assert abs(lateral) <= CFG['bin_axis']['lateral_tol_m'] + tol
+        assert abs(heading) <= CFG['bin_axis']['heading_tol_rad']
+    else:                                                        # facing the centre, from the side
+        assert math.hypot(along, lateral) == pytest.approx(CFG['bin_place_distance_m'], abs=0.06)
+        assert abs(heading) > CFG['bin_axis']['heading_tol_rad']
+
+
+def test_settle_heading():
+    """bin_axis (C1): a mean heading error beyond tol_h fails the settle, one inside passes."""
+    fa = CFG['final_approach']
+    snap = lambda s: Snapshot(s, (0.0, 0.0, 0.0), {}, {}, 0.0, True)       # noqa: E731
+    for eh, accepted in ((0.10, True), (0.14, None)):
+        t = make(FakeWorld({}, {}), PATH)
+        for k in range(int(fa['settle_s'] / DT) + 1):                        # sways 0.08 .. eh + (eh - 0.08)
+            r = t.settle(snap(k * DT), 0.0, 0.0, 0.03, 0.03, None, 0.08 + (2 * (eh - 0.08) if k % 2 else 0.0), 0.12)
+        assert r is accepted
 
 
 def test_items_outside_the_allowed_area_are_never_targeted():
@@ -485,7 +539,7 @@ def test_first_bin_fails_then_the_robot_walks_to_the_second():
     placed_from = {}
     real_place = w.place
 
-    def place(target, iid, bin_id, pose):
+    def place(target, iid, bin_id, pose, frame='map'):
         if target == 'bin':
             placed_from[iid] = (bin_id, w.bin_dist(bin_id))
         return real_place(target, iid, bin_id, pose)
@@ -494,6 +548,33 @@ def test_first_bin_fails_then_the_robot_walks_to_the_second():
     assert t.state == 'DONE' and w.known['b'].status == PLACED and w.known['b'].bin_id == 'residual'
     assert placed_from['b'][0] == 'residual'
     assert placed_from['b'][1] == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
+
+
+@pytest.mark.parametrize('reapproach', [True, False])
+def test_reapproach_before_each_place_undoes_the_creep(reapproach):
+    """devpose s3: robot_lab crept 0.805 -> 0.70 m towards the bin over 3 places and the stowed gripper
+    hooked on the rim. Two recyclable items (a, c); each place lets the robot creep 0.1 m in."""
+    w = FakeWorld(ITEMS, MATS)
+    t = make(w, PATH, cfg={**CFG, 'reapproach_before_place': reapproach})
+    placed_from = []
+    real_place = w.place
+
+    def place(target, iid, bin_id, pose, frame='map'):
+        if target == 'bin':
+            placed_from.append((iid, w.bin_dist(bin_id)))
+            bx, by, _, _ = BINS[bin_id]
+            d = w.bin_dist(bin_id)
+            w.robot[0] -= 0.1 * (w.robot[0] - bx) / d
+            w.robot[1] -= 0.1 * (w.robot[1] - by) / d
+        return real_place(target, iid, bin_id, pose)
+    w.place = place
+    run(t, w)
+    assert t.state == 'DONE' and w.known['a'].status == PLACED and w.known['c'].status == PLACED
+    recyclable = [d for iid, d in placed_from if iid in 'ac']
+    assert len(recyclable) == 2
+    assert recyclable[0] == pytest.approx(CFG['bin_place_distance_m'], abs=0.04)
+    expected = CFG['bin_place_distance_m'] - (0.0 if reapproach else 0.1)
+    assert recyclable[1] == pytest.approx(expected, abs=0.04)
 
 
 def test_robot_backs_out_of_the_bin_before_navigating():
@@ -584,7 +665,7 @@ def test_bins_side_by_side_are_reached_with_a_sideways_step():
     w.nav_to = nav_to
     placed_from, real_place = {}, w.place
 
-    def place(target, iid, bin_id, pose):
+    def place(target, iid, bin_id, pose, frame='map'):
         if target == 'bin':
             placed_from[iid] = (bin_id, w.bin_dist(bin_id), w.t)
         return real_place(target, iid, bin_id, pose)
@@ -627,6 +708,50 @@ def test_step_without_progress_backs_out_and_walks():
     assert w.nav_from_bin == 0
 
 
+def robot_lab_bin_step(band, no_forward=None):
+    """Fake robot_lab (C1 log h3-h3d): stands at a backward part with a sideways one, drifts forward
+    0.04 m/s stepping sideways. Returns the world and the commands sent during the step."""
+    w = FakeWorld(TWO_BINS, TWO_MATS)
+    nf = CFG['bin_step']['no_forward'] if no_forward is None else no_forward
+    t = make(w, PATH, cfg=dict(CFG, bin_step=dict(CFG['bin_step'], back_band_m=band, no_forward=nf)))
+    real_step, sent = w.step, []
+
+    def step():
+        if t.state == 'PLACE' and t.sub == 'step':
+            vx, vy, wz = w.cmd
+            sent.append(w.cmd)
+            if vx < -0.005 and abs(vy) > 0.005:
+                w.cmd = (0.0, 0.0, wz)
+            elif abs(vy) > 0.01:
+                w.cmd = (vx + 0.04, vy, wz)
+        real_step()
+    w.step = step
+    run(t, w)
+    return w, t, sent
+
+
+def test_bin_step_sends_no_back_sideways_command():
+    assert CFG['bin_step']['back_band_m'] > 0.0
+    w, t, sent = robot_lab_bin_step(0.0, no_forward=False)                # B2: steers back while stepping
+    assert phases(w) == ['place', 'bin_step', 'bin_step_failed', 'place']
+    w, t, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'])
+    assert t.state == 'DONE' and statuses(w)['b'] == (PLACED, 'residual')
+    assert phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
+    assert sent and not [c for c in sent if c[0] < -1e-9 and abs(c[1]) > 1e-9]
+    assert [c for c in sent if c[0] < -1e-9]                              # it did back straight
+
+
+def test_bin_step_sends_no_forward_command():
+    """devref: the step started with +0.08 forward (min speed) and the sideways drift took the robot
+    0.13 m nearer the bins; with no_forward short of the pose is left to the final approach."""
+    assert CFG['bin_step']['no_forward']
+    w, t, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'])
+    assert phases(w) == ['place', 'bin_step', 'bin_step_done', 'place']
+    assert sent and max(c[0] for c in sent) <= 0.0
+    _, _, sent = robot_lab_bin_step(CFG['bin_step']['back_band_m'], no_forward=False)
+    assert max(c[0] for c in sent) > 0.0                                   # as B2: it steers forward too
+
+
 def test_safety_pause_during_the_step_stops_the_robot_and_is_not_no_progress():
     w = FakeWorld(TWO_BINS, TWO_MATS)
     t = make(w, PATH)
@@ -652,7 +777,7 @@ def test_bins_apart_are_walked_to():
     bins = dict(BINS, residual=(4.0, 18.0, 0.5, 0.0))
     t = Task(w, CFG, GRASP, Capacity(5, 2.0, 0.2), PATH, bins)
     real_place = w.place
-    w.place = lambda target, iid, bin_id, pose: (Handle(w, 3, (True, 'ok')) if target == 'bin'
+    w.place = lambda target, iid, bin_id, pose, frame='map': (Handle(w, 3, (True, 'ok')) if target == 'bin'
                                                  else real_place(target, iid, bin_id, pose))
     run(t, w)
     assert t.state == 'DONE' and phases(w) == ['place', 'place']
@@ -834,6 +959,37 @@ def test_escape_ends_when_the_controller_does_not_move():
     assert t.state == 'DONE'
 
 
+def jitter_map_pose(w, amp):
+    """The map pose jumps by +-amp every tick (the EKF's GNSS corrections); odom holds the true pose."""
+    real, n = w.snapshot, [0]
+
+    def snapshot():
+        snap = real()
+        n[0] += 1
+        x, y, yaw = snap.robot
+        snap.local_robot = (x, y, yaw)
+        snap.robot = (x + amp * (-1) ** n[0], y, yaw)
+        return snap
+    w.snapshot = snapshot
+
+
+def escape_moved(frame, amp):
+    w, t, _ = escape_run(cfg=dict(CFG, escape=dict(CFG['escape'], travel_frame=frame)))
+    jitter_map_pose(w, amp)
+    run(t, w)
+    done = [r for r in w.log_records if r['event'] == 'escape_done']
+    assert done and done[0]['turn_free']
+    return done[0]['moved_m']
+
+
+def test_escape_distance_ignores_map_pose_jitter():
+    """devesc s1: standing still the EKF map pose adds up 2.18 m per 10 s, so max_m ended every escape after 9 s.
+    `odom` (the default) measures what was walked; the jitter barely changes it. `map` counts it."""
+    assert CFG['escape']['travel_frame'] == 'odom'
+    assert escape_moved('odom', 0.02) == pytest.approx(escape_moved('odom', 0.0), abs=0.05)
+    assert escape_moved('map', 0.02) > 1.5 * escape_moved('odom', 0.02)
+
+
 def test_escape_turning_on_the_spot_is_progress():
     w, t, _ = escape_run()
     e = Escape(t, (0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
@@ -858,3 +1014,130 @@ def test_bin_approach_without_progress_renavigates_then_leaves_the_items():
     assert len(fails) == CFG['nav_retries'] + 1
     assert any(r['event'] == 'left_in_basket' and r['items'] == ['a'] for r in w.log_records)
     assert t.state == 'DONE'
+
+
+class EstimateWorld(FakeWorld):
+    """The map pose is an estimate: true pose + an offset that jumps by `jump` (m, in x) once the item
+    is known (GNSS fusion moving map -> odom); odom = the true pose, items and bins detected there."""
+
+    def __init__(self, *a, jump=0.4, **k):
+        super().__init__(*a, **k)
+        self.jump, self.offset = jump, 0.0
+
+    def snapshot(self):
+        snap = super().snapshot()
+        if self.known:
+            self.offset = self.jump
+        x, y, yaw = self.robot
+        snap.robot = (x + self.offset, y, yaw)
+        # the world model holds positions seen before the jump: the true ones
+        snap.local_robot = (x, y, yaw)
+        snap.local_items = {i: (v.x, v.y, v.z, 0.0) for i, v in self.known.items()}
+        snap.local_bins = {b: BINS[b] for b in BINS}
+        return snap
+
+
+def in_reach(world, ix, iy):
+    x, y, yaw = world.robot
+    c, s = math.cos(yaw), math.sin(yaw)
+    rx, ry = c * (ix - x) + s * (iy - y), -s * (ix - x) + c * (iy - y)
+    return GRASP['reach_x_m'][0] <= rx <= GRASP['reach_x_m'][1] and abs(ry) <= GRASP['reach_y_max_m']
+
+
+@pytest.mark.parametrize('mode, reach', [('odom', True), ('map', False)])
+def test_close_range_in_odom_survives_a_map_jump(mode, reach):
+    """B4: the item was seen before the map estimate moved by 0.4 m. In odom the final approach still
+    ends with the item in reach and the pick goal is in odom; on the map it ends 0.4 m off."""
+    w = EstimateWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'})
+    picks = []
+    pick = w.pick
+    w.pick = lambda iid, pose, size, frame='map': picks.append((pose, frame)) or pick(iid, pose, size, frame)
+    t = make(w, PATH, cfg=dict(CFG, close_range=mode))
+    while t.state != 'PICK' and w.tick_no < 5000:
+        t.tick(w.snapshot())
+        w.step()
+    assert t.state == 'PICK'
+    assert in_reach(w, 8.0, 14.5) == reach
+    t.tick(w.snapshot())
+    assert picks[-1][1] == mode
+
+
+def test_close_range_without_a_fresh_detection_uses_the_map():
+    w = EstimateWorld({'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}}, {'a': 'pet'}, jump=0.0)
+    t = make(w, PATH)
+    snap = w.snapshot()
+    snap.local_items = {}
+    it = ItemView('a', 'trash', 8.0, 14.5, 0.03)
+    robot, pose, frame = t.item_target(snap, it)
+    assert (robot, frame) == (snap.robot, 'map') and pose[:2] == (8.0, 14.5)
+
+
+def test_bin_seen_gives_the_other_bin_by_the_layout():
+    """Only the recyclable bin seen (in a frame rotated by 90 degrees): the residual bin follows from
+    the known layout (1.2 m beside it in the map)."""
+    w = FakeWorld({}, {})
+    t = make(w, PATH)
+    snap = w.snapshot()
+    snap.local_robot = (0.0, 0.0, 0.0)
+    rx, ry, rz, ryaw = BINS['recyclable']
+    snap.local_bins = {'recyclable': (10.0, 20.0, 0.3, ryaw + math.pi / 2)}
+    _, (x, y, z, yaw), frame = t.bin_target(snap, 'residual')
+    dx, dy = BINS['residual'][0] - rx, BINS['residual'][1] - ry
+    assert frame == 'odom'
+    assert math.isclose(x, 10.0 - dy, abs_tol=1e-9) and math.isclose(y, 20.0 + dx, abs_tol=1e-9)
+    assert math.isclose(z, 0.3 + BINS['residual'][2] - rz) and math.isclose(yaw, ryaw + math.pi / 2)
+
+
+def test_bin_seen_long_ago_follows_the_fresher_bin():
+    """Both bins detected, the residual one long ago (odom has drifted since): with bin_reference
+    `freshest` its pose follows the recyclable one's fresh detection, with `own` it is the old one."""
+    w = FakeWorld({}, {})
+    snap = w.snapshot()
+    snap.local_robot = (0.0, 0.0, 0.0)
+    rx, ry, rz, ryaw = BINS['recyclable']
+    stale = (BINS['residual'][0] + 0.16, BINS['residual'][1], BINS['residual'][2], BINS['residual'][3])
+    snap.local_bins = {'recyclable': BINS['recyclable'], 'residual': stale}
+    snap.local_bins_seen = {'recyclable': 770.0, 'residual': 300.0}
+    _, pose, _ = make(w, PATH).bin_target(snap, 'residual')
+    assert all(math.isclose(a, b, abs_tol=1e-9) for a, b in zip(pose, BINS['residual']))
+    _, pose, _ = make(w, PATH).bin_target(snap, 'recyclable')         # the fresh one is its own
+    assert pose == BINS['recyclable']
+    _, pose, _ = make(w, PATH, cfg={**CFG, 'bin_reference': 'own'}).bin_target(snap, 'residual')
+    assert pose == stale
+    snap.local_bins_seen = {'recyclable': 300.0, 'residual': 770.0}
+    _, pose, _ = make(w, PATH).bin_target(snap, 'residual')
+    assert pose == stale
+
+
+def test_full_run_with_a_moving_map_estimate():
+    """The whole cycle with the map estimate off by 0.4 m: everything collected and placed."""
+    w = EstimateWorld(ITEMS, MATS)
+    run(make(w, PATH), w)
+    trash = [i for i, m in MATS.items() if m != 'distractor']
+    assert all(w.known[i].status == PLACED for i in trash)
+
+
+@pytest.mark.parametrize('order', ['last_first', 'first_first'])
+def test_unload_order_takes_the_last_stored_item_first(order):
+    w = FakeWorld(ITEMS, MATS)
+    run(make(w, PATH, cfg=dict(CFG, unload_order=order)), w)
+    places = [r['item'] for r in w.log_records if r['event'] == 'place' and r['bin'] == 'recyclable']
+    assert places == (['c', 'a'] if order == 'last_first' else ['a', 'c'])    # a stored before c
+
+
+def test_an_item_no_compartment_takes_is_put_back_and_skipped():
+    """B5b: the grasping node refuses an item every time (store.check_unload_margin: too wide to unload from
+    the centre landed off by the margin): it is put back, the basket emptied, then skipped compartment_full;
+    the rest is collected and the task ends."""
+    items = {'a': {'cls': 'trash', 'x': 8.0, 'y': 14.5}, 'b': {'cls': 'trash', 'x': 15.0, 'y': 13.0},
+             'c': {'cls': 'trash', 'x': 12.0, 'y': 15.0}}
+    w = FakeWorld(items, {'a': 'residual', 'b': 'residual', 'c': 'pet'})
+
+    class Always(set):
+        def discard(self, x):
+            pass
+    w.store_full = Always({'a'})
+    t = run(make(w, PATH, capacity=Capacity(1, 2.0, 0.05)), w)
+    assert t.state == 'DONE'
+    assert (w.known['a'].status, w.known['a'].skip_reason) == (SKIPPED, 'compartment_full')
+    assert w.known['b'].status == PLACED and w.known['c'].status == PLACED
