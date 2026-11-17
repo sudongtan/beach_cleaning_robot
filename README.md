@@ -50,7 +50,7 @@ So this robot does both jobs: it collects the litter and sorts it on the spot. T
 | **B2** Both bins from one spot | One sideways step between the bins instead of a walk | ✅ done (row `b2_bins`) |
 | **B3** Navigation stalls | Get to a spot with room to turn before each Nav2 goal | ✅ done (row `b3_nav`) |
 | **B4** Walking controller | A controller that falls less, picked by a fall test | ✅ done (row `b4_robot_lab_flip`) |
-| **B5** Collision-checked arm moves | Every arm move checked against the robot, the basket, the items in it and the bin; one item per compartment, stored only where it can be lifted out again; plus the arm and bin fixes from C1 (slower arm joints, wrist turn, bin approach) and its stricter geofence margins | 🟡 row `b5_single` running (8 of 10 scenes done, 0 safety violations so far) |
+| **B5** Collision-checked arm moves | Every arm move checked against the robot, the basket, the items in it and the bin; one item per compartment, stored only where it can be lifted out again; plus the arm and bin fixes from C1 (slower arm joints, wrist turn, bin approach) and its stricter geofence margins | 🟡 row `b5_single` running (9 of 10 scenes done, 0 safety violations so far) |
 | **B6** Arm planner comparison | MoveIt 2 against our own collision-checked planner, same ground-truth inputs | ⬜ planned (after B5's row) |
 | **C1** Localization | EKF over noisy GNSS, leg odometry and IMU | 🟡 built and running the full loop; paused until B5's row is in |
 | **C3** Far detection | Find trash while searching (1–4 m): text-prompted detector (YOLOE) + depth | 🟡 built, currently fails its detection and frame-rate checks |
