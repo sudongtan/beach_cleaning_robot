@@ -111,7 +111,7 @@ Both learned policies share one gap: their training sets every command below 0.2
 
 It also stands 9 cm lower and about 6° tilted with the arm and basket, which it never saw in training. One integration detail: upstream's config lists the leg joints in a different order from the policy's (front right first instead of front left), and with that order the robot fell as soon as the policy took over.
 
-### B5 Collision-checked arm moves (row `b5_single` running)
+### B5 Collision-checked arm moves (row `b5_single`)
 
 Added after the localization work (C1): every arm safety violation found there was a contact the arm planner never checked. The B5 row runs every input on ground truth, so the EKF itself is off. It is built on top of the C1 branch, though, so it carries more than the check. Compared with the B4 row, it adds:
 
@@ -139,15 +139,17 @@ Added after the localization work (C1): every arm safety violation found there w
 
 Every item above is a config switch that can be turned off. The row measures all four groups together. The check's own effect would need a row with group 1 off, but group 2 depends on the check, so that control isn't a single switch.
 
+**Result.** 89 of 110 items collected (B4: 75), all in the right bin, no falls, no safety violations, no compartment blocked. 5 runs finished their scene and 5 hit the 200-minute wall-clock cap; none ended stuck (B4: 3). The robot is slower per item (0.17 items per simulated minute, B4 0.24), because it walks to the bins every one or two items. Items still left on the sand by the check: 7 flat cigarette packs and 3 glass bottles whose store or unload move came within 5 mm of the basket. The row doesn't show that the check prevents the arm safety violations seen in C1: those all happened with the EKF on, and B4 on ground truth already had none. That test comes when C1 resumes on top of B5.
+
 ### B6 Arm planner comparison (planned)
 
-MoveIt 2 against our own collision-checked planner, same ground-truth inputs, after B5's row.
+MoveIt 2 against our own collision-checked planner, same ground-truth inputs, judged against B5's row.
 
 ## Part C: Ground truth → real
 
 Each step swaps one ground-truth baseline for a real component. A row is expected to be equal or worse than the ground-truth row: it reports what making that component real costs, judged by a component check with a pass rule, by safety, and by the gap to the row before.
 
-### C1 Localization (implemented, paused until B5's row is in)
+### C1 Localization (implemented, paused, resumes on top of B5)
 
 Dual EKF (`robot_localization` + `navsat_transform`) over noisy GNSS, leg odometry and IMU, plus an own EKF for comparison that also estimates the leg odometry's scale online. Tuned offline on a recorded run: map error RMS 0.22 m (`robot_localization`) and 0.17 m (own EKF). Findings on the way:
 
